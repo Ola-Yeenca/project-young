@@ -1,0 +1,200 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Global variables */
+:root {
+  --main-color: #000000;
+  --second-color: #ffd700;
+  --light-bg-color: #f8f8f8;
+  --dark-bg-color: #1c1c1c;
+  --light-text-color: #ffffff;
+  --dark-text-color: #000000;
+  --text-font: 'Poppins', sans-serif;
+  --title-font: 'Poppins', sans-serif;
+  --border-radius: 0.5rem;
+  --nav-transition-color: #ffd700;
+  --transition: all 0.4s;
+  --transition-media: all 0.1s;
+  --max-width: 1170px;
+  --fixed-width: 700px;
+  --fixed-width-2: 500px;
+  --fixed-width-3: 400px;
+}
+
+/* Reset and base styles */
+html {
+  font-size: 62.5%;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body styles */
+body {
+  font-family: var(--text-font);
+  font-size: 1.6rem;
+  line-height: 1.5;
+  min-height: 100vh;
+  background-color: var(--main-color);
+  color: var(--light-text-color);
+}
+
+/* Webgel styles */
+.webgel {
+  position: relative;
+  top: 30px;
+  left: 0;
+  width: 100vw;
+  min-height: 100vh;
+  outline: none;
+}
+
+/* Layout styles */
+.row {
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  min-height: 140vh;
+  display: grid;
+  place-content: center;
+}
+
+.content {
+  position: relative;
+  gap: 5em;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--max-width);
+  padding-top: 3em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-bottom: 1px solid var(--second-color);
+  transform: scaleX(1);
+}
+
+.content__title {
+  font-size: 4rem;
+  width: 50vw;
+  font-weight: 600;
+  text-align: center;
+  color: var(--nav-transition-color);
+}
+
+.content__title, .content__para {
+  flex-basis: 0;
+  flex-grow: 1;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+}
+
+.content__para {
+  font-size: 1.8rem;
+  width: 40vw;
+  font-weight: 400;
+  text-align: center;
+}
+
+article {
+  position: relative;
+  width: 100%;
+  max-width: var(--fixed-width);
+  padding: 2em;
+  border-radius: var(--border-radius);
+  background-color: var(--light-bg-color);
+  box-shadow: 0 0 1em rgba(0, 0, 0, 0.2);
+}
+
+
+
+/* Navigation styles */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  transition: all .3s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(225, 225, 225, 0.2);
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: .7s;
+}
+
+.header:hover::before {
+  left: 100%;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+  color: var(--light-text-color);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+}
+
+.navbar a {
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin-left: 2rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+  color: var(--light-text-color);
+  position: relative; /* Create a stacking context */
+}
+
+.navbar a::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--nav-transition-color);
+  transition: width 0.3s ease;
+}
+
+.navbar a:hover::before {
+  width: 100%;
+}
+
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}

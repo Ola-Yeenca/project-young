@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Contact Us{% endblock %}
+
+{% block scripts %}
+{% comment %} threejs link {% endcomment %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
+
+<script>
+  const webgel = '{{ webgel | safe }}';
+  if (webgel.trim() !== '') {
+    const parsedData = JSON.parse(webgel);
+    console.log(parsedData);
+  } else {
+    console.error('The webgel variable is empty.');
+  }
+
+</script>
+
+
+{% endblock %}
+
+{% block content %}
+
+<div id="webgel" class="webgel" style="position: fixed; top: 0; left: 0;">
+  <div class="row" style="position: absolute; color: gold;">
+    <h1>Contact Us</h1>
+
+    {% comment %} <form method="post" action="{% url 'contact' %}">
+        {% csrf_token %}
+        <!-- Your form fields go here -->
+        <button type="submit">Submit</button>
+    </form> {% endcomment %}
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Events Page{% endblock %}
+
+{% block scripts %}
+{% comment %} threejs link {% endcomment %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div id="webgel" >
+  <div class="row">
+    <section class="mt-8">
+      <h2 class="text-3xl font-semibold mb-4">Upcoming Events</h2>
+      {% if upcoming_events %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {% for event in upcoming_events %}
+            <div class="bg-white p-6 rounded-lg shadow-md">
+              <h3 class="text-xl font-semibold mb-2">{{ event.title }}</h3>
+              <p class="text-gray-600 mb-4">{{ event.content }}</p>
+              <p class="text-gray-500">Date: {{ event.event_date }}</p>
+              {% if event.image %}
+                <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+              {% endif %}
+              {% if event.blog_post.slug %}
+                <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}">Read More</a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-500">No upcoming events at the moment.</p>
+      {% endif %}
+    </section>
+
+    <section class="mt-8">
+      <h2 class="text-3xl font-semibold mb-4">Past Events</h2>
+      {% if past_events %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {% for event in past_events %}
+            <div class="bg-white p-6 rounded-lg shadow-md">
+              <h3 class="text-xl font-semibold mb-2">{{ event.title }}</h3>
+              <p class="text-gray-600 mb-4">{{ event.content }}</p>
+              <p class="text-gray-500">Date: {{ event.event_date }}</p>
+              {% if event.image %}
+                {% comment %} <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4"> {% endcomment %}
+              {% endif %}
+              {% if event.blog_post.slug %}
+                <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}" class="text-blue-500 hover:underline">Read More</a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-500">No past events available.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

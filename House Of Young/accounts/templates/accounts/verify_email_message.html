@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Verify Email{% endblock %}
+
+{% block scripts %}
+    {# threejs link #}
+    {% comment %} <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script> {% endcomment %}
+{% endblock %}
+
+<div id="webgel" class="webgel">
+  <div class="row">
+    <h2>Verify Email</h2>
+    <div>
+        <p>Hi {{ user.name }},</p>
+        <p>You created an account on HOY.com, you need to verify your email. Please click on the button below to verify your email.</p>
+        <a href="{{ request.scheme }}://{{ domain }}{% url 'verify-email-confirm' uidb64=uid token=token %}">
+            Verify Email
+        </a>
+        <p >Or you can copy the link below to your browser</p>
+        <p>{{ request.scheme }}://{{ domain }}{% url 'verify-email-confirm' uidb64=uid token=token %}</p>
+        <p>House Of Young Team</p>
+    </div>
+    <div style="text-align: center; margin-top: 20px 0;">
+        <p>© {% now 'Y' %} <a href="#">Instagram</a></p>
+        <p>Follow us on <a href="#">Twitter</a></p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block scripts %}
+{% comment %} threejs link {% endcomment %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
+
+
+
+
+{% endblock %}
+
+{% block content %}
+
+
+
+<div id="webgel" class="webgel" >
+  <div class="row">
+    <section class='content'>
+      {% if home_page %}
+        <h3 class="content__title">{{ home_page.title }}</h3>
+        {% if home_page.image %}
+          <img src="{{ home_page.image.url }}" alt="{{ home_page.title }} Image">
+        {% endif %}
+        <p class="content__para">{{ home_page.about }}</p>
+        <p class="content__para">{{ home_page.content }}</p>
+      {% endif %}
+    </section>
+
+    <section class='body__content'>
+      <h2 class="content__title">Upcoming Events</h2>
+      {% for event in upcoming_events %}
+        <article>
+          <h3 class="title">{{ event.title }}</h3>
+          <p class="content__para">{{ event.content }}</p>
+          <p class="content__para">Date: {{ event.event_date }}</p>
+        </article>
+      {% endfor %}
+    </section>
+
+    <section class='body__content'>
+      <h2 class="content__title">Past Events</h2>
+      {% for event in past_events %}
+        <article>
+          <h3 class="content__title">{{ event.title }}</h3>
+          {% if event.image %}
+            <img src="{{ event.image.url }}" alt="{{ event.title }} Image">
+          {% endif %}
+          <p class="content__para">{{ event.content }}</p>
+          <p class="content__para">Date: {{ event.event_date }}</p>
+        </article>
+      {% endfor %}
+    </section>
+
+    <section class='body__content'>
+      <h2 class="content__title">Recent Blog Posts</h2>
+      {% for blog_post in blog_posts %}
+        <article>
+          <h3 class="content__title">{{ blog_post.title }}</h3>
+          <p class="content__para">{{ blog_post.content }}</p>
+          <p class="content__para">Published on: {{ blog_post.pub_date }}</p>
+          <a href="{% url 'core:blog_detail' blog_id=blog_post.id %}">Read more</a>
+        </article>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+
+
+{% endblock %}
