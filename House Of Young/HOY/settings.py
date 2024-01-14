@@ -5,19 +5,19 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Load environment variables from .env file
-ENV_FILE = BASE_DIR / '.env'
-config.read_env(ENV_FILE)
+# ENV_FILE = BASE_DIR / '.env'
+# config.read_dotenv(ENV_FILE)
 
-AUTH_USER_MODEL = 'accounts.CustomUser'
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', default='django-insecure-ttvii2w)l_x27qh8stwgv9ah#=7@(wz@em^rl)9&t6@k-2v!xi')
 
+# Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'yeenca@thehouseofyoung.com'
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', default='your_default_email_password')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "HOY HouseOfYoung@gmail.com"
 
@@ -28,8 +28,6 @@ DEFAULT_FROM_EMAIL = "HOY HouseOfYoung@gmail.com"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ttvii2w)l_x27qh8stwgv9ah#=7@(wz@em^rl)9&t6@k-2v!xi'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -55,6 +53,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'accounts',
 ]
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

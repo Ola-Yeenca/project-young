@@ -123,12 +123,13 @@ article {
 /* Navigation styles */
 
 .header {
+  height: 117px;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 10;
   width: 100%;
-  padding: 1.5rem 2rem;
+  padding: 0.5rem 2rem;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   transition: all .3s ease-in-out;
@@ -153,13 +154,38 @@ article {
   left: 100%;
 }
 
-.logo {
-  font-size: 2.5rem;
-  font-weight: 800;
+.logo img {
+  width: 140px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+nav ul {
+  padding-left: 25rem;
+}
+
+nav ul li {
+  list-style: none;
+  display: inline-block;
+  margin: 10px 15px;
+}
+
+nav ul li a {
   text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.2rem;
+  font-size: 1.8rem;
+  transition: all .3s ease-in-out;
+}
+
+.account {
+  display: inline;
+  text-decoration: none;
+  padding: 14px 40px;
+  border-radius: 5px;
   color: var(--light-text-color);
+  background-image: linear-gradient(45deg #ffd700, #453b03);
+  font-size: 1.8rem;
+
 }
 
 .navbar {
@@ -175,7 +201,7 @@ article {
   text-transform: uppercase;
   letter-spacing: 0.2rem;
   color: var(--light-text-color);
-  position: relative; /* Create a stacking context */
+  position: relative;
 }
 
 .navbar a::before {
@@ -191,10 +217,4 @@ article {
 
 .navbar a:hover::before {
   width: 100%;
-}
-
-
-.dropdown {
-  position: relative;
-  display: inline-block;
 }
