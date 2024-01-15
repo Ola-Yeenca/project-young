@@ -5,10 +5,10 @@ from django.db.models.signals import post_save
 
 
 class CustomUser(AbstractBaseUser):
-    username = models.CharField(max_length=30, unique=True)
     email = models.EmailField(max_length=254, unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
+    username = models.CharField(max_length=150, unique=True)
     email_is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)

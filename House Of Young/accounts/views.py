@@ -1,47 +1,53 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
-from django.views.generic import CreateView
-from .forms import SignUpForm
-from django.http import HttpResponse
-from django.contrib.auth import login, authenticate
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import  urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.http import HttpResponse
+from django.contrib.auth import login
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from .forms import SignUpForm
 from .tokens import AccountActivationTokenGenerator
-from django.urls import reverse_lazy
-
-
+from .models import CustomUser
 
 def register(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False
-            user.save()
+            username = form.cleaned_data['username']
+            if CustomUser.objects.filter(username=username).exists():
+                form.add_error('username', 'This username is already in use.')
+            else:
+                user = form.save(commit=False)
+                user.is_active = False
+                user.save()
 
-            current_site = get_current_site(request)
-            subject = 'Activate Your House Of Young Account'
-            message = render(request, 'accounts/account_activation_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': AccountActivationTokenGenerator.make_token(user),
-            })
-            user.email_user(subject=subject, message=message)
-            return redirect('account_activation_sent')
+                current_site = get_current_site(request)
+                subject = 'Activate Your House Of Young Account'
+                message = render(request, 'accounts/activate_account_email.html', {
+                    'user': user,
+                    'domain': current_site.domain,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': AccountActivationTokenGenerator().make_token(user),
+                })
+                send_mail(
+                    subject,
+                    strip_tags(message),
+                    from_email='Fromthehouseofyoung@gmail.com',
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                    html_message=message
+                )
+                return redirect('accounts:account_activation_sent')
 
     else:
         form = SignUpForm()
 
-
-    return render(request, 'accounts/signup.html', {'form' : form})
+    return render(request, 'accounts/signup.html', {'form': form})
 
 
 def activate(request, uidb64, token):
-    CustomUser = get_user_model()
     try:
         uid = force_bytes(urlsafe_base64_encode(uidb64))
         user = CustomUser.objects.get(pk=uid)
@@ -55,3 +61,15 @@ def activate(request, uidb64, token):
         return HttpResponse('Thank you for your email confirmation. Now you can log in to your account.')
     else:
         return HttpResponse('Activation link invalid!')
+
+
+def account_activation_sent(request):
+    return render(request, 'accounts/account_activation_sent.html')
+
+
+def user_login(request):
+    return render(request, 'accounts/login.html')
+
+
+def user_logout(request):
+    return render(request, 'accounts/logout.html')

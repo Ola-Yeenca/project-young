@@ -4,6 +4,8 @@ from .views import EventViewSet
 
 
 
+
+
 event_router = DefaultRouter()
 event_router.register(r'event', EventViewSet, basename='event')
 
