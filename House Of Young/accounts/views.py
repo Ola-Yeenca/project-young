@@ -11,13 +11,16 @@ from .forms import SignUpForm
 from .tokens import AccountActivationTokenGenerator
 from .models import CustomUser
 
+
+
+
 def register(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             if CustomUser.objects.filter(username=username).exists():
-                form.add_error('username', 'This username is already in use.')
+                form.add_error(username, 'This username is already in use.')
             else:
                 user = form.save(commit=False)
                 user.is_active = False
@@ -25,7 +28,7 @@ def register(request):
 
                 current_site = get_current_site(request)
                 subject = 'Activate Your House Of Young Account'
-                message = render(request, 'accounts/activate_account_email.html', {
+                message = render_to_string(request, 'accounts/activate_account_email.html', {
                     'user': user,
                     'domain': current_site.domain,
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
@@ -34,7 +37,7 @@ def register(request):
                 send_mail(
                     subject,
                     strip_tags(message),
-                    from_email='Fromthehouseofyoung@gmail.com',
+                    from_email='infohouseofyoung@gmail.com',
                     recipient_list=[user.email],
                     fail_silently=False,
                     html_message=message
@@ -73,3 +76,16 @@ def user_login(request):
 
 def user_logout(request):
     return render(request, 'accounts/logout.html')
+
+
+def admin_signup(request):
+    form = SignUpForm()
+
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('admin:index')
+
+    return render(request, 'accounts/admin_signup.html', {'form': form})
