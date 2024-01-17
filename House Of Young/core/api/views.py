@@ -2,7 +2,8 @@ from rest_framework import status
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from ..models import Event, HomePage
+from ..models import Event
+from ..views import get_active_home_page
 from .serializers import EventSerializer
 from .utils import generate_qr_code
 
@@ -11,12 +12,11 @@ class EventViewSet(ModelViewSet):
     serializer_class = EventSerializer
 
     def perform_create(self, serializer):
-        home_page = HomePage.objects.filter(is_active=True).order_by('-event_date').first()
-
+        home_page = get_active_home_page()
         if home_page:
             serializer.save(home_page=home_page)
         else:
-            raise serializers.ValidationError("No active HomePage available")
+            raise serializers.ValidationError("No active Homepage available")
 
 
     def create(self, request, *args, **kwargs):

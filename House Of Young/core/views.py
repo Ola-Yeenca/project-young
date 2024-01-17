@@ -1,19 +1,24 @@
 import logging
-from django.shortcuts import render, get_object_or_404
-from .models import HomePage, About, BlogPost, Contact, Event, Webgel
 import json
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.utils import timezone
+from .models import BlogPost, Event, Webgel
+from .config import HOMEPAGE_CONTENT
 
 logger = logging.getLogger(__name__)
+
+def get_active_home_page():
+    """Helper function to get the active home page."""
+    return HOMEPAGE_CONTENT
 
 def index(request):
     webgel = [{'type': int(x.type), 'color': x.color} for x in Webgel.objects.all()]
     webgel_json = json.dumps(webgel)
-    home_page = HomePage.objects.filter(is_active=True).first()
+    home_page = get_active_home_page()
 
     if home_page:
-        events = Event.objects.filter(home_page=home_page, is_published_event=True).order_by('event_date')
+        events = Event.objects.filter(home_page=True, is_published_event=True).order_by('event_date')
         upcoming_events = events.filter(event_date__gte=timezone.now())[:3]
         past_events = events.filter(event_date__lt=timezone.now()).order_by('-event_date')[:3]
         recent_blog_posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')[:3]
@@ -37,15 +42,12 @@ def blog_detail(request, blog_id):
     blog_post = get_object_or_404(BlogPost, id=blog_id)
     return render(request, 'core/blog_detail.html', {'blog_post': blog_post})
 
-
-
-
 def blog_list(request):
     blog_posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')
     return render(request, 'core/blog_list.html', {'blog_posts': blog_posts})
 
 def event(request):
-    home_page = HomePage.objects.filter(is_active=True).first()
+    home_page = get_active_home_page()
 
     if home_page:
         all_events = Event.objects.all()

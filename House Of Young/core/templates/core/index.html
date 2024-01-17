@@ -5,16 +5,9 @@
 {% block scripts %}
 {% comment %} threejs link {% endcomment %}
 <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
-
-
-
-
 {% endblock %}
 
 {% block content %}
-
-
-
 <div id="webgel" class="webgel" >
   <div class="row">
     <section class='content'>
@@ -25,33 +18,29 @@
         {% endif %}
         <p class="content__para">{{ home_page.about }}</p>
         <p class="content__para">{{ home_page.content }}</p>
+      {% else %}
+        <h3 class="content__title">Welcome to Our Event Platform</h3>
+        <p class="content__para">Explore upcoming events, connect with organizers, and make the most of your event experiences.</p>
+        <!-- Add any other welcoming content or promotions here -->
       {% endif %}
     </section>
 
     <section class='body__content'>
       <h2 class="content__title">Upcoming Events</h2>
-      {% for event in upcoming_events %}
-        <article>
-          <h3 class="title">{{ event.title }}</h3>
-          <p class="content__para">{{ event.content }}</p>
-          <p class="content__para">Date: {{ event.event_date }}</p>
-        </article>
-      {% endfor %}
+      {% if upcoming_events %}
+        {% for event in upcoming_events %}
+          <article>
+            <h3 class="title">{{ event.title }}</h3>
+            <p class="content__para">{{ event.content }}</p>
+            <p class="content__para">Date: {{ event.event_date }}</p>
+          </article>
+        {% endfor %}
+      {% else %}
+        <p>No upcoming events at the moment. Stay tuned for exciting updates!</p>
+        <!-- You can add more content or promotions related to no upcoming events -->
+      {% endif %}
     </section>
 
-    <section class='body__content'>
-      <h2 class="content__title">Past Events</h2>
-      {% for event in past_events %}
-        <article>
-          <h3 class="content__title">{{ event.title }}</h3>
-          {% if event.image %}
-            <img src="{{ event.image.url }}" alt="{{ event.title }} Image">
-          {% endif %}
-          <p class="content__para">{{ event.content }}</p>
-          <p class="content__para">Date: {{ event.event_date }}</p>
-        </article>
-      {% endfor %}
-    </section>
 
     <section class='body__content'>
       <h2 class="content__title">Recent Blog Posts</h2>

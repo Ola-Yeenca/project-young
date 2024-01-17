@@ -5,6 +5,8 @@ from .models import AdminUser
 
 class CustomUserAdmin(UserAdmin):
     ordering = ('created_at',)
-    
+
 
 admin.site.register(AdminUser, CustomUserAdmin)
+
+

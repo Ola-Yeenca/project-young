@@ -44,3 +44,24 @@ class AdminUser(BaseUser):
         verbose_name='Groups',
         help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
     )
+
+
+class OrganizerProfile(models.Model):
+    user = models.OneToOneField(AdminUser, on_delete=models.CASCADE)
+
+
+    def __str__(self):
+        return f"Organizer Profile - {self.user.username}"
+
+
+
+class CollaboratorProfile(models.Model):
+    user = models.OneToOneField(AdminUser, on_delete=models.CASCADE)
+    organizer = models.ForeignKey(OrganizerProfile, on_delete=models.SET, null=True, blank=True)
+    @property
+    def get_organizer(self):
+        return self.organizer
+
+
+    def __str__(self):
+        return f"Collaborator Profile - {self.user.username}"

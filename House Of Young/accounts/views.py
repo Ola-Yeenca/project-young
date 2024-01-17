@@ -73,4 +73,31 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.save()
         login(request, user)
-        return HttpResponse('Thank yo
+        return HttpResponse('Thank you for your email confirmation. Now you can log in to your account.')
+    else:
+        return HttpResponse('Activation link invalid!')
+
+
+def account_activation_sent(request):
+    return render(request, 'accounts/account_activation_sent.html')
+
+
+def user_login(request):
+    return render(request, 'accounts/login.html')
+
+
+def user_logout(request):
+    return render(request, 'accounts/logout.html')
+
+
+def admin_signup(request):
+    form = SignUpForm()
+
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('admin:index')
+
+    return render(request, 'accounts/admin_signup.html', {'form': form})
