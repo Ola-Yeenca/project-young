@@ -1,5 +1,7 @@
 {% extends "core/base.html" %}
 
+{% block title %}Activation Code Sent{% endblock %}
+
 {% block content %}
   <div class="container">
     <div class="row">
@@ -8,9 +10,9 @@
           <div class="card-body text-center">
             <h2 class="card-title">Account Activation Sent</h2>
             <p class="card-text">
-              We have sent an activation link to your email. Please check your inbox and follow the instructions to activate your account.
+              We have sent an activation link to your email. Please check your inbox (or spam) and follow the instructions to activate your account.
             </p>
-            <a href="{% url 'home' %}" class="btn btn-primary">Go to Home</a>
+            <a href="{% url 'core:index' %}" class="btn btn-primary">Go to Home</a>
           </div>
         </div>
       </div>

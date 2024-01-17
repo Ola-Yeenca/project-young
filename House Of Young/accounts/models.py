@@ -1,3 +1,4 @@
+# accounts/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import EmailValidator
@@ -10,9 +11,6 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
-
-
-    
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -28,6 +26,24 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
     objects = CustomUserManager()
+
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='custom_user_groups',  # Change 'custom_user_groups' to your preference
+        related_query_name='custom_user_group',
+        blank=True,
+        verbose_name='Groups',
+        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+    )
+
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_user_permissions',  # Change 'custom_user_permissions' to your preference
+        related_query_name='custom_user_permission',
+        blank=True,
+        verbose_name='User permissions',
+        help_text='Specific permissions for this user.',
+    )
 
     def __str__(self):
         return self.username

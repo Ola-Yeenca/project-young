@@ -3,6 +3,8 @@
 
 {% load static %}
 
+{% block title %}Activate Your HOY Account{% endblock %}
+
 {% block content %}
 
 <div class="webgel" id="webgel">
@@ -10,7 +12,7 @@
     {% autoescape off %}
       Hi {{ user.username }},
       Please click on the link to confirm your registration,
-      <a href="{% url 'accounts:activate' uidb64=uid token=token %}">Activate your account</a>
+      <a href="{{ protocol }}://{{ domain }}/accounts/activate/{{ uidb64 }}/{{ token }}">Activate your account</a>
     {% endautoescape %}
   </div>
 </div>
