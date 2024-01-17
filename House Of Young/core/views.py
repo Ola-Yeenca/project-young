@@ -63,8 +63,10 @@ def event_detail(request, event_id):
     return render(request, 'core/event_detail.html', {'event': event})
 
 def about(request):
-    abouts = About.objects.filter(is_published_about=True).order_by('-created_at')
-    return render(request, 'core/about.html', {'abouts': abouts})
+    if request.method == 'POST':
+        # Handle form submission logic here (if you have a contact form)
+        pass
+    return render(request, 'core/about.html')
 
 def contact(request):
     if request.method == 'POST':

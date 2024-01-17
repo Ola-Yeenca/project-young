@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import BlogPost, Event, Webgel, Organizer, Collaborator, Sponsor
+from .models import BlogPost, Event, Webgel, Organizer, Collaborator, Sponsor, Homepage
+
+
+
+@admin.register(Homepage)
+class HomepageAdmin(admin.ModelAdmin):
+    list_display = ('is_active',)
+    search_fields = ('content',)
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
@@ -25,7 +32,7 @@ class SponsorAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
 
-    
+
 @admin.register(BlogPost)
 class BlogPostAdmin(admin.ModelAdmin):
     list_display = ('title', 'created_at', 'is_published')
