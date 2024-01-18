@@ -50,9 +50,9 @@ def event(request):
     home_page = get_active_home_page()
 
     if home_page:
-        all_events = Event.objects.all()
-        upcoming_events = all_events.filter(event_date__gte=timezone.now())[:3]
-        past_events = all_events.filter(event_date__lt=timezone.now()).order_by('-event_date')[:3]
+        events = Event.objects.filter(home_page=True, sponsors=True).order_by('start_date')
+        upcoming_events = events.filter(start_date__gte=timezone.now())[:3]
+        past_events = events.filter(end_date__lt=timezone.now()).order_by('-end_date')[:5]
         return render(request, 'core/event.html', {'upcoming_events': upcoming_events, 'past_events': past_events})
     else:
         logger.error("No active home page found.")
