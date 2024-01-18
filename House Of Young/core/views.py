@@ -18,9 +18,9 @@ def index(request):
     home_page = get_active_home_page()
 
     if home_page:
-        events = Event.objects.filter(home_page=True, is_published_event=True).order_by('event_date')
-        upcoming_events = events.filter(event_date__gte=timezone.now())[:3]
-        past_events = events.filter(event_date__lt=timezone.now()).order_by('-event_date')[:3]
+        events = Event.objects.filter(home_page=True, sponsors=True).order_by('start_date')
+        upcoming_events = events.filter(start_date__gte=timezone.now())[:3]
+        past_events = events.filter(end_date__lt=timezone.now()).order_by('-end_date')[:3]
         recent_blog_posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')[:3]
         context = {
             'home_page': home_page,
