@@ -64,12 +64,10 @@ def event_detail(request, event_id):
 
 def about(request):
     if request.method == 'POST':
-        # Handle form submission logic here (if you have a contact form)
         pass
     return render(request, 'core/about.html')
 
 def contact(request):
     if request.method == 'POST':
-        # Handle form submission logic here (if you have a contact form)
         pass
     return render(request, 'core/contact.html')
