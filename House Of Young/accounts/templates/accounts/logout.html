@@ -1,18 +1,29 @@
 {% extends "core/base.html" %}
-
 {% load static %}
-
 
 {% block title %}Log Out{% endblock %}
 
 {% block content %}
-
-<div id="webgel" class="webgel">
-  <div class="row">
-    <h1>{{ title }}</h1>
-
-
+  <div id="webgel" class="webgel">
+    <div class="row">
+      <h1>{{ title }}</h1>
+      <p>Are you sure you want to log out?</p>
+      <form method="post" id="logoutForm" onsubmit="return confirmLogout()">
+        {% csrf_token %}
+        <input type="submit" value="Yes, log out" />
+        <a href="#" onclick="goBack()">No, cancel</a>
+      </form>
+    </div>
   </div>
-</div>
 
+  <script>
+    function confirmLogout() {
+      window.location.href = "{% url 'core:index' %}";
+      return false;
+    }
+
+    function goBack() {
+      window.history.back();
+    }
+  </script>
 {% endblock %}

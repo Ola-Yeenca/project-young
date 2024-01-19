@@ -44,6 +44,14 @@ body {
   color: var(--light-text-color);
 }
 
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
 /* Webgel styles */
 .webgel {
   position: relative;
@@ -99,6 +107,7 @@ body {
   flex-basis: 0;
   flex-grow: 1;
   clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  padding-top: 50px;
 }
 
 .content__para {
