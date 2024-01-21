@@ -27,7 +27,7 @@
                 <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
               {% endif %}
               {% if event.blog_post.slug %}
-                <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}">Read More</a>
+                <button><a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}">Read More</a></button>
               {% endif %}
             </div>
           {% endfor %}
