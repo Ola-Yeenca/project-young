@@ -10,30 +10,71 @@
 {% endblock %}
 
 {% block content %}
-<div id="webgel" class="webgel" >
-  <section>
-    <header class="section__container header__container">
-      <div class="header__content">
-        <span class="bg__blur">
-          <span class="bg__blur header__blur"></span>
-          <h4>Welcome to House Of Young, the best events platform.</h4>
-          <h1><span>WE</span>HOST THE BEST EVENTS EVER!</h1>
-          <p>
-            House of young isnt just an event organizing platform but an organisation that manages, build and grows enterpreneurs
-            and small business, thereby giving them the platform, the voice to showcase and reach out to the so their abilities
-            and talents could be the discovered. Our vocal points which emerges fom event organizing and collaborting got mejor
-            focus of establishing and dominance not only in Valencia-Spain, but in Nigeria, the largest and best room of events
-            in Africa before conquering the world.
-          </p>
-        </span>
-        <button class="btn">Learn more!</button>
-      </div>
-      <div class="header__image">
-        <img src="{% static 'images/HOY-removebg-preview.png' %}" alt="image"></a>
-      </div>
-    </header>
-  </section>
-</div>
 
+<div id="webgel" class="webgel">
+  <header class="section__container header__container">
+      <div class="header__content">
+        <span class="bg__blur"></span>
+        <span class="bg__blur header__blur"></span>
+        <h4>HOUSE OF YOUNG</h4>
+        <h1><span>WE CURATE & HOST</span> UNFORGETTABLE EVENTS</h1>
+        <p>
+          House of Young is more than just an event organizing platform;
+          it's an organization dedicated to nurturing, building, and
+          fostering the growth of entrepreneurs and small businesses.
+          We provide them with a platform and a voice to showcase their
+          talents, allowing them to reach a wider audience and have their
+          abilities discovered. Our expertise, rooted in event organization
+          and collaboration, is focused on establishing a significant presence,
+          not only in Valencia, Spain, but also in Nigeria—the largest and most
+          vibrant hub of events in Africa—before expanding our influence globally.
+        </p>
+        <a href="{% url 'core:event' %}" class="btn">Explore Our Events</a>
+      </div>
+    <div class="header__image">
+      <img src="{% static 'images/HOY-removebg-preview.png' %}" alt="image"></a>
+    </div>
+    
+    <section class="section__container events__container">
+      <h2>Upcoming Events</h2>
+      {% for event in upcoming_events %}
+      <div class="explore__card">
+        <span><i class="ri-boxing-fill"></i></span>
+        <h4 class="text-xl font-semibold mb-2">{{ event.title }}</h4>
+        <p class="text-gray-600 mb-4">{{ event.content }}</p>
+        <p class="text-gray-500">Date and Time: {{ event.event_date }} {{ event.event_time }}</p>
+        <p class="text-gray-500">Venue: {{ event.venue }}</p>
+        <a href="/events/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
+        {% if event.image %}
+          <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+        {% endif %}
+        {% if event.blog_post.slug %}
+          <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}" class="btn">Read More</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <h2>Past Events</h2>
+      {% for event in past_events %}
+          <div class="explore__card">
+            <span><i class="ri-boxing-fill"></i></span>
+            <h4 class="text-xl font-semibold mb-2">{{ event.title }}</h4>
+            <p class="text-gray-600 mb-4">{{ event.content }}</p>
+            <p class="text-gray-500">Date : {{ event.event_date }}</p>
+            <p class="text-gray-500">Time: {{ event.event_time }}</p>
+            <p class="text-gray-500">Venue: {{ event.venue }}</p>
+            <a href="/events/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
+            {% if event.image %}
+              <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+            {% endif %}
+            {% if event.blog_post.slug %}
+              <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}" class="btn">Read More</a>
+            {% endif %}
+          </div>
+        {% endfor %}
+    </section>
+  </header>
+
+</div>
 
 {% endblock %}

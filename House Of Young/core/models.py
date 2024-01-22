@@ -67,8 +67,8 @@ class Event(QRCodeMixin, models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     image = models.ImageField(upload_to='events/', blank=True)
-    start_date = models.DateTimeField(help_text='Start date and time of the event', null=True, blank=True, default=None)
-    end_date = models.DateTimeField(help_text='End date and time of the event', null=True, blank=True, default=None)
+    event_date = models.DateTimeField(help_text='Date  of the event', null=True, blank=True, default=None)
+    event_time = models.TimeField(help_text='Time of the event', null=True, blank=True, default=None)
     organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE, default=1)  # Replace '1' with the actual ID of the default organizer
     venue = models.CharField(max_length=255, default='Valencia, Spain')
     tickets_available = models.PositiveIntegerField(default=0)

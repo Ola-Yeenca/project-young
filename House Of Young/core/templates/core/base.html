@@ -18,13 +18,13 @@
 <body>
   <nav>
     <div class="nav__logo">
-      <a href="{% url 'core:index' %}" class="logo"><img src="{% static 'images/HOY-removebg-preview.png' %}" alt="logo">House Of Young</a>
+      <a href="{% url 'core:index' %}" class="logo"><img src="{% static 'images/HOY-removebg-preview.png' %}" alt="logo"></a>
     </div>
     <ul class="nav__links">
       <li class="link"><a href="{% url 'core:event' %}">Events</li>
       <li class="link"><a href="{% url 'core:blog_list' %}">Blogs</li>
       <li class="link"><a href="{% url 'core:about' %}">About</li>
-      <li class="link"><a href="{% url 'core:contact' %}">Work with Us</li>
+      <li class="link"><a href="{% url 'core:contact' %}">Work with Us</a></li>
     </ul>
     <button id="btn" class="btn">
       {% if user.is_authenticated %}

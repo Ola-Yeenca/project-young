@@ -37,6 +37,19 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
+
+def show_toolbar(request):
+    return DEBUG
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': show_toolbar,
+}
+
+
+TIME_ZONE = 'Europe/Madrid'
 
 # Application definition
 
@@ -49,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_use_email_as_username.apps.DjangoUseEmailAsUsernameConfig',
     'custom_user.apps.CustomUserConfig',
+    'debug_toolbar',
     'rest_framework',
     'corsheaders',
     'core',
@@ -60,6 +74,7 @@ AUTH_USER_MODEL = 'custom_user.AdminUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -69,6 +84,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+
 
 CORS_ALLOWED_ORIGIN = [
     'http://localhost:3000',
