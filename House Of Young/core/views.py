@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.utils import timezone
+from django.db.models import Q
 from .models import BlogPost, Event, Webgel
 from .config import HOMEPAGE_CONTENT
 
@@ -18,9 +19,25 @@ def index(request):
     home_page = get_active_home_page()
 
     if home_page:
-        events = Event.objects.filter(home_page=True, sponsors=True).order_by('start_date')
-        upcoming_events = events.filter(start_date__gte=timezone.now())[:3]
-        past_events = events.filter(end_date__lt=timezone.now()).order_by('-end_date')[:3]
+        events = Event.objects.filter(Q(home_page=True) | Q(sponsors=True)).order_by('event_date')
+        print('All Events:', events)
+
+        now = timezone.localtime(timezone.now())
+        print('Localized Current Time:', now)
+
+        for event in events:
+            print(f"Event: {event.title}, Event Date: {event.event_date}, Localized Event Date: {timezone.localtime(event.event_date)}")
+
+
+        upcoming_events = events.filter(event_date__gte=timezone.localtime(timezone.now()).replace(microsecond=0))[:3]
+        print('Upcoming Events:', upcoming_events)
+
+        for event in upcoming_events:
+            print(f"Upcoming Event: {event.title}, Event Date: {event.event_date}, Localized Event Date: {timezone.localtime(event.event_date)}")
+
+
+        upcoming_events = events.filter(event_date__gte=timezone.localtime(timezone.now()))[:3]
+        past_events = events.filter(event_date__lt=timezone.now()).order_by('-event_date')[:1]
         recent_blog_posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')[:3]
         context = {
             'home_page': home_page,
@@ -33,6 +50,9 @@ def index(request):
     else:
         logger.error("No active home page found.")
         return HttpResponse("No active home page found.")
+
+
+
 
 def blog(request):
     blog_posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')
@@ -50,9 +70,11 @@ def event(request):
     home_page = get_active_home_page()
 
     if home_page:
-        events = Event.objects.filter(home_page=True, sponsors=True).order_by('start_date')
-        upcoming_events = events.filter(start_date__gte=timezone.now())[:3]
-        past_events = events.filter(end_date__lt=timezone.now()).order_by('-end_date')[:5]
+        events = Event.objects.filter(Q(home_page=True) | Q(sponsors=True)).order_by('event_date')
+        upcoming_events = events.filter(event_date__gte=timezone.now())[:3]
+        past_events = events.filter(event_date__lt=timezone.now()).order_by('-event_date')[:5]
+        print('Events count', events.count())
+        print('Upcoming Events Count', upcoming_events.count(), 'Past EventsCount', past_events.count())
         return render(request, 'core/event.html', {'upcoming_events': upcoming_events, 'past_events': past_events})
     else:
         logger.error("No active home page found.")

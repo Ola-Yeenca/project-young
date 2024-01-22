@@ -10,7 +10,7 @@ class HomepageAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('title', 'start_date', 'is_published')
+    list_display = ('title', 'event_date', 'is_published')
     search_fields = ('title', 'content', 'home_page__title')
     prepopulated_fields = {'slug': ('title',)}
 
