@@ -29,7 +29,7 @@ def register(request):
                 user.is_active = False
                 user.save()
 
-                protocol = request.scheme 
+                protocol = request.scheme
                 domain = request.get_host()
                 uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
                 subject = 'Activate Your House Of Young Account'
@@ -81,6 +81,8 @@ def activate(request, uidb64, token):
 def account_activation_sent(request):
     return render(request, 'accounts/account_activation_sent.html')
 
+def profile(request):
+    pass
 
 def user_login(request):
     return render(request, 'accounts/login.html')

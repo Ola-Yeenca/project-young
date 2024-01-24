@@ -1,4 +1,4 @@
-# models.py
+
 from collections.abc import Iterable
 import logging
 import qrcode
@@ -53,9 +53,9 @@ class Homepage(models.Model):
     event_date = models.DateTimeField(help_text='Date and time of the event')
     is_active = models.BooleanField(default=True, help_text='Check if the event is currently active')
 
-
     def __str__(self):
         return f"Homepage - {self.event_date}"
+
     class Meta:
         app_label = 'core'
         verbose_name_plural = 'Home Pages'
@@ -75,8 +75,8 @@ class Event(QRCodeMixin, models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to='events/', blank=True)
     event_date = models.DateTimeField(help_text='Date of the event', null=True, blank=True, default=None)
-    sponsor = models.CharField(max_length=255, blank=True, null=True)
-    collaborator = models.CharField(max_length=255, blank=True, null=True)
+    sponsor = models.ManyToManyField('Sponsor', related_name='event_sponsors', blank=True)
+    collaborator = models.ManyToManyField('Collaborator', related_name='events', blank=True)
     organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE, default=1)
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE, default=1)  # Set default to a valid Venue instance
     tickets_available = models.PositiveIntegerField(default=0)
@@ -115,7 +115,7 @@ class Collaborator(QRCodeMixin, models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.organizer.name} - {self.event.title}"
 
-    
+
 class Session(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
@@ -137,6 +137,7 @@ class Sponsor(models.Model):
 
 class BlogPost(models.Model):
     title = models.CharField(max_length=100)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, blank=True, null=True, related_name='blog_posts')
     image = models.ImageField(upload_to='blog_posts/')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -172,21 +173,4 @@ SHAPE_CHOICES = (
     ('3', 'Torus'),
     ('4', 'Cylinder'),
     ('5', 'Plane'),
-    ('6', 'Heart'),
-    ('7', 'Dodecahedron'),
-    ('8', 'Octahedron'),
-    ('9', 'Icosahedron'),
-    ('10', 'Tetrahedron'),
-    ('11', 'Ring'),
-    ('12', 'Knot'),
-    ('13', 'Polyhedron'),
-    ('14', 'TorusKnot'),
-    ('15', 'Stars')
-)
-
-class Webgel(models.Model):
-    type = models.CharField(max_length=3, choices=SHAPE_CHOICES)
-    color = models.CharField(max_length=7, help_text='Hex color code')
-
-    def __str__(self):
-        return str(self.id)
+    ('6', 

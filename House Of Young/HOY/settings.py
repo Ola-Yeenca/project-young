@@ -41,6 +41,8 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
+FATAL_NOT_FOUND_EXCEPTION = True
+
 def show_toolbar(request):
     return DEBUG
 
