@@ -37,45 +37,4 @@
   <div class="section__container explore__container">
     <h3 class="section__header">Related Events</h3>
     <div class="explore__grid">
-      {% for related_event in related_events %}
-        <div class="related-event">
-          <img src="{{ related_event.image.url }}" alt="{{ related_event.title }}">
-          <h4 class="text-xl font-semibold mb-2">{{ related_event.title }}</h4>
-          <p class="text-gray-500">{{ related_event.description }}</p>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="section__container explore__container">
-    <h3 class="section__header">Related Blogs</h3>
-    <div class="explore__grid">
-      {% for blog in blogs %}
-        <div class="related-blog">
-          <img src="{{ blog.image.url }}" alt="{{ blog.title }}">
-          <h4 class="text-xl font-semibold mb-2">{{ blog.title }}</h4>
-          <p class="text-gray-500">{{ blog.content }}</p>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="section__container explore__container">
-    <h3 class="section__header">Collaborators</h3>
-    <div class="explore__grid">
-      {% for collaborator in collaborators %}
-        <p class="text-gray-500">{{ collaborator.user.username }} - {{ collaborator.organizer.name }}</p>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="section__container explore__container">
-    <h3 class="section__header">Sponsors</h3>
-    <div class="explore__grid">
-      {% for sponsor in sponsors %}
-        <p>{{ sponsor.name }} - {{ sponsor.description }}</p>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-{% endblock %}
+      {% for related_event in

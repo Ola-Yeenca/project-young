@@ -9,6 +9,7 @@
   <title>{% block title %}{% endblock %} | House Of Young</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <linkhref="https://cdn.jsdelivr.net/npm/remixicon@3.4.0/fonts/remixicon.css"rel="stylesheet"/>
   <link rel="stylesheet" href="{% static 'stylesheet/applications.css' %}">
   <link rel="stylesheet" href="{% static 'stylesheet/accounts.css' %}">
   {% block scripts %}{% endblock %}
@@ -36,16 +37,21 @@
     </button>
   </nav>
 
+
+
   {% block content %}
+
+
+
 
 
   <section id="webgel" class="webgel">
     <canvas></canvas>
   </section>
 
-  <footer>
-    <p>&copy; 2023 | House of Young</p>
-  </footer>
+
+  
+
 
 
   <script defer type='module' src="{% static 'javascript/app.js' %}"></script>

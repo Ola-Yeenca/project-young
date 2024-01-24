@@ -36,7 +36,7 @@
       <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
 
       {% if event.image %}
-        <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+        <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
       {% endif %}
       {% if event.blog_post.slug %}
         <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}" class="btn">Read More</a>
@@ -66,7 +66,7 @@
           <p class="text-grey-500">Event Collaborators: {{ event.collaborator }}</p>
           <a href="/events/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
           {% if event.image %}
-            <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+            <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
           {% endif %}
           {% if event.blog_post.slug %}
             <a href="{% url 'blog_post_detail' slug=event.blog_post.slug %}" class="btn">Read More</a>
