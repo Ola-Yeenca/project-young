@@ -63,7 +63,7 @@
             <p class="text-gray-500">Date : {{ event.event_date }}</p>
             <p class="text-gray-500">Time: {{ event.event_time }}</p>
             <p class="text-gray-500">Venue: {{ event.venue }}</p>
-            <a href="/events/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
+            <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
             {% if event.image %}
               <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
             {% endif %}
