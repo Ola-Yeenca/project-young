@@ -173,4 +173,21 @@ SHAPE_CHOICES = (
     ('3', 'Torus'),
     ('4', 'Cylinder'),
     ('5', 'Plane'),
-    ('6', 
+    ('6', 'Heart'),
+    ('7', 'Dodecahedron'),
+    ('8', 'Octahedron'),
+    ('9', 'Icosahedron'),
+    ('10', 'Tetrahedron'),
+    ('11', 'Ring'),
+    ('12', 'Knot'),
+    ('13', 'Polyhedron'),
+    ('14', 'TorusKnot'),
+    ('15', 'Stars')
+)
+
+class Webgel(models.Model):
+    type = models.CharField(max_length=3, choices=SHAPE_CHOICES)
+    color = models.CharField(max_length=7, help_text='Hex color code')
+
+    def __str__(self):
+        return str(self.id)
