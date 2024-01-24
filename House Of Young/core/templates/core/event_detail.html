@@ -14,38 +14,71 @@
   } else {
     console.error('The webgel variable is empty.');
   }
-
 </script>
-
-
 {% endblock %}
 
 {% block content %}
+<div id="webgel">
+  <div class="section__container explore__container">
+    <div class="explore__header">
+      <h2 class="section__header">{{ event.title }}</h2>
+      {% if event.image %}
+        <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+      {% endif %}
+    </div>
 
-<div id="webgel" class="webgel" style="position: fixed; top: 0; left: 0;">
-  <div class="row" style="position: absolute; color: gold;">
-    <article>
-        <h2>{{ event.title }}</h2>
-        <img src="{{ event.image.url }}" alt="{{ event.title }}">
-        <p>{{ event.content }}</p>
-        <p>Date and Time: {{ event.event_date }}</p>
-        {% if event.qr_code %}
-            <img src="{{ event.qr_code.url }}" alt="QR Code">
-        {% endif %}
-        <!-- Add other details as needed -->
-    </article>
-
-    <section>
-        <h3>Related Events</h3>
-        {% for related_event in related_events %}
-            <!-- Display related events -->
-            <article>
-                <h4>{{ related_event.title }}</h4>
-                <!-- Display other details -->
-            </article>
-        {% endfor %}
-    </section>
+    <div class="explore__grid">
+      <p>{{ event.description }}</p>
+      <p>Date: {{ event.event_date }}</p>
+      <p>Organizer: {{ event.organizer.name }}</p>
+      <p>Venue: {{ event.venue.address }}, {{ event.venue.city }}, {{ event.venue.country }}</p>
+      <p>Tickets available: {{ event.tickets_available }}</p>
+      <p>Ticket price: €{{ event.ticket_price }}</p>
+    </div>
   </div>
 
+  <div class="section__container explore__container">
+    <h3 class="section__header">Related Events</h3>
+    <div class="explore__grid">
+      {% for related_event in related_events %}
+        <div class="related-event">
+          <img src="{{ related_event.image.url }}" alt="{{ related_event.title }}">
+          <h4 class="text-xl font-semibold mb-2">{{ related_event.title }}</h4>
+          <p class="text-gray-500">{{ related_event.description }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section__container explore__container">
+    <h3 class="section__header">Related Blogs</h3>
+    <div class="explore__grid">
+      {% for blog in blogs %}
+        <div class="related-blog">
+          <img src="{{ blog.image.url }}" alt="{{ blog.title }}">
+          <h4 class="text-xl font-semibold mb-2">{{ blog.title }}</h4>
+          <p class="text-gray-500">{{ blog.content }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section__container explore__container">
+    <h3 class="section__header">Collaborators</h3>
+    <div class="explore__grid">
+      {% for collaborator in collaborators %}
+        <p class="text-gray-500">{{ collaborator.user.username }} - {{ collaborator.organizer.name }}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section__container explore__container">
+    <h3 class="section__header">Sponsors</h3>
+    <div class="explore__grid">
+      {% for sponsor in sponsors %}
+        <p>{{ sponsor.name }} - {{ sponsor.description }}</p>
+      {% endfor %}
+    </div>
+  </div>
 </div>
 {% endblock %}
