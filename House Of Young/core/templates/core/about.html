@@ -6,19 +6,8 @@
 {% block title %}About{% endblock %}
 
 {% block scripts %}
-{% comment %} threejs link {% endcomment %}
 <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
 
-<script>
-  const webgel = '{{ webgel | safe }}';
-  if (webgel.trim() !== '') {
-    const parsedData = JSON.parse(webgel);
-    console.log(parsedData);
-  } else {
-    console.error('The webgel variable is empty.');
-  }
-
-</script>
 
 
 {% endblock %}

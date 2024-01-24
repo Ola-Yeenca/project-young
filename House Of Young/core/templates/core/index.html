@@ -5,7 +5,6 @@
 {% block title %}Home{% endblock %}
 
 {% block scripts %}
-{% comment %} threejs link {% endcomment %}
 <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
 {% endblock %}
 
@@ -82,7 +81,7 @@
     <span class="bg__blur"></span>
     <span class="bg__blur footer__blur"></span>
     <div class="footer__col">
-      <div class="footer__logo"><img src="assets/logo.png" alt="logo" /></div>
+      <div class="footer__logo"><a href="{% url 'core:index' %}" class="logo"><img src="{% static 'images/HOY-removebg-preview.png' %}" alt="logo"></a></div>
       <p>
         House of Young is more than just an event organizing platform;
         it's an organization dedicated to nurturing, building, and
@@ -116,7 +115,7 @@
     </div>
   </footer>
   <div class="footer__bar">
-    Copyright © 2023 Web Design Mastery. All rights reserved.
+    Copyright © 2024 House Of Young. All rights reserved.
   </div>
 
 </div>
