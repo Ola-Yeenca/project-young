@@ -61,16 +61,24 @@ class Homepage(models.Model):
         verbose_name_plural = 'Home Pages'
         ordering = ('-event_date',)
 
+class Venue(models.Model):
+    address = models.CharField(max_length=225)
+    city = models.CharField(max_length=225)
+    country = models.CharField(max_length=225)
+
+    def __str__(self):
+        return self.address
 
 class Event(QRCodeMixin, models.Model):
     home_page = models.ForeignKey('core.HomePage', on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     description = models.TextField()
     image = models.ImageField(upload_to='events/', blank=True)
-    event_date = models.DateTimeField(help_text='Date  of the event', null=True, blank=True, default=None)
-    event_time = models.TimeField(help_text='Time of the event', null=True, blank=True, default=None)
-    organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE, default=1)  # Replace '1' with the actual ID of the default organizer
-    venue = models.CharField(max_length=255, default='Valencia, Spain')
+    event_date = models.DateTimeField(help_text='Date of the event', null=True, blank=True, default=None)
+    sponsor = models.CharField(max_length=255, blank=True, null=True)
+    collaborator = models.CharField(max_length=255, blank=True, null=True)
+    organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE, default=1)
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, default=1)  # Set default to a valid Venue instance
     tickets_available = models.PositiveIntegerField(default=0)
     qr_code = models.ImageField(upload_to='qr_codes', blank=True)
     ticket_price = models.DecimalField(max_digits=1000, decimal_places=2, default=0, help_text='€')
@@ -92,10 +100,11 @@ class Event(QRCodeMixin, models.Model):
     def __str__(self):
         return self.title
 
+
 class Collaborator(QRCodeMixin, models.Model):
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
     organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='collaborators')  # Add a unique related_name
     qr_code = models.ImageField(upload_to='qr_codes/collaborators', blank=True)
 
     def save(self, *args, **kwargs):
@@ -106,6 +115,7 @@ class Collaborator(QRCodeMixin, models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.organizer.name} - {self.event.title}"
 
+    
 class Session(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)

@@ -12,7 +12,7 @@
 {% block content %}
 
 <div id="webgel" class="webgel">
-  <header class="section__container header__container">
+  <header class="section__container header__container row">
       <div class="header__content">
         <span class="bg__blur"></span>
         <span class="bg__blur header__blur"></span>
@@ -34,7 +34,7 @@
     <div class="header__image">
       <img src="{% static 'images/HOY-removebg-preview.png' %}" alt="image"></a>
     </div>
-    
+
     <section class="section__container events__container">
       <h2>Upcoming Events</h2>
       {% for event in upcoming_events %}

@@ -70,12 +70,14 @@ def event(request):
     home_page = get_active_home_page()
 
     if home_page:
+
         events = Event.objects.filter(Q(home_page=True) | Q(sponsors=True)).order_by('event_date')
         upcoming_events = events.filter(event_date__gte=timezone.now())[:3]
         past_events = events.filter(event_date__lt=timezone.now()).order_by('-event_date')[:5]
-        print('Events count', events.count())
-        print('Upcoming Events Count', upcoming_events.count(), 'Past EventsCount', past_events.count())
-        return render(request, 'core/event.html', {'upcoming_events': upcoming_events, 'past_events': past_events})
+        unique_venue = Event.objects.values_list('venue', flat=True).distinct()
+        unique_sponsor = Event.objects.exclude(sponsor__isnull=True).values_list('sponsor', flat=True).distinct()
+        unique_collaborator = Event.objects.exclude(collaborator__isnull=True).values_list('collaborator', flat=True).distinct()
+        return render(request, 'core/event.html', {'upcoming_events': upcoming_events, 'past_events': past_events, 'unique_collaborator': unique_collaborator})
     else:
         logger.error("No active home page found.")
         return HttpResponse("No active home page found.")
