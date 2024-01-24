@@ -3,32 +3,29 @@
 {% block title %}{{ event.title }}{% endblock %}
 
 {% block scripts %}
-{% comment %} threejs link {% endcomment %}
 <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
-
-<script>
-  const webgel = '{{ webgel | safe }}';
-  if (webgel.trim() !== '') {
-    const parsedData = JSON.parse(webgel);
-    console.log(parsedData);
-  } else {
-    console.error('The webgel variable is empty.');
-  }
-</script>
 {% endblock %}
 
 {% block content %}
 <div id="webgel">
-  <div class="section__container explore__container">
-    <div class="explore__header">
-      <h2 class="section__header">{{ event.title }}</h2>
+  <section class="section__container class__container">
+    <div class="class__image">
+      <span class="bg__blur"></span>
       {% if event.image %}
-        <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="w-full h-32 object-cover mb-4">
+        <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="class__img-1">
+        <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="class__img-2">
       {% endif %}
     </div>
+    <div class="class__content">
+      <h2 class="section__header">{{ event.title }}</h2>
+      <p>
+        {{ event.description }}
+      </p>
+      <button id="btn-ticket" class="btn">Buy Ticket</button>
+    </div>
+  </section>
 
     <div class="explore__grid">
-      <p>{{ event.description }}</p>
       <p>Date: {{ event.event_date }}</p>
       <p>Organizer: {{ event.organizer.name }}</p>
       <p>Venue: {{ event.venue.address }}, {{ event.venue.city }}, {{ event.venue.country }}</p>
