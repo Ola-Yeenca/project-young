@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BlogPost, Event, Webgel, Organizer, Collaborator, Sponsor, Homepage
+from .models import BlogPost, Event, Webgel, Organizer, Collaborator, Sponsor, Homepage, Venue
 
 
 
@@ -10,10 +10,14 @@ class HomepageAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('title', 'event_date', 'is_published')
-    search_fields = ('title', 'content', 'home_page__title')
+    list_display = ('title', 'venue', 'event_date', 'is_published')
+    search_fields = ('title', 'content', 'home_page__title', 'venue__name')
     prepopulated_fields = {'slug': ('title',)}
 
+@admin.register(Venue)
+class VenueAdmin(admin.ModelAdmin):
+    list_display = ('address', 'city', 'country')
+    search_fields = ('address', 'city', 'country')
 
 @admin.register(Organizer)
 class OrganizerAdmin(admin.ModelAdmin):
