@@ -30,7 +30,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='custom_user_groups',  # Change 'custom_user_groups' to your preference
+        related_name='custom_user_groups',  
         related_query_name='custom_user_group',
         blank=True,
         verbose_name='Groups',
@@ -39,7 +39,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     user_permissions = models.ManyToManyField(
         'auth.Permission',
-        related_name='custom_user_permissions',  # Change 'custom_user_permissions' to your preference
+        related_name='custom_user_permissions',
         related_query_name='custom_user_permission',
         blank=True,
         verbose_name='User permissions',
