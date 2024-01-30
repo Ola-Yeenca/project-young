@@ -22,13 +22,13 @@
       <a href="{% url 'core:index' %}" class="logo"><img src="{% static 'images/HOY-removebg-preview.png' %}" alt="logo"></a>
     </div>
     <ul class="nav__links">
-      <li class="link"><a href="{% url 'core:event' %}">Events</li>
-      <li class="link"><a href="{% url 'core:blog_list' %}">Blogs</li>
-      <li class="link"><a href="{% url 'core:about' %}">About</li>
+      <li class="link"><a href="{% url 'core:event' %}">Events</a></li>
+      <li class="link"><a href="{% url 'core:blog_list' %}">Blogs</a></li>
+      <li class="link"><a href="{% url 'core:about' %}">About</a></li>
       <li class="link"><a href="{% url 'core:contact' %}">Work with Us</a></li>
     </ul>
     <button id="btn" class="btn">
-      {% if user.is_authenticated %}
+      {% if request.user.is_authenticated %}
         <a href="{% url 'accounts:logout' %}" class="account">Logout</a>
       {% else %}
         <a href="{% url 'accounts:register' %}" class="account">Sign Up</a>
@@ -36,6 +36,8 @@
       {% endif %}
     </button>
   </nav>
+
+
 
 
 
@@ -50,7 +52,7 @@
   </section>
 
 
-  
+
 
 
 

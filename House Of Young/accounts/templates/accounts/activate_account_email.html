@@ -1,20 +1,22 @@
-{% extends "core/base.html" %}
-
 
 {% load static %}
 
-{% block title %}Activate Your HOY Account{% endblock %}
+{% block title %}Activate Your House Of Young Account{% endblock %}
 
 {% block content %}
+  <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #3498db;">Activate Your HOY Account</h2>
+    <p>Hello {{ user.username }},</p>
+    <p>Please click on the link below to confirm your registration:</p>
 
-<div class="webgel" id="webgel">
-  <div class="row">
-    {% autoescape off %}
-      Hi {{ user.username }},
-      Please click on the link to confirm your registration,
-      <a href="{{ protocol }}://{{ domain }}/accounts/activate/{{ uidb64 }}/{{ token }}">Activate your account</a>
-    {% endautoescape %}
+    <div style="margin-top: 20px;">
+      <a href="{{ protocol }}://{{ domain }}/accounts/activate/{{ uidb64 }}/{{ token }}"
+      style="background-color: #d79447; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+        Activate your account
+      </a>
+    </div>
+
+    <p>If the link doesn't work, you can copy and paste the following URL into your browser:</p>
+    <p>{{ protocol }}://{{ domain }}/accounts/activate/{{ uidb64 }}/{{ token }}</p>
   </div>
-</div>
-
 {% endblock content %}

@@ -64,7 +64,7 @@
           <p class="text-gray-500">Venue: {{ event.venue }}</p>
           <p class="text-grey-500">Sponors: {{ event.sponsor }}</p>
           <p class="text-grey-500">Event Collaborators: {{ event.collaborator }}</p>
-          <a href="/events/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
+          <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
           {% if event.image %}
             <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
           {% endif %}

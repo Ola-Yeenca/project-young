@@ -5,11 +5,13 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.http import urlsafe_base64_decode
 from django.http import HttpResponse
 from django.contrib.auth import login
+from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.contrib.auth import logout, login, authenticate
 
-from .forms import SignUpForm
+from .forms import SignUpForm, LoginForm
 from .tokens import AccountActivationTokenGenerator
 from .models import CustomUser
 
@@ -61,7 +63,7 @@ def register(request):
 
 def activate(request, uidb64, token):
     try:
-        uid = force_bytes(urlsafe_base64_decode(uidb64))  # Change encode to decode
+        uid = force_bytes(urlsafe_base64_decode(uidb64))
         print(f"Received uid: {uid}")
         user = CustomUser.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
@@ -73,7 +75,8 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.save()
         login(request, user)
-        return HttpResponse('Thank you for your email confirmation. Now you can log in to your account.')
+        messages.success(request, "Thank you for verifying your email... Your account has been successfully activated.")
+        return redirect('core:index')
     else:
         return HttpResponse('Activation link invalid!')
 
@@ -85,10 +88,34 @@ def profile(request):
     pass
 
 def user_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        print(f"Username: {username}")
+        print(f"Password: {password}")
+
+        user = authenticate(username=username, password=password)
+
+        if user:
+            if user.is_active:
+                login(request, user)
+                return redirect('accounts:profile')
+            else:
+                return HttpResponse('Account not active!')
+        else:
+            print('Someone tried to login and failed!')
+            print(f"Username: {username}")
+            print(f"Password: {password}")
+            return HttpResponse('Invalid login details supplied!')
+    else:
+        form = LoginForm()
+
     return render(request, 'accounts/login.html')
 
 
 def user_logout(request):
+    logout(request)
     return render(request, 'accounts/logout.html')
 
 
