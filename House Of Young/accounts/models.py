@@ -16,21 +16,20 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=254, unique=True, validators=[EmailValidator()])
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
+    full_name = models.CharField(max_length=30)
     username = models.CharField(max_length=150, unique=True)
     email_is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)  # Active by default
     date_joined = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ['email', 'full_name']
 
     objects = CustomUserManager()
 
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='custom_user_groups',  
+        related_name='custom_user_groups',
         related_query_name='custom_user_group',
         blank=True,
         verbose_name='Groups',

@@ -2,10 +2,11 @@
 
 {% load static %}
 
+
 {% block css %}
-<link rel="stylesheet" href="{% static 'core/static/stylesheet/accounts.css' %}">
-<link rel="stylesheet" href="{% static 'core/static/stylesheet/signup.css' %}">
+  <link rel="stylesheet" href="{% static 'core/static/stylesheet/accounts.css' %}">
 {% endblock %}
+
 
 {% block title %}Sign Up{% endblock %}
 
@@ -15,26 +16,33 @@
 
 {% block content %}
 
-<div class = "container" style="display: flex; align-items: center; flex-direction: column;
-position: relative;
-padding-top: 18rem;">
-  <h2>Sign up</h2>
-  <form method="post">
-    {% csrf_token %}
-      {% for field in form %}
-      <p>
-        {{ field.label_tag }}<br>
-        {{ field }}
-        {% if field.help_text %}
-          <small style="display: none ">{{ field.help_text }}</small>
-        {% endif %}
-        {% for error in field.errors %}
-          <p style="color: red">{{ error }}</p>
+<div id="webgel" class="webgel">
+  <div class = "accounts-container">
+    <h2 class="signup-text">Sign up</h2>
+    <p class="login-text">Already have an account? <button><a href="{% url 'accounts:login' %}">Log in</a></p>
+    </button>
+    <div class="social-container">
+      <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+      <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+        {% for field in form %}
+        <p>
+          {{ field.label_tag }}<br>
+          {{ field }}
+          {% if field.help_text %}
+            <small class="help-text">{{ field.help_text }}</small>
+          {% endif %}
+          {% for error in field.errors %}
+            <p class="error-message"> {{ error }} </p>
+          {% endfor %}
+        </p>
         {% endfor %}
-      </p>
-      {% endfor %}
-    <button type="submit">Sign up</button>
-  </form>
+      <button type="submit">Sign up</button>
+    </form>
+  </div>
 </div>
 
 {% endblock %}
