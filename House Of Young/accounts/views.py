@@ -21,10 +21,9 @@ from .models import CustomUser
 
 def register(request):
     if request.method == 'POST':
-        print('checking form')
+
         form = SignUpForm(request.POST)
         if form.is_valid():
-            print('is form valid')
             username = form.cleaned_data['username']
             if CustomUser.objects.filter(username=username).exists():
                 form.add_error('username', 'This username is already in use.')
@@ -32,7 +31,6 @@ def register(request):
                 user = form.save(commit=False)
                 user.is_active = False
                 user.save()
-                print(f"User: {user}")
                 protocol = request.scheme
                 domain = request.get_host()
                 uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
@@ -68,12 +66,10 @@ def register(request):
 def activate(request, uidb64, token):
     try:
         uid = force_bytes(urlsafe_base64_decode(uidb64))
-        print(f"Received uid: {uid}")
         user = CustomUser.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
         user = None
 
-    print(f"Received token: {token}")
 
     if user is not None and AccountActivationTokenGenerator().check_token(user, token):
         user.is_active = True
@@ -95,12 +91,7 @@ def user_login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-
-        print(f"email: {email}")
-        print(f"Password: {password}")
-
         user = authenticate(email=email, password=password)
-
         if user:
             if user.is_active:
                 login(request, user)
@@ -108,9 +99,6 @@ def user_login(request):
             else:
                 return HttpResponse('Account not active!')
         else:
-            print('Someone tried to login and failed!')
-            print(f"email: {email}")
-            print(f"Password: {password}")
             return HttpResponse('Invalid login details supplied!')
     else:
         form = LoginForm()
