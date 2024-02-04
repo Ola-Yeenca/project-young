@@ -21,16 +21,19 @@ from .models import CustomUser
 
 def register(request):
     if request.method == 'POST':
+        print('checking form')
         form = SignUpForm(request.POST)
         if form.is_valid():
+            print('is form valid')
             username = form.cleaned_data['username']
             if CustomUser.objects.filter(username=username).exists():
-                form.add_error(username, 'This username is already in use.')
+                form.add_error(f'username', 'This username is already in use.')
             else:
+                print(form.errors)
                 user = form.save(commit=False)
                 user.is_active = False
                 user.save()
-
+                print(f"User: {user}")
                 protocol = request.scheme
                 domain = request.get_host()
                 uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
@@ -89,13 +92,13 @@ def profile(request):
 
 def user_login(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
+        email = request.POST.get('email')
         password = request.POST.get('password')
 
-        print(f"Username: {username}")
+        print(f"email: {email}")
         print(f"Password: {password}")
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(email=email, password=password)
 
         if user:
             if user.is_active:
@@ -105,7 +108,7 @@ def user_login(request):
                 return HttpResponse('Account not active!')
         else:
             print('Someone tried to login and failed!')
-            print(f"Username: {username}")
+            print(f"email: {email}")
             print(f"Password: {password}")
             return HttpResponse('Invalid login details supplied!')
     else:
