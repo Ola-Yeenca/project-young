@@ -28,7 +28,7 @@ class SignUpForm(UserCreationForm):
 class LoginForm(AuthenticationForm):
     class Meta:
         model = CustomUser
-        fields = ['username', 'password']
+        fields = ['email', 'password']
 
     error_messages = {
         'invalid_login': (

@@ -40,11 +40,10 @@
         {% for event in upcoming_events %}
         <div class="explore__card">
           <span><i class="ri-boxing-fill"></i></span>
-          <h4 class="text-xl font-semibold mb-2">{{ event.title }}</h4>
-          <p class="text-gray-600 mb-4">{{ event.content }}</p>
-          <p class="text-gray-500">Date and Time: {{ event.event_date }} {{ event.event_time }}</p>
-          <p class="text-gray-500">Venue: {{ event.venue }}</p>
-          <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
+          <h4 class="text-xl font-semibold mb-2" style="text-align: center;">{{ event.title }}</h4>
+          <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Date and Time: {{ event.event_date }} {{ event.event_time }}</p>
+          <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Venue: {{ event.venue }}</p>
+          <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary" style="margin: 0 2em;">View Event</a>
           {% if event.image %}
             <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
           {% endif %}
@@ -59,12 +58,11 @@
       {% for event in past_events %}
           <div class="explore__card">
             <span><i class="ri-boxing-fill"></i></span>
-            <h4 class="text-xl font-semibold mb-2">{{ event.title }}</h4>
-            <p class="text-gray-600 mb-4">{{ event.content }}</p>
-            <p class="text-gray-500">Date : {{ event.event_date }}</p>
-            <p class="text-gray-500">Time: {{ event.event_time }}</p>
-            <p class="text-gray-500">Venue: {{ event.venue }}</p>
-            <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary">View Event</a>
+            <h4 class="text-xl font-semibold mb-2" style="text-align: center;">{{ event.title }}</h4>
+            <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Date : {{ event.event_date }}</p>
+            <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Time: {{ event.event_time }}</p>
+            <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Venue: {{ event.venue }}</p>
+            <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary" style="margin: 0 12em;">View Event</a>
             {% if event.image %}
               <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
             {% endif %}

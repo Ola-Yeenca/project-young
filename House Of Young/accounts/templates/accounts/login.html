@@ -1,15 +1,40 @@
-{% extends "core/base.html" %}
+{% extends 'core/base.html' %}
 
 {% load static %}
 
+{% block css %}
+  <link rel="stylesheet" href="{% static 'core/static/stylesheet/accounts.css' %}">
+{% endblock %}
 
-{% block title %}Log Out{% endblock %}
+{% block title %}Log In{% endblock %}
+
+{% block scripts %}
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
+{% endblock %}
 
 {% block content %}
 
 <div id="webgel" class="webgel">
-  <div class="row">
-    <h1>{{ title }}</h1>
+  <div class="accounts-container">
+    <h2 class="accounts-text">Log In</h2>
+    <p class="link-text">Don't have an account? <button><a href="{% url 'accounts:register' %}">Sign Up</a></button></p>
+    <div class="social-container">
+      <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+      <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+    </div>
+    <form method="post" action="{% url 'accounts:login' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="id_email" class="label-text">Email</label>
+        <input type="email" name="email" id="id_email" placeholder="Your email" required>
+      </div>
+      <div class="form-group">
+        <label for="id_password" class="label-text">Password</label>
+        <input type="password" name="password" id="id_password" placeholder="Your password" required>
+      </div>
+      <button type="submit" class="submit-button">Log In</button>
+    </form>
   </div>
 </div>
 
