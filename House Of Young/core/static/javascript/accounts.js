@@ -1,26 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log("Accounts js loaded")
-  document.querySelector('#login-form').onsubmit = () => {
-    const username = document.querySelector('#username').value;
-    const password = document.querySelector('#password').value;
+  console.log("Accounts js loaded");
 
-    fetch('/login', {
-      method: 'POST',
-      body: JSON.stringify({
-        username: username,
-        password: password
-      })
-    })
-    .then(response => response.json())
-    .then(result => {
+  document.querySelector('.accounts-container').onsubmit = async (event) => {
+    event.preventDefault();
+
+    const email = document.querySelector('#id_email').value;
+    const password = document.querySelector('#id_password').value;
+
+    try {
+      const response = await fetch('/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value,
+        },
+        body: new URLSearchParams({
+          email: email,
+          password: password
+        }),
+      });
+
+      const result = await response.json();
+
       console.log(result);
+
       if (result.error) {
         document.querySelector('#message').innerHTML = result.error;
       } else {
         document.querySelector('#message').innerHTML = 'Logged in successfully';
       }
-    });
 
-    return false;
+    } catch (error) {
+      console.error('Error during login:', error);
+      document.querySelector('#message').innerHTML = "An unexpected error occurred while trying to log you in. Please try again later.";
+    }
   };
 });

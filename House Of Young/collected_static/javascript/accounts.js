@@ -1,35 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // password_strength_meter.js
-$(document).ready(function () {
-  var passwordInput = $('#password');
-  var meter = $('#password-strength-meter');
+  console.log("Accounts js loaded");
 
-  passwordInput.on('input', function () {
-    var password = passwordInput.val();
-    var result = zxcvbn(password);
+  document.querySelector('#login-form').onsubmit = async (event) => {
+    event.preventDefault(); 
 
-    // Update the meter with the password strength
-    meter.html('Password strength: ' + result.score + '/4');
+    const email = document.querySelector('#id_email').value;
+    const password = document.querySelector('#id_password').value;
 
-    // You can customize the styling based on the password strength if needed
-    switch (result.score) {
-      case 0:
-      case 1:
-        meter.css('color', 'red');
-        break;
-      case 2:
-        meter.css('color', 'orange');
-        break;
-      case 3:
-        meter.css('color', 'yellow');
-        break;
-      case 4:
-        meter.css('color', 'green');
-        break;
-      default:
-        meter.css('color', 'black');
+    try {
+      const response = await fetch('/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value,
+        },
+        body: new URLSearchParams({
+          email: email,
+          password: password
+        }),
+      });
+
+      const result = await response.json();
+
+      console.log(result);
+
+      if (result.error) {
+        document.querySelector('#message').innerHTML = result.error;
+      } else {
+        document.querySelector('#message').innerHTML = 'Logged in successfully';
+      }
+
+    } catch (error) {
+      console.error('Error during login:', error);
+      document.querySelector('#message').innerHTML = "An unexpected error occurred while trying to log you in. Please try again later.";
     }
-  });
+  };
 });
-
-})
