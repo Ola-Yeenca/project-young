@@ -17,7 +17,7 @@
         <span class="bg__blur header__blur"></span>
         <h4>HOUSE OF YOUNG</h4>
         <h1><span>WE CURATE & HOST</span> UNFORGETTABLE EVENTS</h1>
-        <p>
+        <p style="margin: 2rem 0;">
           House of Young is more than just an event organizing platform;
           it's an organization dedicated to nurturing, building, and
           fostering the growth of entrepreneurs and small businesses.
@@ -52,6 +52,9 @@
           {% endif %}
         </div>
         {% endfor %}
+        {% if upcoming_events|length == 0 %}
+          <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">No upcoming events</p>
+        {% endif %}
       </div>
 
       <h2>Past Events</h2>
