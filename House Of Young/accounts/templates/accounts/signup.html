@@ -11,15 +11,15 @@
 {% block title %}Sign Up{% endblock %}
 
 {% block scripts %}
-<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js'></script>
 {% endblock %}
 
 {% block content %}
 
 <div id="webgel" class="webgel">
   <div class = "accounts-container">
-    <h2 class="signup-text">Sign up</h2>
-    <p class="login-text">Already have an account? <button><a href="{% url 'accounts:login' %}">Log in</a></p>
+    <h2 class="accounts-text">Sign up</h2>
+    <p class="link-text">Already have an account? <button><a href="{% url 'accounts:login' %}">Log in</a></p>
     </button>
     <div class="social-container">
       <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
