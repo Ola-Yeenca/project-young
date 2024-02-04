@@ -25,7 +25,7 @@
       <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
       <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
     </div>
-    <form method="post" action="accounts:account_activation_sent.html">
+    <form method="post" action="{% url 'accounts:register' %}">
       {% csrf_token %}
       {% for field in form %}
         <p style="text-transform: uppercase;">
@@ -39,6 +39,13 @@
           {% endfor %}
         </p>
       {% endfor %}
+      {% if messages %}
+        <ul class="messages">
+          {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
       <button type="submit">Sign up</button>
     </form>
   </div>

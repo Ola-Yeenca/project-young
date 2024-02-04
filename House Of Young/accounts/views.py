@@ -27,9 +27,8 @@ def register(request):
             print('is form valid')
             username = form.cleaned_data['username']
             if CustomUser.objects.filter(username=username).exists():
-                form.add_error(f'username', 'This username is already in use.')
+                form.add_error('username', 'This username is already in use.')
             else:
-                print(form.errors)
                 user = form.save(commit=False)
                 user.is_active = False
                 user.save()
@@ -55,6 +54,8 @@ def register(request):
                     html_message=message
                 )
                 return redirect('accounts:account_activation_sent')
+        else:
+            messages.error(request, 'There was an error in your registration. Please correct the highlighted fields.')
 
     else:
         form = SignUpForm()
