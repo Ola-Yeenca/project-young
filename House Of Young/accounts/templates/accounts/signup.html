@@ -29,7 +29,7 @@
     <form method="post">
       {% csrf_token %}
         {% for field in form %}
-        <p>
+        <p style="text-transform: uppercase;">
           {{ field.label_tag }}<br>
           {{ field }}
           {% if field.help_text %}
