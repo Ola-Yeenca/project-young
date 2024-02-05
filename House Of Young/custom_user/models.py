@@ -4,13 +4,14 @@ from django.db import models
 
 class AdminUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
-        if email is not set:
-            raise ValueError('The Email field must be valid and set')
+        if email is None:
+            raise ValueError('The Email field must be set and valid')
         email = self.normalize_email(email)
-        user = self.model(email=email,**extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
+
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)

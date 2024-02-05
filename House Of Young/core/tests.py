@@ -1,14 +1,22 @@
 from django.test import TestCase
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from core.models import Organizer, Attendee, BlogPost, Collaborator, Event, Homepage, Session, Sponsor, Venue, Webgel, QRCodeMixin
 
 class TestModel(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            email= 'infohouseofyoung@gmail.com',
-            username= 'testuser',
+            email= 'inforhouseofyoung@gmail.com',
             password= 'password'
             )
+        user = get_user_model().objects.create_user(email='inforhouseofyoung@gmail.com', password='password')
+        organizer = Organizer.objects.create(
+            user=user,
+            name='House of Young',
+        )
+        self.event = Event.objects.create(title='Test Event', organizer=self.organizer)
+        self.attendee = Attendee.objects.create(user=self.user)
+        self.collaborator = Collaborator.objects.create(user=self.user, organizer=self.organizer, event=self.event)
 
 
     def test_organizer(self):
@@ -53,6 +61,8 @@ class TestModel(TestCase):
         self.assertEqual(event.get_absolute_url(), '/event/1/test-event/')
 
     def test_collaborator(self):
+        collaborator = Collaborator.objects.create(user=self.user, organizer=self.organizer, event=self.event)
+        self.assertEqual(str(collaborator), 'testuser - Test Organizer - Test Event')
         organizer = Organizer.objects.create(user=self.user, name='Test Organizer')
         event = Event.objects.create(
             home_page=Homepage.objects.create(event_date=timezone.now(), is_active=True),
@@ -75,8 +85,12 @@ class TestModel(TestCase):
 
         self.assertEqual(str(collaborator), 'testuser - Test Organizer - Test Event')
 
+        def __str__(self):
+            return f"{self.user.username} - {self.organizer.name} - {self.event.title}"
+
+
     def test_session(self):
-        organizer = Organizer.objects.create(user=self.user, email='inforhouseofyoung@gmail.com')
+        organizer = Organizer.objects.create(user=self.user)  # Remove the 'email' argument
         event = Event.objects.create(
             home_page=Homepage.objects.create(event_date=timezone.now(), is_active=True),
             title='Test Event',
@@ -99,6 +113,7 @@ class TestModel(TestCase):
         )
 
         self.assertEqual(str(session), 'Test Session')
+
 
     def test_sponsor(self):
         sponsor = Sponsor.objects.create(
@@ -138,6 +153,10 @@ class TestModel(TestCase):
     def test_attendee(self):
         attendee = Attendee.objects.create(user=self.user)
         self.assertEqual(str(attendee), 'testuser')
+
+        def __str__(self):
+            return str(self.user.username)
+
 
     def test_webgel(self):
         webgel = Webgel.objects.create(type='1', color='#FF0000')
