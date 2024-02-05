@@ -4,6 +4,8 @@ from django.db import models
 
 class AdminUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
+        if email is not set:
+            raise ValueError('The Email field must be valid and set')
         email = self.normalize_email(email)
         user = self.model(email=email,**extra_fields)
         user.set_password(password)
@@ -23,8 +25,8 @@ class AdminUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class AdminUser(BaseUser):
+    email = models.EmailField(unique=True)
     objects = AdminUserManager()
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -44,6 +46,9 @@ class AdminUser(BaseUser):
         verbose_name='Groups',
         help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
     )
+
+    def __str__(self):
+        return self.email
 
 
 class OrganizerProfile(models.Model):

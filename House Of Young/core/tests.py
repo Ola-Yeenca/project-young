@@ -1,55 +1,144 @@
 from django.test import TestCase
-from core.models import Event
-
-
-app_name = 'core'
+from django.contrib.auth import get_user_model
+from core.models import Organizer, Attendee, BlogPost, Collaborator, Event, Homepage, Session, Sponsor, Venue, Webgel, QRCodeMixin
 
 class TestModel(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email= 'infohouseofyoung@gmail.com',
+            username= 'testuser',
+            password= 'password'
+            )
+
+
+    def test_organizer(self):
+        organizer = Organizer.objects.create(user=self.user, name='Test Organizer')
+        self.assertEqual(str(organizer), 'Test Organizer')
+
+    def test_qr_code_mixin(self):
+        class TestModelWithQRCodeMixin(QRCodeMixin):
+            pass
+
+        model_instance = TestModelWithQRCodeMixin()
+        qr_code = model_instance.generate_qr_code('test_data')
+        self.assertIsNotNone(qr_code)
+
+    def test_homepage(self):
+        homepage = Homepage.objects.create(event_date=timezone.now(), is_active=True)
+        self.assertEqual(str(homepage), f"Homepage - {homepage.event_date}")
+
+    def test_venue(self):
+        venue = Venue.objects.create(address='123 Main St', city='City', country='Country')
+        self.assertEqual(str(venue), '123 Main St')
+
     def test_event(self):
+        homepage = Homepage.objects.create(event_date=timezone.now(), is_active=True)
+        organizer = Organizer.objects.create(user=self.user, name='Test Organizer')
+        venue = Venue.objects.create(address='123 Main St', city='City', country='Country')
+
         event = Event.objects.create(
-            title='TesT Event',
+            home_page=homepage,
+            title='Test Event',
             description='This is a test event',
-            event_date='2021-12-31 23:59:59',
-            home_page=True,
-            organizer='House of Young',
-            venue='Valencia, Spain',
+            event_date=timezone.now(),
+            organizer=organizer,
+            venue=venue,
+            tickets_available=100,
+            ticket_price=10.0,
+            is_published=True,
+            slug='test-event'
         )
 
-        self.assertEqual(event.title, 'TesT Event')
-        # OR
-        self.assertEqual(event.title.lower(), 'test event')
-
-        self.assertEqual(event.description, 'This is a test event')
-        self.assertEqual(event.event_date, '2021-12-31 23:59:59')
-        self.assertTrue(event.home_page)
-        self.assertEqual(event.image, 'default.jpg')
-        self.assertIsNone(event.sponsor)
-        self.assertIsNone(event.collaborator)
-        self.assertEqual(event.organizer, 'House of Young')
-        self.assertEqual(event.venue, 'Valencia, Spain')
-        self.assertEqual(event.tickets_available, 0)
-        self.assertEqual(event.qr_code, 'default.jpg')
-        self.assertIsNone(event.generate_qr_code('Test Event'))
-        self.assertEqual(event.sanitize_filename('Test Event'), 'test-event')
-        self.assertEqual(event.slug, 'test-event')
-        self.assertTrue(event.is_published)
+        self.assertEqual(str(event), 'Test Event')
         self.assertEqual(event.get_absolute_url(), '/event/1/test-event/')
 
+    def test_collaborator(self):
+        organizer = Organizer.objects.create(user=self.user, name='Test Organizer')
+        event = Event.objects.create(
+            home_page=Homepage.objects.create(event_date=timezone.now(), is_active=True),
+            title='Test Event',
+            description='This is a test event',
+            event_date=timezone.now(),
+            organizer=organizer,
+            venue=Venue.objects.create(address='123 Main St', city='City', country='Country'),
+            tickets_available=100,
+            ticket_price=10.0,
+            is_published=True,
+            slug='test-event'
+        )
 
-        self.assertEqual(Event._meta.app_label, 'core')
-        self.assertEqual(Event._meta.verbose_name_plural, 'Events')
-        self.assertEqual(Event._meta.ordering, ('-event_date',))
-        self.assertEqual(Event._meta.verbose_name, 'Event')
-        self.assertTrue(Event._meta.managed)
-        self.assertIsNone(Event._meta.unique_together)
-        self.assertIsNone(Event._meta.index_together)
-        self.assertEqual(Event._meta.permissions, None)
-        self.assertEqual(Event._meta.default_permissions, ('add', 'change', 'delete', 'view'))
-        self.assertEqual(Event._meta.get_latest_by, 'event_date')
-        self.assertEqual(Event._meta.ordering, ('-event_date',))
-        self.assertEqual(Event._meta.app_label, 'core')
-        self.assertEqual(Event._meta.db_table, 'core_event')
+        collaborator = Collaborator.objects.create(
+            user=self.user,
+            organizer=organizer,
+            event=event
+        )
 
-    if __name__ == '__main__':
-        test_event()
-        print('All tests passed!')
+        self.assertEqual(str(collaborator), 'testuser - Test Organizer - Test Event')
+
+    def test_session(self):
+        organizer = Organizer.objects.create(user=self.user, email='inforhouseofyoung@gmail.com')
+        event = Event.objects.create(
+            home_page=Homepage.objects.create(event_date=timezone.now(), is_active=True),
+            title='Test Event',
+            description='This is a test event',
+            event_date=timezone.now(),
+            organizer=organizer,
+            venue=Venue.objects.create(address='123 Main St', city='City', country='Country'),
+            tickets_available=100,
+            ticket_price=10.0,
+            is_published=True,
+            slug='test-event'
+        )
+
+        session = Session.objects.create(
+            event=event,
+            title='Test Session',
+            description='This is a test session',
+            start_time=timezone.now(),
+            end_time=timezone.now() + timezone.timedelta(hours=1)
+        )
+
+        self.assertEqual(str(session), 'Test Session')
+
+    def test_sponsor(self):
+        sponsor = Sponsor.objects.create(
+            name='Test Sponsor',
+            description='This is a test sponsor',
+            logo='logo.jpg'
+        )
+
+        self.assertEqual(str(sponsor), 'Test Sponsor')
+
+    def test_blog_post(self):
+        organizer = Organizer.objects.create(user=self.user, name='Test Organizer')
+        event = Event.objects.create(
+            home_page=Homepage.objects.create(event_date=timezone.now(), is_active=True),
+            title='Test Event',
+            description='This is a test event',
+            event_date=timezone.now(),
+            organizer=organizer,
+            venue=Venue.objects.create(address='123 Main St', city='City', country='Country'),
+            tickets_available=100,
+            ticket_price=10.0,
+            is_published=True,
+            slug='test-event'
+        )
+
+        blog_post = BlogPost.objects.create(
+            title='Test Blog Post',
+            event=event,
+            image='blog_image.jpg',
+            content='This is a test blog post',
+            is_published=True,
+            slug='test-blog-post'
+        )
+
+        self.assertEqual(str(blog_post), 'Test Blog Post')
+
+    def test_attendee(self):
+        attendee = Attendee.objects.create(user=self.user)
+        self.assertEqual(str(attendee), 'testuser')
+
+    def test_webgel(self):
+        webgel = Webgel.objects.create(type='1', color='#FF0000')
+        self.assertEqual(str(webgel), '1')
