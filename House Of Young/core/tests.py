@@ -1,6 +1,8 @@
 from django.test import TestCase
-from .models import Event
+from core.models import Event
 
+
+app_name = 'core'
 
 class TestModel(TestCase):
     def test_event(self):
@@ -33,7 +35,7 @@ class TestModel(TestCase):
         self.assertTrue(event.is_published)
         self.assertEqual(event.get_absolute_url(), '/event/1/test-event/')
 
-        
+
         self.assertEqual(Event._meta.app_label, 'core')
         self.assertEqual(Event._meta.verbose_name_plural, 'Events')
         self.assertEqual(Event._meta.ordering, ('-event_date',))
@@ -47,3 +49,7 @@ class TestModel(TestCase):
         self.assertEqual(Event._meta.ordering, ('-event_date',))
         self.assertEqual(Event._meta.app_label, 'core')
         self.assertEqual(Event._meta.db_table, 'core_event')
+
+    if __name__ == '__main__':
+        test_event()
+        print('All tests passed!')
