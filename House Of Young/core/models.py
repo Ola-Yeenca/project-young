@@ -113,7 +113,11 @@ class Collaborator(QRCodeMixin, models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.username} - {self.organizer.name} - {self.event.title}"
+        username = self.user.username if self.user else 'Unknown User'
+        organizer_name = self.organizer.name if self.organizer else 'Unknown Organizer'
+        event_title = self.event.title if self.event else 'Unknown Event'
+        return f"{username} - {organizer_name} - {event_title}" if all([username, organizer_name, event_title]) else 'Incomplete Collaborator'
+
 
 
 class Session(models.Model):
