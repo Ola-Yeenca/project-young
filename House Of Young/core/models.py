@@ -85,6 +85,7 @@ class Event(QRCodeMixin, models.Model):
     is_published = models.BooleanField(default=True, help_text='Check if the event is published')
     slug = models.SlugField(max_length=255, unique=True, blank=True)
 
+
     def get_absolute_url(self):
         return reverse('core:event_detail', args=[str(self.id), self.slug])
 

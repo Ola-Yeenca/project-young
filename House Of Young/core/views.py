@@ -12,7 +12,6 @@ from django.contrib.auth.decorators import login_required
 logger = logging.getLogger(__name__)
 
 def get_active_home_page():
-    """Helper function to get the active home page."""
     return HOMEPAGE_CONTENT
 
 def index(request):
