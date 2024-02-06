@@ -104,7 +104,7 @@ class Event(QRCodeMixin, models.Model):
 class Collaborator(QRCodeMixin, models.Model):
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
     organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='collaborators')  # Add a unique related_name
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='collaborators')
     qr_code = models.ImageField(upload_to='qr_codes/collaborators', blank=True)
 
     def save(self, *args, **kwargs):
