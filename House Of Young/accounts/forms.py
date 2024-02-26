@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
+from .models import CustomUser, UserProfile
 from django.contrib.auth import get_user_model
 
 
@@ -37,3 +37,20 @@ class LoginForm(AuthenticationForm):
         ),
         'inactive': ("This account is inactive."),
     }
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'avatar']
+
+class UserProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['avatar', 'bio', 'location', 'phone_number', 'birth_date']
+        widgets = {
+            'avatar': forms.ImageField(),
+            'bio': forms.Textarea(),
+            'location': forms.TextInput(),
+            'phone_number': forms.TextInput(),
+            'birth_date': forms.DateInput(),
+        }

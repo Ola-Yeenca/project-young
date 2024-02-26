@@ -1,8 +1,6 @@
-# accounts/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import EmailValidator
-
 
 
 class CustomUserManager(BaseUserManager):
@@ -13,17 +11,24 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    @classmethod
+    def create_user_profile(cls, email, username, password=None, **extra_fields):
+        user = cls.create_user(email, username, password, **extra_fields)
+        UserProfile.objects.create(user=user)
+        return user
+
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=254, unique=True, validators=[EmailValidator()])
-    full_name = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30, default='')
     username = models.CharField(max_length=150, unique=True)
     email_is_verified = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)  # Active by default
+    is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'full_name']
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
 
     objects = CustomUserManager()
 
@@ -53,3 +58,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=15, blank=True, default='')
+    bio = models.TextField(max_length=500, blank=True, default='')
+    location = models.CharField(max_length=30, blank=True, default='')
+    birth_date = models.DateField(null=True, blank=True)
+    avatar = models.ImageField(default='default.jpg', upload_to='profile_images', blank=True, null=True)
+
+
+    def __str__(self):
+        return self.user.get_username() if self.user else "Deleted User"

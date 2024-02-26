@@ -327,6 +327,7 @@ nav {
 
 .explore__card a:hover {
   color: var(--secondary-color);
+  transition: .2s;
 }
 
 .class__container {

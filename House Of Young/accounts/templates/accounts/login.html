@@ -18,6 +18,11 @@
 <div id="webgel" class="webgel">
   <div class="accounts-container">
     <h2 class="accounts-text">Log In</h2>
+    {% with register_param=request.GET.register %}
+      {% if register_param == 'true' %}
+        <p class="message-text">You don't have an account! Please <a href="{% url 'accounts:register' %}">register</a> first.</p>
+      {% endif %}
+    {% endwith %}
     <p class="link-text">Don't have an account? <button><a href="{% url 'accounts:register' %}">Sign Up</a></button></p>
     <div class="social-container">
       <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
@@ -34,6 +39,7 @@
         <label for="id_password" class="label-text">Password</label>
         <input type="password" name="password" id="id_password" placeholder="Your password" required>
       </div>
+      <input type="hidden" name="next" value="{{ request.GET.next }}">
       <button type="submit" class="submit-button">Log In</button>
     </form>
   </div>
