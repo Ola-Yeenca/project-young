@@ -4,7 +4,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.http import HttpResponse
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, REDIRECT_FIELD_NAME
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -67,14 +67,40 @@ def activate(request, uidb64, token):
     if user is not None and AccountActivationTokenGenerator().check_token(user, token):
         user.is_active = True
         user.save()
-        login(request, user)
+
+        # Move the messages.success line here
         messages.success(request, "Thank you for verifying your email. Your account has been successfully activated.")
-        return redirect(reverse('core:index'))
+
+        next_url = request.GET.get('next', reverse('accounts:login'))
+        if next_url and next_url.startswith('/'):
+            return redirect(next_url)
+        else:
+            return redirect(reverse('accounts:login'))
     else:
         return HttpResponse('Activation link invalid!')
 
 def account_activation_sent(request):
     return render(request, 'accounts/account_activation_sent.html')
+
+def user_login(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, username=email, password=password)
+
+        if user:
+            if user.is_active:
+                login(request, user)
+                next_url = request.GET.get('next', reverse('accounts:profile'))
+                return redirect(next_url)
+            else:
+                messages.error(request, 'Account not active!')
+        else:
+            messages.error(request, 'Invalid login credentials. Please try again.')
+
+    form = LoginForm()
+    return render(request, 'accounts/login.html', {'form': form, 'delay_redirect': True})
+
 
 @login_required
 def profile(request):
@@ -94,29 +120,6 @@ def profile(request):
         form = UserProfileUpdateForm(instance=request.user.userprofile)
     return render(request, 'accounts/profile.html')
 
-def user_login(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        print('passed email and password:', email, password)
-        user = authenticate(email=email, password=password)
-
-        if user:
-            print('User authenticated successfully:', user)
-            if user.is_active:
-                print('User is active')
-                login(request, user)
-                print('User logged in successfully')
-                next_url = request.GET.get('next', reverse('accounts:profile'))
-                print('Redirecting to profile page...')
-                return redirect(next_url)
-            else:
-                messages.error(request, 'Account not active!')
-    else:
-        messages.error(request, 'Invalid login credentials. Please try again.')
-
-    form = LoginForm()
-    return render(request, 'accounts/login.html', {'form': form, 'delay_redirect': True})
 
 def user_logout(request):
     logout(request)

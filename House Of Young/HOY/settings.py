@@ -87,6 +87,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'django_use_email_as_username.backends.EmailBackend',  # Use this if it's for regular users
+    'django_use_email_as_username.backends.EmailAsUsernameBackend',  # Use this if it's for regular users
+    'django.contrib.auth.backends.ModelBackend',  # Default Django authentication backend
+    'House Of Young/custom_user.AdminBackend',  # Replace with the actual path to your admin backend
+]
 
 
 
