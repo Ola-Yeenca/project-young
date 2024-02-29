@@ -10,7 +10,7 @@ urlpatterns = [
         path('', include('core.urls')),
         path('api/', include('core.api.urls')),
         path('accounts/', include('accounts.urls')),
-        # path('__debug__/', include('debug_toolbar.urls')),
+        path('__debug__/', include('debug_toolbar.urls')),
     ]
 # if settings.DEBUG:
 

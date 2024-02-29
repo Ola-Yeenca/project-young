@@ -21,7 +21,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', default='your_defaul
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "HOY \nHouseOfYoung@gmail.com"
 
-
+LOGIN_REDIRECT_URL = 'accounts:profile'
 
 
 
@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_use_email_as_username.apps.DjangoUseEmailAsUsernameConfig',
     'custom_user.apps.CustomUserConfig',
-    # 'debug_toolbar',
+    'debug_toolbar',
     'rest_framework',
     'corsheaders',
     'core',
@@ -76,7 +76,7 @@ AUTH_USER_MODEL = 'custom_user.AdminUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -87,6 +87,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'django_use_email_as_username.backends.EmailBackend',  # Use this if it's for regular users
+    'django_use_email_as_username.backends.EmailAsUsernameBackend',  # Use this if it's for regular users
+    'django.contrib.auth.backends.ModelBackend',  # Default Django authentication backend
+    'House Of Young/custom_user.AdminBackend',  # Replace with the actual path to your admin backend
+]
 
 
 
