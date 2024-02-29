@@ -12,7 +12,7 @@
             <p class="card-text" style="margin: 4rem;">
               We have sent an activation link to your email.
               Please check your inbox (or spam) and follow the instructions to activate your account.
-              <a href="{% url 'accounts:activate' uidb64=uidb64 token=token %}" class="btn btn-secondary">Activate Your Account</a>
+              {% comment %} <a href="{% url 'accounts:activate' uidb64=uidb64 token=token %}" class="btn btn-secondary">Activate Your Account</a> {% endcomment %}
             </p>
             <a href="{% url 'core:index' %}" class="btn btn-primary">Go Home</a>
           </div>
