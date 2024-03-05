@@ -9,7 +9,8 @@ urlpatterns = [
         path('admin/', admin.site.urls),
         path('', include('core.urls')),
         path('api/', include('core.api.urls')),
-        path('accounts/', include('accounts.urls')),
+        # path('accounts/', include('accounts.urls')),
+        path('sessions/', include('sessions.urls')),
         path('__debug__/', include('debug_toolbar.urls')),
     ]
 # if settings.DEBUG:

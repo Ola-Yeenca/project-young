@@ -10,18 +10,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # config.read_dotenv(ENV_FILE)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', default='django-insecure-ttvii2w)l_x27qh8stwgv9ah#=7@(wz@em^rl)9&t6@k-2v!xi')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', default='default_secret_key')
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'infohouseofyoung@gmail.com'
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', default='your_default_email_password')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', default='default_email_password')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "HOY \nHouseOfYoung@gmail.com"
 
-LOGIN_REDIRECT_URL = 'accounts:profile'
+LOGIN_REDIRECT_URL = 'sessions:profile'
+LOGOUT_REDIRECT_URL = 'core:index'
+
 
 
 
@@ -30,7 +32,7 @@ LOGIN_REDIRECT_URL = 'accounts:profile'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False if os.environ.get('DJANGO_DEBUG', default='True') == 'False' else True
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
     'core',
     'django_extensions',
     'accounts',
+    'sessions',
 ]
 
 AUTH_USER_MODEL = 'custom_user.AdminUser'

@@ -9,14 +9,16 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required, permission_required
 
 from .forms import SignUpForm, LoginForm, UserProfileUpdateForm
 from .tokens import AccountActivationTokenGenerator
 from .models import CustomUser
 
+
+
 logger = logging.getLogger(__name__)
+
 
 def register(request):
     if request.method == 'POST':
@@ -33,14 +35,14 @@ def register(request):
                 domain = request.get_host()
                 uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
                 subject = 'Activate Your House Of Young Account'
-                message = render_to_string('accounts/activate_account_email.html', {
+                message = render_to_string('sessions/activate_account_email.html', {
                     'user': user,
                     'protocol': protocol,
                     'domain': domain,
                     'uidb64': uidb64,
                     'token': AccountActivationTokenGenerator().make_token(user),
                 })
-                logger.debug(f"Activation Link: {protocol}://{domain}/accounts/activate/{uidb64}/{AccountActivationTokenGenerator().make_token(user)}/")
+                logger.debug(f"Activation Link: {protocol}://{domain}/sessions/activate/{uidb64}/{AccountActivationTokenGenerator().make_token(user)}/")
                 send_mail(
                     subject,
                     strip_tags(message),
@@ -49,14 +51,14 @@ def register(request):
                     fail_silently=False,
                     html_message=message
                 )
-                return redirect(reverse('accounts:account_activation_sent'))
+                return redirect(reverse('sessions:account_activation_sent'))
         else:
             messages.error(request, 'There was an error in your registration. Please correct the highlighted fields.')
 
     else:
         form = SignUpForm()
 
-    return render(request, 'accounts/signup.html', {'form': form})
+    return render(request, 'sessions/signup.html', {'form': form})
 
 def activate(request, uidb64, token):
     try:
@@ -72,73 +74,90 @@ def activate(request, uidb64, token):
         # Move the messages.success line here
         messages.success(request, "Thank you for verifying your email. Your account has been successfully activated.")
 
-        next_url = request.GET.get('next', reverse('accounts:login'))
+        next_url = request.GET.get('next', reverse('sessions:login'))
         if next_url and next_url.startswith('/'):
             return redirect(next_url)
         else:
-            return redirect(reverse('accounts:login'))
+            return redirect(reverse('sessions:login'))
     else:
         return HttpResponse('Activation link invalid!')
 
 def account_activation_sent(request):
-    return render(request, 'accounts/account_activation_sent.html')
+    return render(request, 'sessions/account_activation_sent.html')
+
+
+
+from django.contrib.auth import authenticate, login
 
 def user_login(request):
-    print('User Login')
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        user = authenticate(request, username=email, password=password)
-        print('User: ', user, 'Email: ', email, 'Password: ', password)
-
-        if user:
-            if user.is_active:
-                print('User is active', user.email)
-                login(request, user)
-                print(JsonResponse({'status':'OK'},
-                                    status=200))
-                next_url = request.GET.get('next', reverse('accounts:profile'))
-                return redirect(next_url)
-            else:
-                messages.error(request, 'Account not active!')
-        else:
-            messages.error(request, 'Invalid login credentials. Please try again.')
-
-    form = LoginForm()
-    return render(request, 'accounts/login.html', {'form': form, 'delay_redirect': True})
-
-
-@login_required
-def profile(request):
-    if request.method == 'POST':
-        form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.userprofile)
+        form = LoginForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Your profile has been updated successfully.')
-            next_url = request.GET.get('next', reverse('accounts:profile'))
-            if next_url and next_url.startswith('/'):
-                return redirect(next_url)
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+
+
+            user = authenticate(request, email=email, password=password)
+
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    next_url = request.GET.get('next', reverse('sessions:profile'))
+                    if next_url and next_url.startswith('/'):
+                        return redirect(next_url)
+                    else:
+                        return redirect(reverse('core:index'))
+                else:
+                    messages.error(request, 'This account is inactive.')
             else:
-                return redirect(reverse('accounts:profile'))
+                messages.error(request, 'Invalid email or password.')
         else:
-            messages.error(request, 'There was an error in updating your profile. Please correct the highlighted fields.')
+            messages.error(request, 'There was an error in your form. Please correct the highlighted fields.')
+            for msg in form.errors.values():
+                messages.error(request, msg)
     else:
-        form = UserProfileUpdateForm(instance=request.user.userprofile)
-    return render(request, 'accounts/profile.html')
+        form = LoginForm()
+
+    context = {
+        'form': form,
+        'next': request.GET.get('next', '')
+    }
+
+    return render(request, 'sessions/login.html', context)
 
 
 def user_logout(request):
-    logout(request)
-    return render(request, 'accounts/logout.html')
+    pass
 
-def admin_signup(request):
-    form = SignUpForm()
+@login_required
+def profile(request):
+    pass
+@login_required
+def profile_edit(request):
+    form = UserProfileUpdateForm(instance=request.user.userprofile)
 
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
+    if request.method == "POST":
+        form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.userprofile)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect(reverse('admin:index'))
+            form.save()
+            messages.success(request, "Your profile has been updated successfully.")
+            return redirect(reverse('sessions:profile'))
+        else:
+            messages.error(request, "There was an error in your form. Please correct the highlighted fields.")
 
-    return render(request, 'accounts/admin_signup.html', {'form': form})
+    context = {"form": form}
+    return render(request, 'sessions/profile_edit.html', context)
+
+
+@permission_required
+def password_change(request):
+    pass
+
+def password_reset(request):
+    pass
+
+def password_reset_confirm(request):
+    pass
+
+def password_reset_complete(request):
+    pass

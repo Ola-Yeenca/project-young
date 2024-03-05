@@ -30,10 +30,10 @@
     </ul>
     <button id="btn" class="btn">
       {% if request.user.is_authenticated %}
-        <a href="{% url 'accounts:logout' %}" class="account">Logout</a>
+        <a href="{% url 'sessions:logout' %}" class="account">Logout</a>
       {% else %}
-        <a href="{% url 'accounts:register' %}" class="account">Sign Up</a>
-        <a href="{% url 'accounts:login' %}" class="account">Login</a>
+        <a href="{% url 'sessions:register' %}" class="account">Sign Up</a>
+        <a href="{% url 'sessions:login' %}" class="account">Login</a>
       {% endif %}
     </button>
   </nav>
@@ -57,7 +57,7 @@
 
 
 
-  
+
   <script defer type='module' src="{% static 'javascript/app.js' %}"></script>
   <script defer type='module' src="{% static 'javascript/script.js' %}"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"
