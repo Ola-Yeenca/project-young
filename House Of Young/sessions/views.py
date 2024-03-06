@@ -11,9 +11,11 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.contrib.auth.decorators import login_required, permission_required
 
+
 from .forms import SignUpForm, LoginForm, UserProfileUpdateForm
 from .tokens import AccountActivationTokenGenerator
 from .models import CustomUser
+from .backend import CustomUserManager
 
 
 
@@ -87,8 +89,6 @@ def account_activation_sent(request):
 
 
 
-from django.contrib.auth import authenticate, login
-
 def user_login(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -96,8 +96,8 @@ def user_login(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
-
-            user = authenticate(request, email=email, password=password)
+            custom_user_manager = CustomUserManager()
+            user = custom_user_manager.authenticate(request, email=email, password=password)
 
             if user is not None:
                 if user.is_active:
@@ -125,13 +125,13 @@ def user_login(request):
 
     return render(request, 'sessions/login.html', context)
 
-
 def user_logout(request):
     pass
 
 @login_required
 def profile(request):
-    pass
+    return render(request, 'sessions/profile.html')
+
 @login_required
 def profile_edit(request):
     form = UserProfileUpdateForm(instance=request.user.userprofile)

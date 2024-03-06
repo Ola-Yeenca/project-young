@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.core.validators import EmailValidator
 
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         email = self.normalize_email(email)
@@ -15,6 +16,11 @@ class CustomUserManager(BaseUserManager):
     def create_user_profile(cls, email, username, password=None, **extra_fields):
         user = cls.create_user(email, username, password, **extra_fields)
         UserProfile.objects.create(user=user)
+        return user
+
+    def save_user_profile(self, user, **extra_fields):
+        user.save(using=self._db)
+        UserProfile.objects.create(user=user, **extra_fields)
         return user
 
 
@@ -59,7 +65,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.first_name
 
-    
+
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=15, blank=True, default='')
@@ -67,6 +73,9 @@ class UserProfile(models.Model):
     location = models.CharField(max_length=30, blank=True, default='')
     birth_date = models.DateField(null=True, blank=True)
     avatar = models.ImageField(default='default.jpg', upload_to='profile_images', blank=True, null=True)
+
+
+
 
 
     def __str__(self):
