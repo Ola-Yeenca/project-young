@@ -93,8 +93,8 @@ MIDDLEWARE = [
 AUTHENTICATION_BACKENDS = [
     'django_use_email_as_username.backends.EmailBackend',
     'django_use_email_as_username.backends.EmailAsUsernameBackend',
-    'custom_user.backend.AdminBackend',
-    'sessions.backend.CustomUserManager',
+    'custom_user.backends.AdminBackend',
+    'sessions.backends.CustomUserManager',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
