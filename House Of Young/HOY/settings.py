@@ -21,6 +21,9 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', default='default_ema
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "HOY \nHouseOfYoung@gmail.com"
 
+
+
+
 LOGIN_REDIRECT_URL = 'sessions:profile'
 LOGOUT_REDIRECT_URL = 'core:index'
 

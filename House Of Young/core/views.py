@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.db.models import Q
 from .models import BlogPost, Event, Webgel
 from .config import HOMEPAGE_CONTENT
-# from accounts.views import profile
 from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)

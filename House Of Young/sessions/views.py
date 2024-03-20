@@ -3,13 +3,14 @@ from django.shortcuts import render, redirect, reverse
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import login, logout, authenticate, REDIRECT_FIELD_NAME
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.contrib.auth.decorators import login_required, permission_required
+
 
 
 from .forms import SignUpForm, LoginForm, UserProfileUpdateForm
@@ -90,19 +91,25 @@ def account_activation_sent(request):
 
 
 def user_login(request):
+    print('user_login')
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
+            print('form is valid', email, password)
 
-            custom_user_manager = CustomUserManager()
-            user = custom_user_manager.authenticate(request, email=email, password=password)
+
+            user = authenticate(request, email=email, password=password, backend='custom_user.backends.CustomUserManager')
+            print('user authenicated??', user)
 
             if user is not None:
                 if user.is_active:
+                    print('user is active')
                     login(request, user)
+                    print(JsonResponse({'message': 'You have been logged in successfully'}).content)
                     next_url = request.GET.get('next', reverse('sessions:profile'))
+                    print('next_url', next_url)
                     if next_url and next_url.startswith('/'):
                         return redirect(next_url)
                     else:
@@ -126,11 +133,27 @@ def user_login(request):
     return render(request, 'sessions/login.html', context)
 
 def user_logout(request):
-    pass
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect(reverse('core:index'))
 
 @login_required
 def profile(request):
-    return render(request, 'sessions/profile.html')
+    user_form = UserProfileUpdateForm(instance=request.user)
+    profile_form = UserProfileUpdateForm(instance=request.user.userprofile)
+    if request.method == 'POST':
+        user_form = UserProfileUpdateForm(request.POST, instance=request.user)
+        profile_form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.userprofile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "Your profile has been updated successfully.")
+            return redirect(reverse('sessions:profile'))
+        else:
+            messages.error(request, "There was an error in your form. Please correct the highlighted fields.")
+
+    return render(request, 'sessions/profile.html', {'user_form': user_form, 'profile_form': profile_form})
 
 @login_required
 def profile_edit(request):

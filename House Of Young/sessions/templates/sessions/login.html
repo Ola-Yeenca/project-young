@@ -20,7 +20,7 @@
     <h2 class="accounts-text">Log In</h2>
     {% with register_param=request.GET.register %}
       {% if register_param == 'true' %}
-        <p class="message-text">You don't have an account! Please <a href="{% url 'accountssessions:register' %}">register</a> first.</p>
+        <p class="message-text">You don't have an account! Please <a href="{% url 'sessions:register' %}">register</a> first.</p>
       {% endif %}
     {% endwith %}
     <p class="link-text">Don't have an account? <button><a href="{% url 'sessions:register' %}">Sign Up</a></button></p>
@@ -29,18 +29,10 @@
       <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
       <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
     </div>
-    <form method="post" action="{% url 'sessions:login' %}">
+    <form method="post">
       {% csrf_token %}
-      <div class="form-group">
-        <label for="id_email" class="label-text">Email</label>
-        <input type="email" name="email" id="id_email" placeholder="Your email" required>
-      </div>
-      <div class="form-group">
-        <label for="id_password" class="label-text">Password</label>
-        <input type="password" name="password" id="id_password" placeholder="Your password" required>
-      </div>
-      <input type="hidden" name="next" value="{{ request.GET.next }}">
-      <button type="submit" class="submit-button">Log In</button>
+      {{ form }}
+      <button type="submit">Log In</button>
     </form>
   </div>
 </div>
