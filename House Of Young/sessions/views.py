@@ -14,8 +14,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 
 from .forms import SignUpForm, LoginForm, UserProfileUpdateForm
 from .tokens import AccountActivationTokenGenerator
-from .models import CustomUser
-from .backend import CustomUserManager
+from custom_user.models import CustomUser
+from custom_user.backends import CustomUserManager
 
 
 

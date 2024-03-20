@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'core',
     'django_extensions',
-    'accounts',
     'sessions',
 ]
 
@@ -91,10 +90,8 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'django_use_email_as_username.backends.EmailBackend',
-    'django_use_email_as_username.backends.EmailAsUsernameBackend',
     'custom_user.backends.AdminBackend',
-    'sessions.backends.CustomUserManager',
+    'custom_user.backends.CustomUserManager',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
