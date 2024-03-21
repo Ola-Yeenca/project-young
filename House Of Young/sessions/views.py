@@ -1,5 +1,5 @@
 import logging
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.contrib.auth.decorators import login_required, permission_required
+
 
 
 
@@ -109,15 +110,17 @@ def user_login(request):
                     login(request, user)
                     print(JsonResponse({'message': 'You have been logged in successfully'}).content)
                     next_url = request.GET.get('next', reverse('sessions:profile'))
-                    print('next_url', next_url)
+                    print('next_url: ', next_url)
                     if next_url and next_url.startswith('/'):
                         return redirect(next_url)
                     else:
                         return redirect(reverse('core:index'))
+                        print('redirecting to index')
                 else:
                     messages.error(request, 'This account is inactive.')
             else:
                 messages.error(request, 'Invalid email or password.')
+
         else:
             messages.error(request, 'There was an error in your form. Please correct the highlighted fields.')
             for msg in form.errors.values():
@@ -137,13 +140,16 @@ def user_logout(request):
     messages.success(request, "You have been logged out successfully.")
     return redirect(reverse('core:index'))
 
+
 @login_required
 def profile(request):
-    user_form = UserProfileUpdateForm(instance=request.user)
-    profile_form = UserProfileUpdateForm(instance=request.user.userprofile)
+    user = request.user
+    user_form = UserProfileUpdateForm(instance=user)
+    profile_form = UserProfileUpdateForm(instance=user.userprofile)
+
     if request.method == 'POST':
-        user_form = UserProfileUpdateForm(request.POST, instance=request.user)
-        profile_form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.userprofile)
+        user_form = UserProfileUpdateForm(request.POST, instance=user)
+        profile_form = UserProfileUpdateForm(request.POST, request.FILES, instance=user.userprofile)
 
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()

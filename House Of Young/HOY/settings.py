@@ -23,7 +23,7 @@ DEFAULT_FROM_EMAIL = "HOY \nHouseOfYoung@gmail.com"
 
 
 
-
+LOGIN_URL = 'sessions:login'
 LOGIN_REDIRECT_URL = 'sessions:profile'
 LOGOUT_REDIRECT_URL = 'core:index'
 

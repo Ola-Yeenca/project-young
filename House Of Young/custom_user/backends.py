@@ -34,7 +34,7 @@ class EmailBackend(ModelBackend):
 class CustomUserManager(ModelBackend):
     def authenticate(self, request, email=None, password=None, **kwargs):
         try:
-            user = CustomUser.objects.get(email=email)  # Querying the CustomUser model explicitly
+            user = CustomUser.objects.get(email=email)
             print('Attempting to find user with email:', email)
             print('Found user:', user)
         except CustomUser.DoesNotExist:
