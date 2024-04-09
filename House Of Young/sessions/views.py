@@ -109,13 +109,8 @@ def user_login(request):
                     print('user is active')
                     login(request, user)
                     print(JsonResponse({'message': 'You have been logged in successfully'}).content)
-                    next_url = request.GET.get('next', reverse('sessions:profile'))
-                    print('next_url: ', next_url)
-                    if next_url and next_url.startswith('/'):
-                        return redirect(next_url)
-                    else:
-                        return redirect(reverse('core:index'))
-                        print('redirecting to index')
+                    return redirect(request.GET.get(REDIRECT_FIELD_NAME, 'core:index'))
+                    print('redirected')
                 else:
                     messages.error(request, 'This account is inactive.')
             else:

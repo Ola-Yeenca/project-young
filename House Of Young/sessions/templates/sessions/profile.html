@@ -1,20 +1,39 @@
 {% extends 'core/base.html' %}
-
 {% load static %}
-
 
 {% block css %}
   <link rel="stylesheet" href="{% static 'core/static/stylesheet/accounts.css' %}">
 {% endblock %}
 
-
-{% block title %}Profile Page{% endblock %}
+{% block title %}{{ user.username }} - Profile{% endblock %}
 
 {% block content %}
-<div>
-  <h1>
-    This is the profile page of {{ user.username }}
-  </h1>
-</div>
-
+  <div class="profile-container">
+    <div class="profile-header">
+      <div class="profile-avatar">
+        {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar">
+        {% else %}
+          <img src="{% static 'core/images/default-avatar.png' %}" alt="Default avatar">
+        {% endif %}
+      </div>
+      <div class="profile-info">
+        <h2>{{ user.username }}</h2>
+        <p>{{ user.email }}</p>
+      </div>
+    </div>
+    <div class="profile-body">
+      <h3>About Me</h3>
+      {% if user.profile.bio %}
+        <p>{{ user.profile.bio }}</p>
+      {% else %}
+        <p>No bio available.</p>
+      {% endif %}
+      <h3>Joined</h3>
+      <p>{{ user.date_joined|date:"F d, Y" }}</p>
+    </div>
+    <div class="profile-actions">
+      <a href="{% url 'core:profile_edit' %}" class="btn btn-primary">Update Profile</a>
+    </div>
+  </div>
 {% endblock %}

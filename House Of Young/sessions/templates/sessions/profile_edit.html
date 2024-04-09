@@ -1,11 +1,41 @@
 {% extends 'core/base.html' %}
-
 {% load static %}
-
 
 {% block css %}
   <link rel="stylesheet" href="{% static 'core/static/stylesheet/accounts.css' %}">
 {% endblock %}
 
-
 {% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+  <div class="profile-edit-container">
+    <h2>Edit Profile</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="avatar">Avatar</label>
+        <div class="avatar-preview">
+          {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar">
+          {% else %}
+            <img src="{% static 'core/images/default-avatar.png' %}" alt="Default avatar">
+          {% endif %}
+        </div>
+        {{ form.avatar }}
+      </div>
+      <div class="form-group">
+        <label for="username">Username</label>
+        {{ form.username }}
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        {{ form.email }}
+      </div>
+      <div class="form-group">
+        <label for="bio">Bio</label>
+        {{ form.bio }}
+      </div>
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+  </div>
+{% endblock %}
