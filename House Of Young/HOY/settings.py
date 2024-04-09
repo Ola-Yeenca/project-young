@@ -61,6 +61,7 @@ TIME_ZONE = 'Europe/Madrid'
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -77,7 +78,7 @@ INSTALLED_APPS = [
     'sessions',
 ]
 
-AUTH_USER_MODEL = 'custom_user.AdminUser'
+AUTH_USER_MODEL = 'custom_user.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -188,3 +189,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+JAZZMIN_SETTINGS = {
+    'site_header': 'House Of Young',
+    'site_brand': 'Fostering the growth of Entrepreneurs',
+    'site_logo': 'images/HOY-removebg-preview.png',
+    'site_logo_classes': 'img-circle',
+    'welcome_sign': 'Welcome to House Of Young',
+    'user_avatar': None, # Default avatar if user has no avatar
+    'copyright': 'House Of Young',
+    # 'language_chooser': True,
+
+}
