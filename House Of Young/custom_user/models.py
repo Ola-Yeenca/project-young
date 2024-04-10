@@ -28,6 +28,7 @@ class UserProfile(models.Model):
     location = models.CharField(max_length=30, blank=True, default='')
     birth_date = models.DateField(null=True, blank=True)
     avatar = models.ImageField(default='default.jpg', upload_to='profile_images', blank=True, null=True)
+    verified = models.BooleanField(default=False)  # If the profile has been reviewed by an admin
 
 
     def __str__(self):

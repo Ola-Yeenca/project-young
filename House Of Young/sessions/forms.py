@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from custom_user.models import CustomUser, UserProfile
-from django.contrib.auth import get_user_model
+from PIL import Image
+
 
 
 
@@ -46,12 +47,27 @@ class Profile(forms.ModelForm):
 class UserProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['avatar', 'bio', 'location', 'phone_number', 'birth_date']
-        widgets = {
-            'avatar': forms.ImageField(),
-            'bio': forms.Textarea(),
-            'location': forms.TextInput(),
-            'phone_number': forms.TextInput(),
-            'birth_date':
-            forms.DateInput(attrs={'type': 'date'})
-        }
+        fields = ['avatar', 'user', 'phone_number', 'bio']
+
+    def __init__(self, *args, **kwargs):
+        super(UserProfileUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['avatar'].widget.attrs.pop('required', None)
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar:
+            if avatar.size > 2 * 1024 * 1024:
+                raise forms.ValidationError('Image file too large ( > 2mb )')
+            image = Image.open(avatar)
+            width, height = image.size
+
+            if width > 300 or height > 300:
+                raise forms.ValidationError('Image dimensions exceed 300x300')
+
+            # Ensure the image is a perfect square (optional)
+            if width != height:
+                raise forms.ValidationError('Image is not a perfect square')
+
+            return avatar
+        else:
+            return avatar

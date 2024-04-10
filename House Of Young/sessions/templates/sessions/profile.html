@@ -1,39 +1,31 @@
+
+
 {% extends 'core/base.html' %}
-{% load static %}
 
-{% block css %}
-  <link rel="stylesheet" href="{% static 'core/static/stylesheet/accounts.css' %}">
-{% endblock %}
 
-{% block title %}{{ user.username }} - Profile{% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block content %}
-  <div class="profile-container">
-    <div class="profile-header">
-      <div class="profile-avatar">
-        {% if user.profile.avatar %}
-          <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar">
-        {% else %}
-          <img src="{% static 'core/images/default-avatar.png' %}" alt="Default avatar">
-        {% endif %}
-      </div>
-      <div class="profile-info">
-        <h2>{{ user.username }}</h2>
-        <p>{{ user.email }}</p>
-      </div>
-    </div>
-    <div class="profile-body">
-      <h3>About Me</h3>
-      {% if user.profile.bio %}
-        <p>{{ user.profile.bio }}</p>
-      {% else %}
-        <p>No bio available.</p>
-      {% endif %}
-      <h3>Joined</h3>
-      <p>{{ user.date_joined|date:"F d, Y" }}</p>
-    </div>
-    <div class="profile-actions">
-      <a href="{% url 'sessions:profile_edit' %}" class="btn btn-primary">Update Profile</a>
-    </div>
+  <h2>Profile Information</h2>
+
+  <div class="profile-details">
+    {% if profile.avatar %}
+      <img src="{{ profile.avatar.url }}" alt="Profile Picture" width="150" height="150">
+    {% else %}
+      <p>No avatar uploaded.</p>
+    {% endif %}
+
+    <ul>
+      <li><strong>Username:</strong> {{ profile.user.username }}</li>
+      <li><strong>Email:</strong> {{ profile.user.email }}</li>
+      <li><strong>First Name:</strong> {{ profile.user.first_name }}</li>
+      <li><strong>Last Name:</strong> {{ profile.user.last_name }}</li>
+      <li><strong>Phone Number:</strong> {{ profile.phone_number }}</li>
+      <li><strong>Bio:</strong> {{ profile.bio }}</li>
+      <li><strong>Location:</strong> {{ profile.location }}</li>
+      <li><strong>Birth Date:</strong> {{ profile.birth_date }}</li>
+    </ul>
+
+    <a href="{% url 'sessions:profile_edit' %}" class="btn btn-primary">Edit Profile</a>
   </div>
 {% endblock %}

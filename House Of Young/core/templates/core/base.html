@@ -11,6 +11,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.4.0/fonts/remixicon.css"rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  {% comment %} import boostrap {% endcomment %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
   <link rel="stylesheet" href="{% static 'stylesheet/applications.css' %}">
   <link rel="stylesheet" href="{% static 'stylesheet/accounts.css' %}">
   {% block scripts %}{% endblock %}
@@ -29,6 +31,14 @@
       <li class="link"><a href="{% url 'core:contact' %}">Work with Us</a></li>
       {% if request.user.is_authenticated %}
         <li class="link"><a href="{% url 'sessions:profile' %}">Profile</a></li>
+      {% endif %}
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{message.tags}}">
+            <strong>{{ message }}</strong>
+          </div>
+        {% endfor %}
       {% endif %}
     </ul>
     <button id="btn" class="btn">

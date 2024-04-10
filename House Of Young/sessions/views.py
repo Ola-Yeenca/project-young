@@ -14,7 +14,7 @@ from django.utils.html import strip_tags
 
 from .forms import SignUpForm, LoginForm, UserProfileUpdateForm
 from .tokens import AccountActivationTokenGenerator
-from custom_user.models import CustomUser
+from custom_user.models import CustomUser, UserProfile
 from django.contrib.auth.forms import PasswordChangeForm
 
 logger = logging.getLogger(__name__)
@@ -90,6 +90,7 @@ def user_login(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             user = authenticate(request, email=email, password=password)
+            messages.success(request, 'Login success.')
             if user is not None and user.is_active:
                 login(request, user)
                 return redirect(request.GET.get('next', 'core:index'))
@@ -107,47 +108,37 @@ def user_login(request):
 @login_required
 def user_logout(request):
     logout(request)
-    messages.success(request, "You have been logged out successfully.")
+    messages.success(request, "Logout success.")
     return redirect('core:index')
 
+@login_required
+def profile(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
 
-class ProfileUpdateView(UpdateView):
-    model = User
-    template_name = 'sessions/profile.html'
-    fields = ['first_name', 'last_name', 'email']
+        messages.error(request, "Profile not found for this user.")
+        return redirect('sessions:profile_edit')
 
-    def get_object(self):
-        return self.request.user
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['profile'] = self.request.user.userprofile
-        return context
-
-    def form_valid(self, form):
-        user_profile = self.request.user.userprofile
-        user_profile.phone_number = self.request.POST.get('phone_number', '')
-        user_profile.bio = self.request.POST.get('bio', '')
-        user_profile.location = self.request.POST.get('location', '')
-        user_profile.birth_date = self.request.POST.get('birth_date', None)
-        user_profile.avatar = self.request.FILES.get('avatar', user_profile.avatar)
-        user_profile.save()
-        return super().form_valid(form)
-
+    context = {
+        'profile' : profile
+    }
+    return render(request, 'sessions/profile.html', context)
 
 @login_required
 def profile_edit(request):
-    form = UserProfileUpdateForm(instance=request.user.userprofile)
-    if request.method == "POST":
-        form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.userprofile)
+    profile = UserProfile.objects.get(user=request.user)
+    if request.method == 'POST':
+        form = UserProfileUpdateForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile has been updated successfully.")
             return redirect('sessions:profile')
         else:
             messages.error(request, "There was an error in your form. Please correct the highlighted fields.")
+    else:
+        form = UserProfileUpdateForm(instance=profile)
     return render(request, 'sessions/profile_edit.html', {'form': form})
-
 
 @login_required
 def password_change(request):
