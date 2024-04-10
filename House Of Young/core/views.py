@@ -22,7 +22,7 @@ def index(request):
 def event(request):
     now = timezone.localtime(timezone.now())
     upcoming_events = Event.objects.filter(is_published=True, event_date__gte=now).order_by('event_date')[:3]
-    past_events = Event.objects.filter(is_published=True, event_date__lt=now).order_by('-event_date')[:1]
+    past_events = Event.objects.filter(is_published=True, event_date__lt=now).order_by('-event_date')[:4]
     recent_blog_posts = BlogPost.objects.filter(is_published=True).order_by('-created_at')[:3]
     context = {
         'upcoming_events': upcoming_events,

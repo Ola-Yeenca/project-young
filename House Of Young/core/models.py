@@ -79,7 +79,7 @@ class Event(models.Model):
     event_date = models.DateTimeField(help_text='Date of the event', null=True, blank=True)
     tickets_available = models.PositiveIntegerField(default=0)
     ticket_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    is_published = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=False)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     organizer = models.ForeignKey(Organizer, on_delete=models.CASCADE, blank=True, null=True)
     qr_code = models.ImageField(upload_to='event_qrcodes/', blank=True, null=True)
