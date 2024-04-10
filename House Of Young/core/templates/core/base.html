@@ -27,6 +27,9 @@
       <li class="link"><a href="{% url 'core:blog_list' %}">Blogs</a></li>
       <li class="link"><a href="{% url 'core:about' %}">About</a></li>
       <li class="link"><a href="{% url 'core:contact' %}">Work with Us</a></li>
+      {% if request.user.is_authenticated %}
+        <li class="link"><a href="{% url 'sessions:profile' %}">Profile</a></li>
+      {% endif %}
     </ul>
     <button id="btn" class="btn">
       {% if request.user.is_authenticated %}

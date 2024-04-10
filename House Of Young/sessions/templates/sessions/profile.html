@@ -33,7 +33,7 @@
       <p>{{ user.date_joined|date:"F d, Y" }}</p>
     </div>
     <div class="profile-actions">
-      <a href="{% url 'core:profile_edit' %}" class="btn btn-primary">Update Profile</a>
+      <a href="{% url 'sessions:profile_edit' %}" class="btn btn-primary">Update Profile</a>
     </div>
   </div>
 {% endblock %}

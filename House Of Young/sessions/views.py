@@ -1,28 +1,23 @@
 import logging
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.http import HttpResponse, JsonResponse
-from django.contrib.auth import login, logout, authenticate, REDIRECT_FIELD_NAME
+from django.http import HttpResponse
 from django.contrib import messages
+from django.contrib.auth import login, logout, authenticate, get_user_model
+from django.views.generic import UpdateView
+from django.contrib.auth.decorators import login_required, permission_required, method_decorator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.contrib.auth.decorators import login_required, permission_required
-
-
-
 
 from .forms import SignUpForm, LoginForm, UserProfileUpdateForm
 from .tokens import AccountActivationTokenGenerator
-from custom_user.models import CustomUser
-from custom_user.backends import CustomUserManager
-
-
+from custom_user.models import CustomUser, UserProfile
 
 logger = logging.getLogger(__name__)
-
+User = get_user_model()
 
 def register(request):
     if request.method == 'POST':
@@ -35,38 +30,38 @@ def register(request):
                 user = form.save(commit=False)
                 user.is_active = False
                 user.save()
-                protocol = request.scheme
-                domain = request.get_host()
-                uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-                subject = 'Activate Your House Of Young Account'
-                message = render_to_string('sessions/activate_account_email.html', {
-                    'user': user,
-                    'protocol': protocol,
-                    'domain': domain,
-                    'uidb64': uidb64,
-                    'token': AccountActivationTokenGenerator().make_token(user),
-                })
-                logger.debug(f"Activation Link: {protocol}://{domain}/sessions/activate/{uidb64}/{AccountActivationTokenGenerator().make_token(user)}/")
-                send_mail(
-                    subject,
-                    strip_tags(message),
-                    from_email='infohouseofyoung@gmail.com',
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                    html_message=message
-                )
+                send_activation_email(request, user)
                 return redirect(reverse('sessions:account_activation_sent'))
         else:
             messages.error(request, 'There was an error in your registration. Please correct the highlighted fields.')
-
     else:
         form = SignUpForm()
-
     return render(request, 'sessions/signup.html', {'form': form})
+
+def send_activation_email(request, user):
+    protocol = request.scheme
+    domain = request.get_host()
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    token = AccountActivationTokenGenerator().make_token(user)
+    activation_link = f"{protocol}://{domain}/sessions/activate/{uidb64}/{token}/"
+    subject = 'Activate Your House Of Young Account'
+    message = render_to_string('sessions/activate_account_email.html', {
+        'user': user,
+        'activation_link': activation_link,
+    })
+    send_mail(
+        subject,
+        strip_tags(message),
+        from_email='infohouseofyoung@gmail.com',
+        recipient_list=[user.email],
+        fail_silently=False,
+        html_message=message
+    )
+    logger.debug(f"Activation Link: {activation_link}")
 
 def activate(request, uidb64, token):
     try:
-        uid = force_bytes(urlsafe_base64_decode(uidb64))
+        uid = force_text(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
         user = None
@@ -74,92 +69,68 @@ def activate(request, uidb64, token):
     if user is not None and AccountActivationTokenGenerator().check_token(user, token):
         user.is_active = True
         user.save()
-
-        # Move the messages.success line here
         messages.success(request, "Thank you for verifying your email. Your account has been successfully activated.")
-
         next_url = request.GET.get('next', reverse('sessions:login'))
-        if next_url and next_url.startswith('/'):
-            return redirect(next_url)
-        else:
-            return redirect(reverse('sessions:login'))
+        return redirect(next_url) if next_url and next_url.startswith('/') else redirect(reverse('sessions:login'))
     else:
         return HttpResponse('Activation link invalid!')
 
 def account_activation_sent(request):
     return render(request, 'sessions/account_activation_sent.html')
 
-
-
 def user_login(request):
-    print('user_login')
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            print('form is valid', email, password)
-
-
-            user = authenticate(request, email=email, password=password, backend='custom_user.backends.CustomUserManager')
-            print('user authenicated??', user)
-
-            if user is not None:
-                if user.is_active:
-                    print('user is active')
-                    login(request, user)
-                    print(JsonResponse({'message': 'You have been logged in successfully'}).content)
-                    return redirect(request.GET.get(REDIRECT_FIELD_NAME, 'core:index'))
-                    print('redirected')
-                else:
-                    messages.error(request, 'This account is inactive.')
+            user = authenticate(request, email=email, password=password)
+            if user is not None and user.is_active:
+                login(request, user)
+                return redirect(request.GET.get('next', 'core:index'))
+            elif user is not None and not user.is_active:
+                messages.error(request, 'This account is inactive.')
             else:
                 messages.error(request, 'Invalid email or password.')
-
         else:
             messages.error(request, 'There was an error in your form. Please correct the highlighted fields.')
-            for msg in form.errors.values():
-                messages.error(request, msg)
     else:
         form = LoginForm()
+    return render(request, 'sessions/login.html', {'form': form})
 
-    context = {
-        'form': form,
-        'next': request.GET.get('next', '')
-    }
-
-    return render(request, 'sessions/login.html', context)
-
+@login_required
 def user_logout(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect(reverse('core:index'))
 
+@method_decorator(login_required, name='dispatch')
+class ProfileUpdateView(UpdateView):
+    model = User
+    template_name = 'profile_update.html'
+    fields = ['first_name', 'last_name', 'email']
 
-@login_required
-def profile(request):
-    user = request.user
-    user_form = UserProfileUpdateForm(instance=user)
-    profile_form = UserProfileUpdateForm(instance=user.userprofile)
+    def get_object(self):
+        return self.request.user
 
-    if request.method == 'POST':
-        user_form = UserProfileUpdateForm(request.POST, instance=user)
-        profile_form = UserProfileUpdateForm(request.POST, request.FILES, instance=user.userprofile)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile'] = self.request.user.userprofile
+        return context
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, "Your profile has been updated successfully.")
-            return redirect(reverse('sessions:profile'))
-        else:
-            messages.error(request, "There was an error in your form. Please correct the highlighted fields.")
-
-    return render(request, 'sessions/profile.html', {'user_form': user_form, 'profile_form': profile_form})
+    def form_valid(self, form):
+        user_profile = self.request.user.userprofile
+        user_profile.phone_number = self.request.POST.get('phone_number', '')
+        user_profile.bio = self.request.POST.get('bio', '')
+        user_profile.location = self.request.POST.get('location', '')
+        user_profile.birth_date = self.request.POST.get('birth_date', None)
+        user_profile.avatar = self.request.FILES.get('avatar', user_profile.avatar)
+        user_profile.save()
+        return super().form_valid(form)
 
 @login_required
 def profile_edit(request):
     form = UserProfileUpdateForm(instance=request.user.userprofile)
-
     if request.method == "POST":
         form = UserProfileUpdateForm(request.POST, request.FILES, instance=request.user.userprofile)
         if form.is_valid():
@@ -168,20 +139,21 @@ def profile_edit(request):
             return redirect(reverse('sessions:profile'))
         else:
             messages.error(request, "There was an error in your form. Please correct the highlighted fields.")
-
-    context = {"form": form}
-    return render(request, 'sessions/profile_edit.html', context)
-
+    return render(request, 'sessions/profile_edit.html', {'form': form})
 
 @permission_required
 def password_change(request):
+    # Implement password change view
     pass
 
 def password_reset(request):
+    # Implement password reset view
     pass
 
 def password_reset_confirm(request):
+    # Implement password reset confirmation view
     pass
 
 def password_reset_complete(request):
+    # Implement password reset completion view
     pass
