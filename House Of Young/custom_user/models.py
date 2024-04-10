@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import EmailValidator
 
 class CustomUser(AbstractUser):
-    email = models.EmailField(max_length=254, unique=True, validators=[EmailValidator()])
+    email = models.EmailField(max_length=254, unique=True)
     username = models.CharField(max_length=50, unique=True)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -17,8 +17,21 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
+    # Choices for boolean fields
+    BOOLEAN_CHOICES = [
+        (True, 'Yes'),
+        (False, 'No')
+    ]
+
     def __str__(self):
-        return self.username
+        return f'{self.email} ({self.get_full_name()})'
+
+    def get_full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
+    class Meta:
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
 
 
 class UserProfile(models.Model):

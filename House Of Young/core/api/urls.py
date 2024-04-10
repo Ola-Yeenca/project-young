@@ -11,4 +11,5 @@ event_router.register(r'event', EventViewSet, basename='event')
 
 urlpatterns = [
     path('', include(event_router.urls)),
+    path('api/event/new/', EventViewSet.as_view({'post': 'create'}), name='create_event'),
 ]

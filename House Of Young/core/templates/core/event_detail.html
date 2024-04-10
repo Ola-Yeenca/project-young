@@ -30,7 +30,7 @@
       <p>Organizer: {{ event.organizer.name }}</p>
       <p>Venue: {{ event.venue.address }}, {{ event.venue.city }}, {{ event.venue.country }}</p>
       <p>Tickets available: {{ event.tickets_available }}</p>
-      <p>Ticket price: €{{ event.ticket_price }}</p>
+      <p>Ticket price: € {{ event.ticket_price }} </p>
     </div>
   </div>
 
@@ -59,23 +59,4 @@
       {% endfor %}
     </div>
   </div>
-
-  <div class="section__container explore__container">
-    <h3 class="section__header">Collaborators</h3>
-    <div class="explore__grid">
-      {% for collaborator in collaborators %}
-        <p class="text-gray-500">{{ collaborator.user.username }} - {{ collaborator.organizer.name }}</p>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="section__container explore__container">
-    <h3 class="section__header">Sponsors</h3>
-    <div class="explore__grid">
-      {% for sponsor in sponsors %}
-        <p>{{ sponsor.name }} - {{ sponsor.description }}</p>
-      {% endfor %}
-    </div>
-  </div>
-</div>
 {% endblock %}

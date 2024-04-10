@@ -33,7 +33,9 @@
           {{ collaborator.user.username }}
         {% endfor %}
       </p>
-      <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary" style="margin: 0 2em;">View Event</a>
+      <a href="{% url 'core:event_detail' event_id=event.id slug=event.slug %}" class="btn btn-primary" style="margin: 0 2em;" target="_blank">Event Details</a>
+
+
 
       {% if event.image %}
         <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
@@ -63,7 +65,7 @@
           <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Venue: {{ event.venue }}</p>
           <p class="text-grey-500" style="margin-left: 0em; margin-bottom: 3em;">Sponors: {{ event.sponsor }}</p>
           <p class="text-grey-500" style="margin-left: 0em; margin-bottom: 3em;">Event Collaborators: {{ event.collaborator }}</p>
-          <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary" style="margin: 0 2em;">View Event</a>
+          <a href="{% url 'core:event_detail' event_id=event.id slug=event.slug %}" class="btn btn-primary" style="margin: 0 2em;" target="_blank">Past Event Details</a>
           {% if event.image %}
             <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
           {% endif %}
