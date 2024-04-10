@@ -43,7 +43,7 @@
           <h4 class="text-xl font-semibold mb-2" style="text-align: center;">{{ event.title }}</h4>
           <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Date and Time: {{ event.event_date }} {{ event.event_time }}</p>
           <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Venue: {{ event.venue }}</p>
-          <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary" style="margin: 0 2em;">View Event</a>
+          <a href="{% url 'core:event_detail' event_id=event.id slug=event.slug %}" class="btn btn-primary" style="margin: 0 2em;" target="_blank">Past Event Details</a>
           {% if event.image %}
             <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
           {% endif %}
@@ -65,7 +65,7 @@
             <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Date : {{ event.event_date }}</p>
             <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Time: {{ event.event_time }}</p>
             <p class="text-gray-500" style="margin-left: 0em; margin-bottom: 3em;">Venue: {{ event.venue }}</p>
-            <a href="/event/{{ event.id }}" target="_blank" class="btn btn-primary" style="margin: 0 12em;">View Event</a>
+            <a href="{% url 'core:event_detail' event_id=event.id slug=event.slug %}" class="btn btn-primary" style="margin: 0 2em;" target="_blank">Past Event Details</a>
             {% if event.image %}
               <img src="{{ event.image.url }}" alt="{{ event.title }} Image" class="event__image">
             {% endif %}
