@@ -50,9 +50,10 @@ section.view.active{display:block;animation:viewin .6s var(--ease)}
 .grain::after{content:"";position:absolute;inset:-60px;background-image:var(--noise);opacity:.07;pointer-events:none;z-index:3;animation:grain .9s steps(5) infinite}
 @keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-18px,12px)}40%{transform:translate(14px,-20px)}60%{transform:translate(-10px,-6px)}80%{transform:translate(22px,16px)}}
 
-/* scroll reveal */
+/* scroll reveal (state lives in data-rvs, not the class list, so React hydration and
+   className updates never clobber it) */
 [data-rv]{transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0ms)}
-[data-rv].pre{opacity:0;transform:translateY(28px)}
+[data-rv][data-rvs="pre"]{opacity:0;transform:translateY(28px)}
 
 /* buttons */
 .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 22px;border-radius:999px;border:1px solid var(--line-2);font-weight:500;font-size:.9rem;white-space:nowrap;overflow:hidden;isolation:isolate;transition:color .35s var(--snap),border-color .35s,translate .35s var(--ease)}
@@ -374,7 +375,7 @@ footer a:hover{color:var(--ink)}
 
 @media(prefers-reduced-motion:reduce){
   .grain::after,.mq span.s{animation:none}
-  [data-rv].pre{transform:none}
+  [data-rv][data-rvs="pre"]{transform:none}
   .wd>span{animation-name:fadeonly}
   @keyframes fadeonly{from{opacity:0}}
 }
@@ -382,6 +383,7 @@ footer a:hover{color:var(--ink)}
 /* ---- additions: not in the prototype, needed for live data. Same tokens and values. ---- */
 .peek img,.frame .ph img,.focus .obj img,.hero-img img{display:block;object-fit:cover}
 .hero-img img.contain{object-fit:contain;background:var(--night)}
+.f2>label{align-content:start}
 .sizes button:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
 .hp{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .ck{display:flex;align-items:flex-start;gap:10px;line-height:1.6;cursor:pointer}

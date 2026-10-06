@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8017/api/v1").replace(/\/$/, "");
 
+const API_ORIGIN = new URL(API).origin;
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
@@ -13,6 +15,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/api/v1/:path*/", destination: `${API}/:path*/` },
       { source: "/api/v1/:path*", destination: `${API}/:path*` },
+      // Same-origin media for canvas reads (see mediaSrc in lib/api.ts).
+      { source: "/media/:path*", destination: `${API_ORIGIN}/media/:path*` },
     ];
   },
 };

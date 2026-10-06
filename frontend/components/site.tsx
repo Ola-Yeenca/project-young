@@ -18,6 +18,8 @@ type Ctx = {
   slug: string;
   city: City | null;
   bundle: CityBundle | null;
+  /** Every city loaded so far (the others are warmed 2.5s after first paint). */
+  bundles: Record<string, CityBundle>;
   /** Records on the turntable: featured, falling back to upcoming. */
   records: EventItem[];
   cur: number;
@@ -136,10 +138,15 @@ export function SiteProvider({
   const openSheet = useCallback(
     (type: "event" | "talent", s: string) => {
       const url = `/${type === "event" ? "events" : "talent"}/${s}`;
-      const base = sheet?.base ?? pathname;
-      if (sheet?.pushed) window.history.replaceState(null, "", url);
-      else window.history.pushState(null, "", url);
-      setSheet({ type, slug: s, pushed: true, base });
+      // From inside a sheet (e.g. a line-up name in an event sheet), swap the sheet in place so
+      // closing goes straight back to the page underneath.
+      if (sheet) {
+        window.history.replaceState(null, "", url);
+        setSheet({ ...sheet, type, slug: s });
+        return;
+      }
+      window.history.pushState(null, "", url);
+      setSheet({ type, slug: s, pushed: true, base: pathname });
     },
     [pathname, sheet],
   );
@@ -196,6 +203,7 @@ export function SiteProvider({
     slug,
     city,
     bundle,
+    bundles,
     records,
     cur: records.length ? Math.min(cur, records.length - 1) : 0,
     setCur,

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getEvent } from "@/lib/server";
 import { EventsView } from "@/components/pages/Views";
 import { AdoptSheet } from "@/components/sheets/Adopt";
@@ -15,12 +16,19 @@ export async function generateMetadata({ params }: PageProps<"/events/[slug]">):
   };
 }
 
-export default async function Page({ params }: PageProps<"/events/[slug]">) {
-  const { slug } = await params;
+// The list renders straight away; only the sheet depends on the URL (kept inside Suspense).
+export default function Page({ params }: PageProps<"/events/[slug]">) {
   return (
     <>
       <EventsView />
-      <AdoptSheet type="event" slug={slug} />
+      <Suspense fallback={null}>
+        <Adopt params={params} />
+      </Suspense>
     </>
   );
+}
+
+async function Adopt({ params }: { params: PageProps<"/events/[slug]">["params"] }) {
+  const { slug } = await params;
+  return <AdoptSheet type="event" slug={slug} />;
 }

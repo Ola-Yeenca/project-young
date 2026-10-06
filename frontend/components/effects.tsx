@@ -12,15 +12,17 @@ type PeekState = { x: number; y: number; vx: number; tx?: number; ty?: number };
 export function Effects() {
   useEffect(() => {
     installNoise();
+    // Only touch nodes React has already hydrated (they carry React's fiber key); changing a
+    // server-rendered node before its boundary hydrates causes a hydration mismatch.
+    const hydrated = (el: Element) => Object.keys(el).some((k) => k.startsWith("__reactFiber$"));
     const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    /* ---- scroll reveals: [data-rv] → .pre until in view, then .seen ---- */
+    /* ---- scroll reveals: [data-rv] → data-rvs="pre" until in view, then "seen" ---- */
     const io = new IntersectionObserver(
       (es) =>
         es.forEach((en) => {
           if (en.isIntersecting) {
-            en.target.classList.remove("pre");
-            en.target.classList.add("seen");
+            (en.target as HTMLElement).dataset.rvs = "seen";
             io.unobserve(en.target);
           }
         }),
@@ -28,14 +30,15 @@ export function Effects() {
     );
     const reveal = () => {
       const vh = window.innerHeight;
-      document.querySelectorAll<HTMLElement>("[data-rv]:not(.seen):not(.pre)").forEach((el) => {
+      document.querySelectorAll<HTMLElement>("[data-rv]:not([data-rvs])").forEach((el) => {
+        if (!hydrated(el)) return;
         if (!el.offsetParent && getComputedStyle(el).position !== "fixed") return;
         const r = el.getBoundingClientRect();
         if (r.top < vh && r.bottom > 0) {
-          el.classList.add("seen");
+          el.dataset.rvs = "seen";
           return;
         }
-        el.classList.add("pre");
+        el.dataset.rvs = "pre";
         io.observe(el);
       });
     };
@@ -49,6 +52,12 @@ export function Effects() {
     });
     mo.observe(document.body, { childList: true, subtree: true });
     reveal();
+    // Hydration doesn't mutate the DOM, so rescan briefly while streamed boundaries hydrate.
+    let scans = 0;
+    const rescan = setInterval(() => {
+      reveal();
+      if (++scans >= 20) clearInterval(rescan);
+    }, 150);
 
     /* ---- magnetic buttons ---- */
     const onMag = (e: PointerEvent) => {
@@ -60,7 +69,7 @@ export function Effects() {
           x.style.translate = "";
         }
       });
-      if (!m) return;
+      if (!m || !hydrated(m)) return;
       const r = m.getBoundingClientRect(),
         dx = e.clientX - (r.left + r.width / 2),
         dy = e.clientY - (r.top + r.height / 2);
@@ -133,7 +142,7 @@ export function Effects() {
     };
     const strips = (dt: number) => {
       document.querySelectorAll<HTMLElement>(".strip").forEach((s) => {
-        if (!s.offsetParent) return;
+        if (!s.offsetParent || !hydrated(s)) return;
         if (s.hasAttribute("data-drift") && !RM && !stripHover && !s.dataset.drag) {
           s.scrollLeft += dt * 0.025;
           if (s.scrollLeft >= s.scrollWidth - s.clientWidth - 1) s.scrollLeft = 0;
@@ -185,6 +194,7 @@ export function Effects() {
     document.addEventListener("pointerdown", onDown);
     return () => {
       cancelAnimationFrame(raf);
+      clearInterval(rescan);
       mo.disconnect();
       io.disconnect();
       document.removeEventListener("pointermove", onMag);
