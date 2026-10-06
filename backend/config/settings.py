@@ -38,6 +38,18 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1" if DEBUG else "")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
+# Railway sets RAILWAY_PUBLIC_DOMAIN for every service and runs its health check
+# from healthcheck.railway.app, so trust both without extra configuration.
+RAILWAY_PUBLIC_DOMAIN = env("RAILWAY_PUBLIC_DOMAIN")
+if RAILWAY_PUBLIC_DOMAIN:
+    ALLOWED_HOSTS += [RAILWAY_PUBLIC_DOMAIN, "healthcheck.railway.app"]
+# Every real domain we serve is also a trusted origin for Studio's forms.
+for _host in ALLOWED_HOSTS:
+    if "." in _host and not _host.startswith(".") and _host not in {"127.0.0.1", "healthcheck.railway.app"}:
+        _origin = f"https://{_host}"
+        if _origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_origin)
+
 INSTALLED_APPS = [
     "jazzmin",
     "django.contrib.admin",
@@ -181,6 +193,8 @@ REST_FRAMEWORK = {
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", True)
+    # The host's health check calls over plain HTTP inside its network.
+    SECURE_REDIRECT_EXEMPT = [r"^api/v1/health/$"]
     SECURE_HSTS_SECONDS = int(env("DJANGO_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

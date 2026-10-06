@@ -94,8 +94,10 @@ settings → booking or contact email) and sends the client a confirmation.
 
 Set the variables in `.env.example`: a secret key, allowed hosts, `DATABASE_URL`
 for Postgres, the S3/R2 bucket for uploads and SMTP details. The `Dockerfile`
-runs migrations and starts Gunicorn on `$PORT`, so Railway, Render or Fly.io
-can deploy it as is.
+runs migrations, creates the first admin from `DJANGO_SUPERUSER_*` (once) and
+starts Gunicorn on `$PORT`. `railway.json` sets up the Railway build and health
+check. The step-by-step guide, including Cloudflare and Resend, is in
+[`docs/DEPLOY.md`](../docs/DEPLOY.md).
 
 Data retention for GDPR and Nigeria's NDPA: schedule
 `python manage.py purge_old_enquiries --months 24` to run monthly.

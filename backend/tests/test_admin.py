@@ -125,3 +125,28 @@ class CommandTests(HOYTestCase):
         ContactEnquiry.objects.create(name="New", email="n@x.com", message="m")
         call_command("purge_old_enquiries", months=24, verbosity=0, stdout=open("/dev/null", "w"))
         self.assertEqual(list(ContactEnquiry.objects.values_list("name", flat=True)), ["New"])
+
+
+class EnsureAdminTests(HOYTestCase):
+    def test_creates_once_and_never_overwrites(self):
+        import os
+        from io import StringIO
+        from unittest import mock
+
+        env = {"DJANGO_SUPERUSER_USERNAME": "hoy", "DJANGO_SUPERUSER_EMAIL": "hoy@x.com", "DJANGO_SUPERUSER_PASSWORD": "first-password-123"}
+        with mock.patch.dict(os.environ, env):
+            call_command("ensure_admin", stdout=StringIO())
+            user = get_user_model().objects.get(username="hoy")
+            self.assertTrue(user.is_superuser and user.check_password("first-password-123"))
+            user.set_password("changed-in-studio-1")
+            user.save()
+            call_command("ensure_admin", stdout=StringIO())
+            user.refresh_from_db()
+            self.assertTrue(user.check_password("changed-in-studio-1"))
+
+    def test_skips_without_variables(self):
+        from io import StringIO
+
+        out = StringIO()
+        call_command("ensure_admin", stdout=out)
+        self.assertIn("skipping", out.getvalue())
