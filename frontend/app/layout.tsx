@@ -10,9 +10,11 @@ import { SheetHost } from "@/components/sheets/SheetHost";
 import { ShellSkeleton } from "@/components/skeleton";
 import "./globals.css";
 
-const geist = Geist({ variable: "--font-geist", subsets: ["latin"], weight: ["300", "400", "500", "600", "800", "900"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], weight: ["400", "500"] });
-const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: ["latin"], weight: "400", style: "italic" });
+// adjustFontFallback off: the size-adjusted Arial fallback would otherwise draw glyphs these fonts
+// lack (→ ↗ ✦ ■) before the prototype's system-ui fallback in --sans/--mono/--serif gets to.
+const geist = Geist({ variable: "--font-geist", subsets: ["latin"], weight: ["300", "400", "500", "600", "800", "900"], adjustFontFallback: false });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], weight: ["400", "500"], adjustFontFallback: false });
+const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: ["latin"], weight: "400", style: "italic", adjustFontFallback: false });
 
 export const metadata: Metadata = {
   title: { default: "House of Young", template: "%s · House of Young" },

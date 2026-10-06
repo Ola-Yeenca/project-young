@@ -137,6 +137,9 @@ export function Effects() {
 
     /* ---- strips: slow drift + parallax + mouse drag ---- */
     let stripHover = false;
+    // Fractional drift position per strip: scrollLeft rounds to whole (device) pixels, so adding
+    // .4px a frame directly (as the prototype did) barely moves on 1x screens.
+    const driftX = new WeakMap<HTMLElement, number>();
     const onOver = (e: PointerEvent) => {
       stripHover = !!(e.target as Element).closest?.(".strip");
     };
@@ -144,8 +147,12 @@ export function Effects() {
       document.querySelectorAll<HTMLElement>(".strip").forEach((s) => {
         if (!s.offsetParent || !hydrated(s)) return;
         if (s.hasAttribute("data-drift") && !RM && !stripHover && !s.dataset.drag) {
-          s.scrollLeft += dt * 0.025;
-          if (s.scrollLeft >= s.scrollWidth - s.clientWidth - 1) s.scrollLeft = 0;
+          let x = driftX.get(s) ?? s.scrollLeft;
+          if (Math.abs(x - s.scrollLeft) > 2) x = s.scrollLeft; // user scrolled or dragged
+          x += dt * 0.025;
+          if (x >= s.scrollWidth - s.clientWidth - 1) x = 0;
+          driftX.set(s, x);
+          s.scrollLeft = x;
         }
         if (RM) return;
         const r = s.getBoundingClientRect(),
