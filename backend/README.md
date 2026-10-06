@@ -18,9 +18,34 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Admin: http://localhost:8000/admin/ · API: http://localhost:8000/api/v1/
+Studio (team dashboard): http://localhost:8000/studio/ · Advanced admin: http://localhost:8000/admin/ · API: http://localhost:8000/api/v1/
 
 Emails print to the terminal in debug mode.
+
+## HOY Studio
+
+`/studio/` is the day-to-day dashboard for the team. It works on desktop, tablet
+(slide-out menu) and phone (bottom tab bar, tables turn into cards), in light and
+dark mode.
+
+- **Overview**: new enquiries, events in the next 30 days, average tickets sold and
+  bookings won, each against the previous period. An upcoming events table with
+  sales progress and one-click publish. A "Needs attention" list (enquiries waiting
+  over 24 hours, events without a poster or ticket link, drafts about to start), a
+  dot chart of enquiries over four weeks (one dot per enquiry), most requested
+  talent and recent team activity.
+- **Enquiries**: inbox with status tabs, search, a pipeline view, email, WhatsApp and
+  call shortcuts, internal notes, owner and status in one place.
+- **Events**: poster board with live, draft and sold-out states, homepage star and
+  publish toggles. The editor has a live preview card and a publish checklist.
+  Times are entered in the event city's local time.
+- **Talent, Gallery, Shop, Site & FAQs**: roster with booking counts, drag-and-drop
+  photo uploads, per-city prices and checkout links, company copy and FAQs.
+- The city switch at the top filters everything to Valencia, Lagos or both.
+- Every change made in Studio is recorded in the same history as the admin.
+
+The classic Django admin stays available as "Advanced admin" for rare tasks such
+as users, permissions and cities.
 
 ## What the team manages in the admin
 

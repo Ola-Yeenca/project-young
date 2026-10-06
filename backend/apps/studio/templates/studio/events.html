@@ -1,0 +1,40 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}Events{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="calendar" %}{% endblock %}
+{% block heading %}Events{% endblock %}
+{% block sub %}Star an event to put it on the homepage record player{% endblock %}
+{% block action %}<a class="btn pri" href="{% url 'studio:event_new' %}">{% include "studio/_i.html" with i="plus" %}<span>New event</span></a>{% endblock %}
+{% block filters_extra %}
+<nav class="seg" aria-label="When">{% for t in tabs %}<a href="?tab={{ t.key }}" class="{% if t.on %}on{% endif %}">{{ t.label }} <span>{{ t.count }}</span></a>{% endfor %}</nav>
+{% endblock %}
+{% block content %}
+<div class="board">
+  {% for e in events %}
+  <article class="card ev">
+    <a class="art" href="{% url 'studio:event_edit' e.pk %}">
+      {% if e.poster %}<img src="{{ e.poster.url }}" alt="" loading="lazy">{% else %}<span class="noart">{% include "studio/_i.html" with i="image" %}</span>{% endif %}
+      <span class="badges">
+        {% if e.status == 'draft' %}<span class="pill gold">Draft</span>{% elif e.status == 'cancelled' %}<span class="pill crit">Cancelled</span>{% elif e.sold_out %}<span class="pill good">Sold out</span>{% else %}<span class="pill good">Live</span>{% endif %}
+      </span>
+      <span class="date-chip"><b>{{ e.local_starts_at|date:"d" }}</b><span>{{ e.local_starts_at|date:"M" }}</span></span>
+    </a>
+    <div class="body">
+      <div><h3><a href="{% url 'studio:event_edit' e.pk %}">{{ e.title }}</a></h3><span class="meta">{{ e.local_starts_at|date:"D H:i" }} · {{ e.venue.name }}, {{ e.city }}</span></div>
+      {% if e.sold_percent is not None or e.sold_out %}<div class="qty" style="min-width:0"><span class="num" style="font-size:.84rem"><b>{% if e.sold_out %}100{% else %}{{ e.sold_percent }}{% endif %}%</b><small>sold</small></span><span class="progress"><i class="{% if e.sold_out %}done{% endif %}" style="width:{% if e.sold_out %}100{% else %}{{ e.sold_percent }}{% endif %}%"></i></span></div>{% endif %}
+      <div class="foot">
+        <span class="price">{{ e.price_from|money:e.city.currency_symbol }}</span>
+        <span class="muted" style="font-size:.8rem">{{ e.provider }}</span>
+        <span class="grow"></span>
+        {% if tab != 'past' %}
+        <form method="post" action="{% url 'studio:event_toggle' e.pk 'featured' %}">{% csrf_token %}<input type="hidden" name="back" value="{{ request.get_full_path }}">
+          <button class="star {% if e.is_featured %}on{% endif %}" title="{% if e.is_featured %}On the homepage. Click to remove.{% else %}Feature on the homepage{% endif %}" aria-pressed="{{ e.is_featured|yesno:'true,false' }}">{% include "studio/_i.html" with i="star" %}</button></form>
+        {% if e.status == 'draft' %}<form method="post" action="{% url 'studio:event_toggle' e.pk 'publish' %}">{% csrf_token %}<input type="hidden" name="back" value="{{ request.get_full_path }}"><button class="btn pri sm">Publish</button></form>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+  {% if tab != 'past' %}<a class="new-card" href="{% url 'studio:event_new' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">New event</b><span style="font-size:.84rem">Draft it now, publish when tickets are live</span></a>{% endif %}
+</div>
+{% if not events and tab == 'past' %}<div class="card empty">{% include "studio/_i.html" with i="calendar" %}<b>No past events yet</b></div>{% endif %}
+{% endblock %}

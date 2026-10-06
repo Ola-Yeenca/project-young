@@ -1,31 +1,9 @@
-from zoneinfo import ZoneInfo
-
 from django import forms
 from django.contrib import admin, messages
-from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import Event
-
-
-def to_city_wall_time(value, city):
-    """Show a stored datetime as the wall-clock time in the event's city."""
-    if value is None or city is None:
-        return value
-    return timezone.localtime(value, ZoneInfo(city.timezone)).replace(tzinfo=None)
-
-
-def from_city_wall_time(value, city):
-    """Read a datetime typed into the admin as wall-clock time in the event's city.
-
-    Django has already attached the admin's own time zone (Europe/Madrid). We drop
-    it and attach the city's zone instead, so 20:00 for a Lagos event means 20:00
-    in Lagos.
-    """
-    if value is None or city is None:
-        return value
-    naive = timezone.make_naive(value) if timezone.is_aware(value) else value
-    return timezone.make_aware(naive, ZoneInfo(city.timezone))
+from .timezones import from_city_wall_time, to_city_wall_time
 
 
 class EventAdminForm(forms.ModelForm):

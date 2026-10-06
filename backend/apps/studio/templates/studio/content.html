@@ -1,0 +1,47 @@
+{% extends "studio/base.html" %}
+{% block title %}Site &amp; FAQs{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="sliders" %}{% endblock %}
+{% block heading %}Site &amp; FAQs{% endblock %}
+{% block sub %}Company copy, where enquiries go, FAQs and cities{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<div class="cities-row">
+  {% for c in cities_list %}
+  <section class="card city-card">
+    <div style="display:flex;align-items:center;gap:8px"><span class="mono">{{ c.country }} · {{ c.currency }}</span><span class="grow" style="flex:1"></span>{% if c.is_active %}<span class="pill good">Live</span>{% else %}<span class="pill gold">Hidden</span>{% endif %}</div>
+    <h3>{{ c.name }}</h3>
+    <span class="muted" style="font-size:.86rem">{{ c.n_events }} upcoming event{{ c.n_events|pluralize }} · {{ c.n_talent }} on the roster</span>
+    <span class="muted" style="font-size:.86rem">Tickets via {{ c.ticket_provider|default:"—" }} · WhatsApp {{ c.whatsapp_number|default:"—" }}</span>
+    <a class="btn sm" style="justify-self:start;margin-top:4px" href="{% url 'admin:core_city_change' c.pk %}">Edit city</a>
+  </section>
+  {% endfor %}
+  <a class="new-card" style="min-height:150px" href="{% url 'admin:core_city_add' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.8rem">Accra, London… one form</span></a>
+</div>
+
+<form class="card" method="post">{% csrf_token %}<input type="hidden" name="action" value="site">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="sliders" %}</span><h2>Site settings</h2></div>
+  <div class="card-b fgrid">
+    {% include "studio/_field.html" with f=site_form.tagline wide=1 %}
+    {% include "studio/_field.html" with f=site_form.about wide=1 %}
+    {% include "studio/_field.html" with f=site_form.booking_email %}{% include "studio/_field.html" with f=site_form.contact_email %}
+    {% include "studio/_field.html" with f=site_form.instagram_url hide_help=1 %}{% include "studio/_field.html" with f=site_form.tiktok_url hide_help=1 %}
+    {% include "studio/_field.html" with f=site_form.youtube_url hide_help=1 %}{% include "studio/_field.html" with f=site_form.show_powered_by %}
+    <div class="full" style="display:flex;justify-content:flex-end"><button class="btn pri">Save settings</button></div>
+  </div>
+</form>
+
+<form class="card" method="post" id="faqs">{% csrf_token %}<input type="hidden" name="action" value="faqs">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="chat" %}</span><h2>FAQs</h2><span class="tag">{{ faqs.queryset.count }}</span><span class="grow"></span><button class="btn pri sm">Save FAQs</button></div>
+  <div class="card-b">
+    {{ faqs.management_form }}
+    <div class="faq-row head"><span>Question</span><span>Answer</span><span>Category</span><span>Order</span><span>Published</span><span>Remove</span></div>
+    {% for f in faqs %}<div class="faq-row">{% for h in f.hidden_fields %}{{ h }}{% endfor %}
+      <div class="f">{{ f.question }}{% for e in f.question.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+      <div class="f">{{ f.answer }}{% for e in f.answer.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+      <div class="f">{{ f.category }}</div><div class="f">{{ f.order }}</div>
+      <label class="switch" style="padding:9px 10px"><small>Live</small>{{ f.is_published }}</label>
+      <div style="display:grid;place-items:center;min-height:42px">{% if f.instance.pk %}{{ f.DELETE }}{% else %}<span class="pill gold nodot">New</span>{% endif %}</div>
+    </div>{% endfor %}
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "studio/base.html" %}
+{% block title %}{% if album %}{{ album.title }}{% else %}New album{% endif %}{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="image" %}{% endblock %}
+{% block heading %}{% if album %}{{ album.title }}{% else %}New album{% endif %}{% endblock %}
+{% block sub %}<a href="{% url 'studio:gallery' %}">Gallery</a> / {% if album %}{{ items|length }} items{% else %}Create{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<div class="editor">
+  <div class="stack">
+    {% if album %}
+    <section class="card card-b">
+      <form method="post" enctype="multipart/form-data" style="display:grid;gap:12px">{% csrf_token %}<input type="hidden" name="action" value="upload">
+        <label class="file-drop" style="padding:40px">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the night's photos here">Drop the night's photos here</b><span>or click to choose as many as you like</span><input type="file" name="m-photos" accept="image/*" multiple><div class="file-preview"></div></label>
+        <div class="fgrid">{{ upload.video_url }}{{ upload.caption }}</div>
+        <div><button class="btn pri">{% include "studio/_i.html" with i="upload" %}Add to album</button></div>
+      </form>
+    </section>
+    <section class="masonry">
+      {% for it in items %}<figure class="tile" style="margin:0 0 10px">{% if it.image %}<img src="{{ it.image.url }}" alt="{{ it.caption }}" loading="lazy">{% else %}<a class="vid" href="{{ it.video_url }}" target="_blank" rel="noopener">▶ {{ it.video_url|truncatechars:40 }}</a>{% endif %}{% if it.caption %}<figcaption class="cap">{{ it.caption }}</figcaption>{% endif %}
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_item"><input type="hidden" name="item" value="{{ it.pk }}"><button class="btn sm confirm" data-confirm="Remove?" aria-label="Remove">{% include "studio/_i.html" with i="trash" %}</button></form></figure>
+      {% empty %}<div class="card empty">{% include "studio/_i.html" with i="image" %}<b>No photos yet</b><span>Drop some above.</span></div>{% endfor %}
+    </section>
+    {% else %}
+    <section class="card card-b muted">Give the album a name and city, then you can drop in photos.</section>
+    {% endif %}
+  </div>
+  <aside class="preview">
+    <form class="card card-b" method="post" enctype="multipart/form-data" style="display:grid;gap:14px">{% csrf_token %}
+      <div class="sect-h" style="margin:0">Album details</div>
+      {% include "studio/_field.html" with f=form.title %}
+      <div class="f"><label for="id_a-slug">Web address</label><input class="in" id="id_a-slug" name="a-slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_a-title" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+      {% include "studio/_field.html" with f=form.city %}{% include "studio/_field.html" with f=form.event %}{% include "studio/_field.html" with f=form.date %}
+      {% include "studio/_field.html" with f=form.cover %}{% include "studio/_field.html" with f=form.is_published %}
+      <button class="btn pri">{% if album %}Save details{% else %}Create album{% endif %}</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

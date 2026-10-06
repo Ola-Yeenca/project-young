@@ -1,0 +1,74 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}{% if person %}{{ person.name }}{% else %}Add talent{% endif %}{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="mic" %}{% endblock %}
+{% block heading %}{% if person %}{{ person.name }}{% else %}Add talent{% endif %}{% endblock %}
+{% block sub %}<a href="{% url 'studio:talent' %}">Talent</a> / {% if person %}Profile{% else %}New{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<div class="editor">
+  <div class="stack">
+    <form method="post" enctype="multipart/form-data" novalidate class="stack" id="talent-form">{% csrf_token %}
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="user" %}</span>Profile</div>
+        <div class="photo-edit" style="margin-bottom:16px">
+          <img id="t-photo" alt="" {% if person.photo %}src="{{ person.photo.url }}"{% else %}hidden{% endif %}>{% if not person.photo %}<span class="ph" id="t-ph"></span>{% endif %}
+          <div class="f"><label for="id_photo">Main photo</label><input class="file" type="file" id="id_photo" name="photo" accept="image/*" data-preview="#t-photo">{% for e in form.photo.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">Portrait, at least 1000px tall.</span></div>
+        </div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.name %}
+          <div class="f"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_name" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+          {% include "studio/_field.html" with f=form.category %}
+          {% include "studio/_field.html" with f=form.genre %}
+          {% include "studio/_field.html" with f=form.city %}
+          <span></span>
+          {% include "studio/_field.html" with f=form.bio wide=1 %}
+          {% include "studio/_field.html" with f=form.previous_work wide=1 %}
+        </div>
+      </section>
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="play" %}</span>Music and socials</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.spotify_url hide_help=1 %}{% include "studio/_field.html" with f=form.apple_music_url hide_help=1 %}
+          {% include "studio/_field.html" with f=form.soundcloud_url hide_help=1 %}{% include "studio/_field.html" with f=form.youtube_url hide_help=1 %}
+          {% include "studio/_field.html" with f=form.instagram_url hide_help=1 %}{% include "studio/_field.html" with f=form.tiktok_url hide_help=1 %}
+          {% include "studio/_field.html" with f=form.website_url hide_help=1 %}
+        </div>
+      </section>
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="star" %}</span>Bookings and visibility</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.booking_available %}{% include "studio/_field.html" with f=form.travels %}
+          {% include "studio/_field.html" with f=form.is_published %}{% include "studio/_field.html" with f=form.is_featured %}
+          {% include "studio/_field.html" with f=form.featured_order %}
+        </div>
+      </section>
+      <div class="formbar"><span class="grow"></span><a class="btn ghost" href="{% url 'studio:talent' %}">Cancel</a><button class="btn pri">{% if person %}Save changes{% else %}Add to roster{% endif %}</button></div>
+    </form>
+  </div>
+
+  <aside class="preview">
+    {% if person %}
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="image" %}</span><h2>Photos and video</h2><span class="tag">{{ person.media.count }}</span></div>
+      <div class="card-b" style="display:grid;gap:12px">
+        <form method="post" enctype="multipart/form-data" style="display:grid;gap:10px">{% csrf_token %}<input type="hidden" name="action" value="upload">
+          <label class="file-drop">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop photos here">Drop photos here</b><span style="font-size:.78rem">or click to choose several</span><input type="file" name="m-photos" accept="image/*" multiple><div class="file-preview"></div></label>
+          {{ upload.video_url }}{{ upload.caption }}
+          <button class="btn pri">Add</button>
+        </form>
+        <div class="masonry" style="columns:2 100px">
+          {% for m in person.media.all %}<div class="tile">{% if m.image %}<img src="{{ m.image.url }}" alt="{{ m.caption }}" loading="lazy">{% else %}<a class="vid" href="{{ m.video_url }}" target="_blank" rel="noopener">▶ Video</a>{% endif %}
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_media"><input type="hidden" name="media" value="{{ m.pk }}"><button class="btn sm icon-btn confirm" data-confirm="✕" aria-label="Remove">{% include "studio/_i.html" with i="trash" %}</button></form></div>{% endfor %}
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="inbox" %}</span><h2>Recent enquiries</h2></div>
+      <div class="results">{% for e in recent %}<a class="result" href="{% url 'studio:enquiries' %}?status=all&open=bk-{{ e.pk }}"><span class="av">{{ e.client_name|initials }}</span><span style="flex:1;min-width:0"><b style="font-weight:500">{{ e.client_name }}</b><small class="muted" style="display:block">{{ e.event_date|date:"j M Y" }} · {{ e.event_location }}</small></span><span class="pill">{{ e.get_status_display }}</span></a>{% empty %}<p class="muted card-b">No booking enquiries yet.</p>{% endfor %}</div>
+    </section>
+    {% else %}
+    <section class="card card-b muted">Save the profile first, then add photos and videos here.</section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

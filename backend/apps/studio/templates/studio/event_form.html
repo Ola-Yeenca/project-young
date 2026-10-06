@@ -1,0 +1,111 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}{% if event %}{{ event.title }}{% else %}New event{% endif %}{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="calendar" %}{% endblock %}
+{% block heading %}{% if event %}{{ event.title }}{% else %}New event{% endif %}{% endblock %}
+{% block sub %}<a href="{% url 'studio:events' %}">Events</a> / {% if event %}Edit{% else %}Create{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<form id="event-form" method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+  {% if form.non_field_errors %}<div class="card card-b" style="color:var(--crit);margin-bottom:14px">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+  <div class="editor">
+    <div class="stack">
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="calendar" %}</span>The night</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.title %}
+          <div class="f {% if form.slug.errors %}has-err{% endif %}"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_title" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">houseofyoung.com/events/<b>{{ form.slug.value|default:'…' }}</b></span></div>
+          {% include "studio/_field.html" with f=form.city %}
+          {% include "studio/_field.html" with f=form.venue %}
+          {% include "studio/_field.html" with f=form.starts_at %}
+          {% include "studio/_field.html" with f=form.ends_at %}
+          {% include "studio/_field.html" with f=form.kind %}
+          {% include "studio/_field.html" with f=form.status %}
+        </div>
+        <p class="help muted" id="pv-tz" style="margin-top:10px;font-size:.8rem"></p>
+      </section>
+
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="image" %}</span>Artwork and copy</div>
+        <div class="fgrid">
+          <div class="f full">
+            <label>Poster</label>
+            <label class="file-drop">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the poster here or click to choose">{% if event.poster %}Replace the poster{% else %}Drop the poster here or click to choose{% endif %}</b><span style="font-size:.8rem">Square or portrait, JPG or PNG</span>
+              <input type="file" name="poster" accept="image/*" data-preview="#pv-img"></label>
+            {% for e in form.poster.errors %}<span class="err">{{ e }}</span>{% endfor %}
+          </div>
+          {% include "studio/_field.html" with f=form.caption wide=1 %}
+          {% include "studio/_field.html" with f=form.description wide=1 %}
+        </div>
+      </section>
+
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="mic" %}</span>Line-up and sound</div>
+        <div class="f">
+          <label>HOY talent playing</label>
+          <div class="checks">
+            {% for city_name, people in talent_by_city.items %}<span class="grp">{{ city_name }}</span>
+              {% for t in people %}<label><input type="checkbox" name="lineup" value="{{ t.pk }}" {% if t.pk in selected_lineup %}checked{% endif %}>{{ t.name }}</label>{% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="fgrid" style="margin-top:16px">
+          {% include "studio/_field.html" with f=form.lineup_extra wide=1 %}
+          {% include "studio/_field.html" with f=form.music_style %}
+          {% include "studio/_field.html" with f=form.bpm %}
+        </div>
+      </section>
+
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="ticket" %}</span>Tickets</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.ticket_url wide=1 %}
+          {% include "studio/_field.html" with f=form.ticket_provider %}
+          {% include "studio/_field.html" with f=form.price_from %}
+          {% include "studio/_field.html" with f=form.sold_percent %}
+          {% include "studio/_field.html" with f=form.age_restriction %}
+          {% include "studio/_field.html" with f=form.sold_out wide=1 %}
+        </div>
+      </section>
+
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="star" %}</span>Homepage</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.is_featured %}
+          {% include "studio/_field.html" with f=form.featured_order %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="preview">
+      <section class="card">
+        <div class="pv-art">
+          <img id="pv-img" alt="" {% if event.poster %}src="{{ event.poster.url }}"{% else %}hidden{% endif %}>
+          <span class="tag pill" id="pv-status">Draft</span>
+          <div class="ov"><b id="pv-title">Event title</b><span id="pv-when"></span></div>
+        </div>
+        <div class="pv-b"><span class="price" id="pv-price">TBA</span><span class="grow"></span><span class="muted" style="font-size:.84rem" id="pv-provider"></span></div>
+      </section>
+      <section class="card card-b">
+        <div class="sect-h" style="margin-bottom:12px">Ready to publish?</div>
+        <div class="checklist">
+          <div id="ck-title"><i></i>Title</div>
+          <div id="ck-when"><i></i>Date, time and venue</div>
+          <div id="ck-poster"><i></i>Poster</div>
+          <div id="ck-tickets"><i></i>Ticket link, free entry or sold out</div>
+          <div id="ck-lineup"><i></i>Line-up</div>
+          <div id="ck-caption"><i></i>Homepage caption</div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="formbar" style="margin-top:18px">
+    {% if event and perms.events.delete_event %}<button class="btn danger confirm" name="action" value="delete" data-confirm="Click again to delete" formnovalidate>{% include "studio/_i.html" with i="trash" %}Delete</button>{% endif %}
+    <span class="grow"></span>
+    <a class="btn ghost" href="{% url 'studio:events' %}">Cancel</a>
+    <button class="btn" name="action" value="save_continue">Save and keep editing</button>
+    <button class="btn pri" name="action" value="save">{% if event %}Save changes{% else %}Create event{% endif %}</button>
+  </div>
+</form>
+{{ venues|json_script:"venues-data" }}{{ cities|json_script:"cities-data" }}
+{% endblock %}

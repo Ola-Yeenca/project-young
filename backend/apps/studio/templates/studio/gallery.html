@@ -1,0 +1,17 @@
+{% extends "studio/base.html" %}
+{% block title %}Gallery{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="image" %}{% endblock %}
+{% block heading %}Gallery{% endblock %}
+{% block sub %}Albums from the nights{% endblock %}
+{% block action %}<a class="btn pri" href="{% url 'studio:album_new' %}">{% include "studio/_i.html" with i="plus" %}<span>New album</span></a>{% endblock %}
+{% block content %}
+<div class="board">
+  {% for a in albums %}
+  <a class="card album" href="{% url 'studio:album_edit' a.pk %}">
+    <div class="cov">{% for it in a.items.all|slice:":3" %}{% if it.image %}<img src="{{ it.image.url }}" alt="" loading="lazy">{% endif %}{% endfor %}</div>
+    <div class="body"><span style="flex:1;min-width:0"><b>{{ a.title }}</b><small>{{ a.n }} item{{ a.n|pluralize }} · {{ a.city }}{% if a.date %} · {{ a.date|date:"j M Y" }}{% endif %}</small></span>{% if not a.is_published %}<span class="pill gold">Hidden</span>{% endif %}</div>
+  </a>
+  {% endfor %}
+  <a class="new-card" href="{% url 'studio:album_new' %}" style="min-height:220px">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">New album</b><span style="font-size:.84rem">Then drop in the photos from the night</span></a>
+</div>
+{% endblock %}

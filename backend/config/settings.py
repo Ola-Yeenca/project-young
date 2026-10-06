@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "apps.gallery",
     "apps.shop",
     "apps.enquiries",
+    "apps.studio",
 ]
 
 MIDDLEWARE = [
@@ -78,6 +79,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.studio.context.studio",
             ],
         },
     },
@@ -145,6 +147,7 @@ STORAGES = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGIN_URL = "studio:login"
 DATA_UPLOAD_MAX_NUMBER_FILES = 200
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 

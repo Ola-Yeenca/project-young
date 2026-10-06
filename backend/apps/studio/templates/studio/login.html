@@ -1,0 +1,30 @@
+{% load static %}<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark">
+<title>Sign in · HOY Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
+<link rel="stylesheet" href="{% static 'studio/studio.css' %}">
+</head>
+<body>
+<div class="login">
+  <section class="art">
+    <span class="mono" style="color:var(--side-mute)">House of Young · Studio</span>
+    <div class="disc" aria-hidden="true"></div>
+    <div style="position:relative;display:grid;gap:14px">
+      <h1>Run the nights, the roster and the <span class="it">room.</span></h1>
+      <p>Events, talent, bookings and the gallery for Valencia and Lagos, in one place.</p>
+    </div>
+  </section>
+  <section class="formside">
+    <form method="post">{% csrf_token %}
+      <div><span class="mono">Team sign in</span><h2 style="margin-top:6px">Welcome back</h2></div>
+      {% if form.non_field_errors %}<div class="pill crit" style="height:auto;padding:8px 12px;white-space:normal">Wrong username or password. Check both and try again.</div>{% endif %}
+      <div class="f"><label for="id_username">Username</label><input class="in" id="id_username" name="username" autocomplete="username" autofocus required></div>
+      <div class="f"><label for="id_password">Password</label><input class="in" id="id_password" name="password" type="password" autocomplete="current-password" required></div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn pri" type="submit" style="height:44px">Sign in</button>
+      <span class="muted" style="font-size:.78rem">Need access? Ask an admin to add you to the HOY team group.</span>
+    </form>
+  </section>
+</div>
+</body></html>

@@ -1,0 +1,98 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}Enquiries{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="inbox" %}{% endblock %}
+{% block heading %}Enquiries{% endblock %}
+{% block sub %}Bookings and messages from the site{% endblock %}
+{% block filters_extra %}
+  <nav class="seg" aria-label="Type">
+    <a href="{% keep kind='' open='' %}" class="{% if not kind %}on{% endif %}">Everything</a>
+    <a href="{% keep kind='bk' open='' %}" class="{% if kind == 'bk' %}on{% endif %}">Bookings</a>
+    <a href="{% keep kind='ct' open='' %}" class="{% if kind == 'ct' %}on{% endif %}">Messages</a>
+  </nav>
+{% endblock %}
+{% block content %}
+<nav class="seg" aria-label="Status" style="justify-self:start">
+  {% for t in tabs %}<a href="{% keep status=t.key open='' %}" class="{% if t.on %}on{% endif %}">{{ t.label }} <span>{{ t.count }}</span></a>{% endfor %}
+</nav>
+
+<div class="inbox {% if detail %}has-detail{% endif %}">
+  <section class="card list" aria-label="Enquiries">
+    <form class="search-in" method="get">{% include "studio/_i.html" with i="search" %}
+      <input name="q" value="{{ q }}" placeholder="Search name, email, venue, act" aria-label="Search enquiries">
+      <input type="hidden" name="status" value="{{ status }}"><input type="hidden" name="kind" value="{{ kind }}">
+    </form>
+    <div class="msgs">
+      {% for r in rows %}
+      <a class="msg {% if detail and detail.key == r.key %}on{% endif %} {% if r.obj.status == 'new' %}new{% endif %}" href="{% keep open=r.key %}">
+        <span class="av">{{ r.name|initials }}</span>
+        <span style="min-width:0">
+          <span class="l1"><b>{{ r.name }}</b><time datetime="{{ r.created|date:'c' }}">{{ r.created|ago }}</time></span>
+          <span class="l2">{{ r.title }} · {{ r.snippet }}</span>
+          <span class="l3">
+            <span class="pill {% if r.obj.status == 'new' %}gold{% elif r.obj.status == 'won' %}good{% elif r.obj.status == 'in_progress' %}info{% elif r.obj.status == 'spam' %}crit{% endif %}">{{ r.obj.get_status_display }}</span>
+            {% if r.overdue %}<span class="pill crit">Over 24h</span>{% endif %}
+            {% if r.obj.assigned_to %}<span class="pill nodot">{{ r.obj.assigned_to.get_short_name|default:r.obj.assigned_to.get_username }}</span>{% endif %}
+          </span>
+        </span>
+      </a>
+      {% empty %}
+      <div class="empty">{% include "studio/_i.html" with i="inbox" %}<b>{% if q %}No matches for “{{ q }}”{% else %}Nothing here{% endif %}</b><span>{% if status == 'open' %}Every enquiry has been handled.{% else %}Try another status.{% endif %}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card detail" aria-label="Enquiry">
+    {% if detail %}{% with e=detail.e %}
+    <a class="back-link" href="{% keep open='' %}">← All enquiries</a>
+    <div class="head">
+      <span class="av">{{ detail.name|initials }}</span>
+      <div style="min-width:0">
+        <span class="ref">{{ e.reference }} · received {{ e.created_at|date:"D j M, H:i" }}</span>
+        <h2>{{ detail.name }}{% if detail.kind == 'bk' and e.company %} <span class="muted" style="font-size:1rem">· {{ e.company }}</span>{% endif %}</h2>
+        <span class="muted" style="font-size:.9rem">{% if detail.kind == 'bk' %}Booking {% if e.talent %}for <b style="color:var(--ink);font-weight:500">{{ e.talent.name }}</b>{% else %}(any act){% endif %}{% else %}{{ e.get_category_display }}{% if e.subject %} · {{ e.subject }}{% endif %}{% endif %}</span>
+      </div>
+      <div class="acts">
+        {% if e.email %}<a class="btn pri sm" href="mailto:{{ e.email }}?subject=Re: {{ e.reference|urlencode }} House of Young">{% include "studio/_i.html" with i="mail" %}Reply</a>{% endif %}
+        {% if detail.whatsapp %}<a class="btn sm" href="{{ detail.whatsapp }}" target="_blank" rel="noopener">{% include "studio/_i.html" with i="chat" %}WhatsApp</a>{% endif %}
+        {% if e.phone %}<a class="btn sm" href="tel:{{ e.phone }}">{% include "studio/_i.html" with i="phone" %}Call</a>{% endif %}
+      </div>
+    </div>
+    <div class="steps">{% for s in detail.steps %}<div class="step {% if s.done %}done{% endif %}"><i></i>{{ s.label }}</div>{% endfor %}</div>
+    <div class="facts">
+      {% if detail.kind == 'bk' %}
+      <div><span>Event date</span><b>{{ e.event_date|date:"D j M Y" }}</b></div>
+      <div><span>Where</span><b>{{ e.event_location }}</b></div>
+      <div><span>Type</span><b>{{ e.get_event_type_display }}</b></div>
+      <div><span>Audience</span><b>{{ e.get_expected_audience_display }}</b></div>
+      {% endif %}
+      <div><span>Email</span><b style="word-break:break-all">{{ e.email|default:"—" }}</b></div>
+      <div><span>Phone</span><b>{{ e.phone|default:"—" }}</b></div>
+    </div>
+    <div class="quote {% if not e.message %}none{% endif %}">{{ e.message|default:"No extra details were given." }}</div>
+    <form class="work" method="post" action="{% url 'studio:enquiry_update' detail.key %}">{% csrf_token %}
+      <input type="hidden" name="back" value="{{ request.get_full_path }}">
+      <div class="f">
+        <label for="notes">Internal notes</label>
+        <textarea class="in" id="notes" name="internal_notes" rows="6" placeholder="Quote sent, rider, follow-up date. Only the team sees this.">{{ e.internal_notes }}</textarea>
+        <div class="toolbar" style="margin-top:6px">
+          <select class="in" name="assign" style="max-width:220px" aria-label="Owner">
+            <option value="">{% if e.assigned_to %}Owner: {{ e.assigned_to.get_short_name|default:e.assigned_to.get_username }}{% else %}No owner{% endif %}</option>
+            <option value="me">Assign to me</option>
+            {% for u in team %}{% if u != request.user %}<option value="{{ u.pk }}">Assign to {{ u.get_short_name|default:u.get_username }}</option>{% endif %}{% endfor %}
+            {% if e.assigned_to %}<option value="none">Remove owner</option>{% endif %}
+          </select>
+          <span class="grow"></span>
+          <button class="btn pri" type="submit">Save</button>
+        </div>
+      </div>
+      <div class="status-pick" role="group" aria-label="Status">
+        <span class="muted" style="font-size:.84rem;margin-bottom:2px">Status</span>
+        {% for value, label in detail.statuses %}<button type="submit" name="status" value="{{ value }}" class="{% if e.status == value %}on{% endif %}"><i class="s-{{ value }}"></i>{{ label }}</button>{% endfor %}
+      </div>
+    </form>
+    {% endwith %}{% else %}
+    <div class="empty" style="padding:90px 20px">{% include "studio/_i.html" with i="inbox" %}<b>Pick an enquiry</b><span>Its details, notes and status appear here.</span></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

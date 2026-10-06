@@ -1,0 +1,31 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}Talent{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="mic" %}{% endblock %}
+{% block heading %}Talent{% endblock %}
+{% block sub %}The roster, their bookings and what's on the site{% endblock %}
+{% block action %}<a class="btn pri" href="{% url 'studio:talent_new' %}">{% include "studio/_i.html" with i="plus" %}<span>Add talent</span></a>{% endblock %}
+{% block filters_extra %}
+<nav class="seg" aria-label="Type"><a href="?" class="{% if not group %}on{% endif %}">Everyone</a>{% for g in groups %}<a href="?group={{ g.key }}" class="{% if g.on %}on{% endif %}">{{ g.key }}</a>{% endfor %}</nav>
+{% endblock %}
+{% block content %}
+<div class="board">
+  {% for p in people %}
+  <article class="card person">
+    <a href="{% url 'studio:talent_edit' p.pk %}">{% if p.photo %}<img class="thumb round" src="{{ p.photo.url }}" alt="" loading="lazy">{% else %}<span class="thumb round ph">{% include "studio/_i.html" with i="user" %}</span>{% endif %}</a>
+    <div style="min-width:0">
+      <h3><a href="{% url 'studio:talent_edit' p.pk %}">{{ p.name }}</a></h3>
+      <div class="meta">{{ p.get_category_display }}{% if p.genre %} · {{ p.genre }}{% endif %}</div>
+      <div class="meta">{{ p.city }}{% if p.travels %} · travels{% endif %}</div>
+    </div>
+    <div class="stats">
+      {% if not p.is_published %}<span class="pill gold">Hidden</span>{% elif not p.booking_available %}<span class="pill">Not taking bookings</span>{% else %}<span class="pill good">Bookable</span>{% endif %}
+      {% if p.open_count %}<a class="pill info" href="{% url 'studio:enquiries' %}?q={{ p.name|urlencode }}">{{ p.open_count }} open</a>{% endif %}
+      {% if p.event_count %}<span class="pill nodot">{{ p.event_count }} upcoming</span>{% endif %}
+      <span class="grow"></span>
+      <form method="post" action="{% url 'studio:talent_toggle' p.pk 'featured' %}">{% csrf_token %}<input type="hidden" name="back" value="{{ request.get_full_path }}"><button class="star {% if p.is_featured %}on{% endif %}" title="{% if p.is_featured %}On the homepage line-up{% else %}Feature on the homepage{% endif %}" aria-pressed="{{ p.is_featured|yesno:'true,false' }}">{% include "studio/_i.html" with i="star" %}</button></form>
+    </div>
+  </article>
+  {% endfor %}
+  <a class="new-card" href="{% url 'studio:talent_new' %}" style="min-height:170px">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add talent</b></a>
+</div>
+{% endblock %}

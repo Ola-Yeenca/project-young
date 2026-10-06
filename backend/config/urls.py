@@ -9,6 +9,7 @@ admin.site.site_title = "HOY admin"
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("studio/", include("apps.studio.urls")),
     path("admin/", admin.site.urls),
     path("api/v1/", include("api.urls")),
 ]

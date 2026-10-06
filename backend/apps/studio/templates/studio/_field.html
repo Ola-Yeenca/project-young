@@ -1,0 +1,11 @@
+{% load studio %}{% with t=f|field_type %}
+{% if t == "CheckboxInput" %}
+<label class="switch {% if wide %}full{% endif %}" for="{{ f.id_for_label }}"><span><b>{{ f.label }}</b>{% if f.help_text %}<small>{{ f.help_text }}</small>{% endif %}</span>{{ f }}</label>
+{% else %}
+<div class="f {% if f.errors %}has-err{% endif %} {% if wide %}full{% endif %}">
+  <label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} <span class="muted">*</span>{% endif %}</label>
+  {{ f }}
+  {% for e in f.errors %}<span class="err">{{ e }}</span>{% endfor %}
+  {% if f.help_text and not hide_help %}<span class="help">{{ f.help_text }}</span>{% endif %}
+</div>
+{% endif %}{% endwith %}

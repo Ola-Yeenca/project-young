@@ -1,0 +1,95 @@
+{% load static studio %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>{% block title %}Studio{% endblock %} · HOY Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap">
+<link rel="stylesheet" href="{% static 'studio/studio.css' %}">
+<script>try{var t=localStorage.getItem("hoy-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+{% include "studio/_sprite.html" %}
+<div class="shell">
+  <aside class="side" id="side" aria-label="Studio navigation">
+    <div class="brand">
+      <span class="m">HOY</span>
+      <span><b>House of Young</b><small>{% if scope_city %}{{ scope_city.name }}{% else %}Valencia · Lagos{% endif %}</small></span>
+      <button class="btn ghost icon-btn sm close" type="button" data-nav-close aria-label="Close menu">{% include "studio/_i.html" with i="x" %}</button>
+    </div>
+    <form class="side-search" action="{% url 'studio:search' %}" role="search">{% include "studio/_i.html" with i="search" %}<input id="global-search" name="q" value="{{ q|default:'' }}" placeholder="Search" autocomplete="off" aria-label="Search events, talent and enquiries"><kbd>/</kbd></form>
+
+    <span class="grp">Today</span>
+    <a class="nl {% if nav == 'overview' %}on{% endif %}" href="{% url 'studio:overview' %}">{% include "studio/_i.html" with i="home" %}Overview</a>
+    <a class="nl {% if nav == 'enquiries' %}on{% endif %}" href="{% url 'studio:enquiries' %}">{% include "studio/_i.html" with i="inbox" %}Enquiries{% if new_enquiries %}<span class="count hot">{{ new_enquiries }}</span>{% endif %}</a>
+    <span class="grp">Programme</span>
+    <a class="nl {% if nav == 'events' %}on{% endif %}" href="{% url 'studio:events' %}">{% include "studio/_i.html" with i="calendar" %}Events{% if upcoming_count %}<span class="count">{{ upcoming_count }}</span>{% endif %}</a>
+    <a class="nl {% if nav == 'talent' %}on{% endif %}" href="{% url 'studio:talent' %}">{% include "studio/_i.html" with i="mic" %}Talent</a>
+    <a class="nl {% if nav == 'gallery' %}on{% endif %}" href="{% url 'studio:gallery' %}">{% include "studio/_i.html" with i="image" %}Gallery</a>
+    <span class="grp">Business</span>
+    <a class="nl {% if nav == 'shop' %}on{% endif %}" href="{% url 'studio:shop' %}">{% include "studio/_i.html" with i="bag" %}Shop</a>
+    <a class="nl {% if nav == 'content' %}on{% endif %}" href="{% url 'studio:content' %}">{% include "studio/_i.html" with i="sliders" %}Site &amp; FAQs</a>
+
+    {% if setup.next %}
+    <div class="setup">
+      <div class="sky"><span class="disc"></span></div>
+      <div class="b">
+        <b>Finish setup</b>
+        <p>Next: {{ setup.next.label|lower }}.</p>
+        <div class="row"><span class="ring" style="--p:{{ setup.pct }}"></span><span>{{ setup.done }} of {{ setup.total }}</span><span class="grow"></span><a class="btn sm" href="{{ setup.next.url }}">Do it</a></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="bottom" {% if not setup.next %}style="margin-top:auto"{% endif %}>
+      <a class="nl" href="{% url 'admin:index' %}">{% include "studio/_i.html" with i="gear" %}Advanced admin</a>
+      <button class="nl" type="button" data-theme-toggle style="border:0;background:none;width:100%;text-align:left">{% include "studio/_i.html" with i="moon" %}Light / dark</button>
+      <div class="me">
+        <span class="av">{{ request.user|initials }}</span>
+        <span><b>{{ request.user.get_full_name|default:request.user.get_username }}</b><small>{% if request.user.is_superuser %}Admin{% else %}HOY team{% endif %}</small></span>
+        <form method="post" action="{% url 'studio:logout' %}">{% csrf_token %}<button type="submit" title="Sign out" aria-label="Sign out">{% include "studio/_i.html" with i="logout" %}</button></form>
+      </div>
+    </div>
+  </aside>
+  <div class="scrim" data-nav-close></div>
+
+  <div class="main">
+    <header class="top">
+      <button class="btn icon-btn burger" type="button" data-nav-open aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+      <div class="ttl">{% block icon %}{% endblock %}<h1>{% block heading %}{% endblock %}</h1><span class="sub">{% block sub %}{{ today|date:"l, F j" }}{% endblock %}</span></div>
+      <div class="grow"></div>
+      <div class="acts">{% block action %}{% endblock %}
+        <a class="bell" href="{% url 'studio:enquiries' %}?status=new" aria-label="New enquiries">{% include "studio/_i.html" with i="inbox" %}{% if new_enquiries %}<span class="dot"></span>{% endif %}</a>
+      </div>
+    </header>
+    <main class="page">
+      {% block filters %}
+      <div class="filters">
+        <span class="datechip">{% include "studio/_i.html" with i="calendar" %}{{ today|date:"D, M j" }}</span>
+        <nav class="seg" aria-label="City">
+          <a href="{% url 'studio:scope' 'all' %}?next={{ request.get_full_path|urlencode }}" class="{% if not scope_city %}on{% endif %}">All cities</a>
+          {% for c in scope_cities %}<a href="{% url 'studio:scope' c.slug %}?next={{ request.get_full_path|urlencode }}" class="{% if scope_city == c %}on{% endif %}">{{ c.name }}</a>{% endfor %}
+        </nav>
+        {% block filters_extra %}{% endblock %}
+        <span class="grow"></span>
+        <span class="updated">{% for c in clocks %}{{ c.name }} <b class="num" data-clock="{{ c.tz }}">{{ c.time }}</b>{% if not forloop.last %} · {% endif %}{% endfor %}</span>
+      </div>
+      {% endblock %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<nav class="tabbar" aria-label="Sections">
+  <a href="{% url 'studio:overview' %}" class="{% if nav == 'overview' %}on{% endif %}">{% include "studio/_i.html" with i="home" %}Overview</a>
+  <a href="{% url 'studio:enquiries' %}" class="{% if nav == 'enquiries' %}on{% endif %}">{% include "studio/_i.html" with i="inbox" %}Inbox{% if new_enquiries %}<span class="badge">{{ new_enquiries }}</span>{% endif %}</a>
+  <a href="{% url 'studio:events' %}" class="{% if nav == 'events' %}on{% endif %}">{% include "studio/_i.html" with i="calendar" %}Events</a>
+  <a href="{% url 'studio:talent' %}" class="{% if nav == 'talent' %}on{% endif %}">{% include "studio/_i.html" with i="mic" %}Talent</a>
+  <a href="#" data-nav-open class="{% if nav in 'gallery shop content' %}on{% endif %}"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg>More</a>
+</nav>
+
+{% if messages %}<div class="toasts" role="status">{% for m in messages %}<div class="toast {{ m.tags }}">{% if m.tags == 'error' %}{% include "studio/_i.html" with i="x" %}{% else %}{% include "studio/_i.html" with i="check" %}{% endif %}<span>{{ m }}</span><button type="button" aria-label="Dismiss">✕</button></div>{% endfor %}</div>{% endif %}
+<script src="{% static 'studio/studio.js' %}" defer></script>
+</body>
+</html>

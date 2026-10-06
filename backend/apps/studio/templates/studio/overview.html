@@ -1,0 +1,130 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}Overview{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="home" %}{% endblock %}
+{% block heading %}Overview{% endblock %}
+{% block action %}
+  <a class="btn" href="{% url 'studio:enquiries' %}?status=new">{% include "studio/_i.html" with i="inbox" %}<span>Open inbox</span></a>
+  <a class="btn pri" href="{% url 'studio:event_new' %}">{% include "studio/_i.html" with i="plus" %}<span>New event</span></a>
+{% endblock %}
+{% block content %}
+<section class="kpis" aria-label="Key numbers">
+  {% for k in kpis %}
+  <a class="kpi" href="{{ k.url }}">
+    <div class="h"><span class="sq {{ k.sq }}">{% include "studio/_i.html" with i=k.icon %}</span>{{ k.label }}</div>
+    <div class="v">
+      <div class="big">{{ k.value }}{% if k.unit %}<small>{{ k.unit }}</small>{% endif %}</div>
+      <div class="foot">
+        {% if k.delta %}<span class="delta {{ k.delta.dir }}"><i>{% if k.delta.dir == 'down' %}<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>{% else %}<svg class="ico" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>{% endif %}</i>{{ k.delta.text }}</span>{% endif %}
+        {% if k.progress is not None %}<span class="progress"><i class="{{ k.progress_class }}" style="width:{{ k.progress }}%"></i></span>{% endif %}
+        <span>{{ k.note }}</span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</section>
+
+<div class="split">
+  <div class="col">
+    <section class="card">
+      <div class="card-h">
+        <span class="badge-ico">{% include "studio/_i.html" with i="calendar" %}</span>
+        <h2>Coming up</h2><span class="tag">{{ rows|length }} events</span>
+        <span class="grow"></span>
+        <a class="link" href="{% url 'studio:events' %}">Open events board {% include "studio/_i.html" with i="arrow" %}</a>
+      </div>
+      {% if rows %}
+      <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Event</th><th>Status</th><th>Tickets</th><th>When</th><th></th></tr></thead>
+        <tbody>
+        {% for r in rows %}{% with e=r.e %}
+          <tr>
+            <td><a class="item" href="{% url 'studio:event_edit' e.pk %}">
+              {% if e.poster %}<img class="thumb" src="{{ e.poster.url }}" alt="">{% else %}<span class="thumb ph">{% include "studio/_i.html" with i="image" %}</span>{% endif %}
+              <span style="min-width:0"><b>{{ e.title }}</b><small>{{ e.city }} · {{ e.venue.name }}</small></span></a></td>
+            <td class="t-status">
+              {% if e.status == 'draft' %}<span class="pill gold">Draft</span>
+              {% elif e.status == 'cancelled' %}<span class="pill crit">Cancelled</span>
+              {% elif e.sold_out %}<span class="pill good">Sold out</span>
+              {% else %}<span class="pill good">Live</span>{% endif %}
+              {% if e.is_featured %}<span class="pill nodot" title="On the homepage record player" style="color:var(--gold-deep)">★</span>{% endif %}
+            </td>
+            <td><div class="qty">
+              {% if e.sold_out %}<span><b>100%</b><small>sold out</small></span><span class="progress"><i class="done" style="width:100%"></i></span>
+              {% elif e.sold_percent is not None %}<span><b>{{ e.sold_percent }}%</b><small>sold</small></span><span class="progress"><i style="width:{{ e.sold_percent }}%"></i></span>
+              {% else %}<span><b>{{ e.price_from|money:e.city.currency_symbol }}</b>{% if e.price_from %}<small>from</small>{% endif %}</span><span class="progress"><i style="width:0"></i></span>{% endif %}
+            </div></td>
+            <td class="due"><b>{{ e.local_starts_at|date:"D d M, H:i" }}</b>
+              {% if e.status == 'draft' and r.when.days <= 14 %}<small class="late">Not published yet</small>{% else %}<small>{{ r.when.rel }}</small>{% endif %}</td>
+            <td>
+              {% if e.status == 'draft' %}
+              <form method="post" action="{% url 'studio:event_toggle' e.pk 'publish' %}">{% csrf_token %}<input type="hidden" name="back" value="{{ request.get_full_path }}"><button class="btn pri sm">Publish</button></form>
+              {% elif e.sold_out %}<span class="pill solid-good">{% include "studio/_i.html" with i="check" %}Sold out</span>
+              {% else %}<a class="btn sm" href="{% url 'studio:event_edit' e.pk %}">Edit</a>{% endif %}
+            </td>
+          </tr>
+        {% endwith %}{% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% else %}
+      <div class="empty">{% include "studio/_i.html" with i="calendar" %}<b>Nothing on the calendar</b><span>Create the next night and it shows up here.</span><a class="btn pri" href="{% url 'studio:event_new' %}">New event</a></div>
+      {% endif %}
+    </section>
+
+    <div class="split" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <section class="card">
+        <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="mic" %}</span><h2>Most requested</h2><span class="grow"></span><span class="muted" style="font-size:.84rem">90 days</span></div>
+        <div class="card-b">
+          {% if demand %}<div class="hbars">{% for d in demand %}<a class="hbar" href="{% url 'studio:talent_edit' d.talent__pk %}"><span>{{ d.talent__name }}</span><span class="t"><i style="width:{{ d.pct }}%"></i></span><b>{{ d.value }}</b></a>{% endfor %}</div>
+          {% else %}<p class="muted">No booking enquiries yet. They'll rank your most wanted acts here.</p>{% endif %}
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="clock" %}</span><h2>Recent activity</h2></div>
+        <div class="acts-list">
+          {% for a in activity %}
+          <div class="act"><span class="av">{{ a.user|initials }}</span><span><b style="font-weight:500">{{ a.user.get_short_name|default:a.user.get_username }}</b> {% if a.is_addition %}added{% elif a.is_deletion %}deleted{% else %}updated{% endif %} {{ a.object_repr|truncatechars:38 }}<small>{{ a.content_type.name|capfirst }} · {{ a.action_time|ago }}</small></span></div>
+          {% empty %}<div class="card-b muted">Changes made by the team will show up here.</div>{% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <div class="card-h"><span class="badge-ico" style="color:var(--crit)"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.01"/></svg></span><h2>Needs attention</h2>{% if attention %}<span class="red">{{ attention|length }}</span>{% endif %}</div>
+      {% if attention %}
+      <div class="attn">
+        {% for a in attention %}
+        <a class="a {{ a.tone }}" href="{{ a.url }}"><span class="sq">{% include "studio/_i.html" with i=a.icon %}</span>
+          <span><b>{{ a.title }}</b><p>{{ a.body }}</p><span class="go">{{ a.cta }} {% include "studio/_i.html" with i="arrow" %}</span></span></a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="allgood"><span class="sq green" style="width:38px;height:38px;border-radius:11px;display:grid;place-items:center">{% include "studio/_i.html" with i="check" %}</span><span><b style="font-weight:500">All clear</b><p class="muted" style="font-size:.86rem">Every enquiry answered and every event ready.</p></span></div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="inbox" %}</span><h2>Enquiries</h2><span class="legend"><span><i style="background:var(--s-a)"></i>Bookings</span><span><i style="background:var(--s-b)"></i>Messages</span></span></div>
+      <div class="dm-head"><span class="big">{{ this_week }}</span><span>in the last 7 days, {{ last_week }} the week before</span></div>
+      <div class="chart-wrap">
+        <svg class="dm" viewBox="0 0 {{ dm.width }} {{ dm.height }}" role="img" aria-label="Enquiries per day over the last four weeks. One dot is one enquiry.">
+          {% for c in dm.cols %}<g class="c" data-tip="{{ c.tip }}">
+            <rect class="col-hit" x="{{ c.x }}" y="0" width="{{ dm.step }}" height="{{ dm.label_y }}" rx="4"/>
+            {% for d in c.dots %}<circle class="{{ d.kind }}" cx="{{ d.cx }}" cy="{{ d.cy }}" r="{{ dm.r }}"/>{% endfor %}
+            {% if c.label %}<text class="xl" x="{{ c.x }}" y="{{ dm.label_y }}">{{ c.label }}</text>{% endif %}
+          </g>{% endfor %}
+        </svg>
+        <div class="tip"></div>
+      </div>
+      <details class="table"><summary>View as table</summary>
+        <table><thead><tr><th>Day</th><th>Bookings</th><th>Messages</th></tr></thead><tbody>
+        {% for d in daily reversed %}{% if d.a or d.b %}<tr><td>{{ d.date|date:"D d M" }}</td><td>{{ d.a }}</td><td>{{ d.b }}</td></tr>{% endif %}{% empty %}<tr><td colspan="3">No enquiries in this period.</td></tr>{% endfor %}
+        </tbody></table>
+      </details>
+    </section>
+  </div>
+</div>
+{% endblock %}

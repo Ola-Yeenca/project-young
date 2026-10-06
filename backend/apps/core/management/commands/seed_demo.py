@@ -18,6 +18,7 @@ from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFilter
 
 from apps.core.models import FAQ, City, SiteSettings, Venue
+from apps.enquiries.models import BookingEnquiry, ContactEnquiry
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem
 from apps.shop.models import Product, ProductPrice, ProductVariant
@@ -306,4 +307,87 @@ class Command(BaseCommand):
                     ProductPrice.objects.create(product=product, city=cities[city_name], amount=Decimal(amount))
             seed += 1
 
-        self.stdout.write(self.style.SUCCESS("Sample content loaded. Every record is placeholder data."))
+        self._sample_draft(cities, now)
+        self._sample_enquiries(now)
+        if options.get("verbosity", 1):
+            self.stdout.write(self.style.SUCCESS("Sample content loaded. Every record is placeholder data."))
+
+    def _sample_draft(self, cities, now):
+        lagos = cities["Lagos"]
+        venue = Venue.objects.filter(city=lagos).first()
+        start = (now + timedelta(days=9)).astimezone(ZoneInfo(lagos.timezone)).replace(hour=19, minute=0, second=0, microsecond=0)
+        Event.objects.get_or_create(
+            slug="rooftop-sessions-4-lagos",
+            defaults=dict(
+                title="Rooftop Sessions 4",
+                city=lagos,
+                venue=venue,
+                kind="live",
+                starts_at=start,
+                price_from=Decimal("8000"),
+                status=Event.Status.DRAFT,
+                caption="Fourth edition, same skyline.",
+            ),
+        )
+
+    def _sample_enquiries(self, now):
+        if BookingEnquiry.objects.exists():
+            return
+        rnd = random.Random(7)
+        talent = list(Talent.objects.all())
+        names = [
+            "Adaeze Okafor",
+            "Marta Puig",
+            "Tunde Bello",
+            "Lucía Ferrer",
+            "Chidi Nwosu",
+            "Sara Gómez",
+            "Femi Adeyemi",
+            "Pau Martí",
+            "Ngozi Eze",
+            "Iker Sanz",
+            "Bisi Alade",
+            "Elena Ruiz",
+            "Kunle Ojo",
+            "Nuria Vidal",
+            "Emeka Obi",
+            "Carla Soler",
+            "Yemi Bankole",
+            "Jordi Roca",
+        ]
+        statuses = ["new", "new", "new", "in_progress", "in_progress", "waiting", "won", "won", "lost", "closed"]
+        for i, name in enumerate(names):
+            t = rnd.choice(talent)
+            e = BookingEnquiry.objects.create(
+                talent=t,
+                city=t.city,
+                client_name=name,
+                email=f"{slugify(name)}@example.com",
+                event_date=(now + timedelta(days=rnd.randint(20, 120))).date(),
+                event_location=rnd.choice(
+                    ["Hotel Las Arenas", "Eko Hotel, VI", "Private villa, Lekki", "Marina Beach Club", "Ikoyi Club", "Ciutat de les Arts"]
+                ),
+                event_type=rnd.choice(["private", "corporate", "wedding", "club"]),
+                expected_audience=rnd.choice(["lt100", "100-300", "300-1000"]),
+                message=rnd.choice(
+                    ["", "Three-hour set after dinner.", "Looking for a 90-minute set, outdoor.", "Can you send the rider?"]
+                ),
+                status=statuses[i % len(statuses)],
+                privacy_accepted=True,
+            )
+            when = now - timedelta(days=rnd.randint(0, 27), hours=rnd.randint(0, 20))
+            if e.status == "new":
+                when = now - timedelta(hours=rnd.choice([3, 30, 52]))
+            BookingEnquiry.objects.filter(pk=e.pk).update(created_at=when, updated_at=when)
+        for i in range(9):
+            e = ContactEnquiry.objects.create(
+                name=rnd.choice(names),
+                email=f"contact{i}@example.com",
+                category=rnd.choice(["general", "press", "collaboration", "business"]),
+                subject=rnd.choice(["Partnership idea", "Press request", "Venue collaboration", "Question about tickets"]),
+                message="Sample message.",
+                status=rnd.choice(["new", "in_progress", "closed"]),
+                privacy_accepted=True,
+            )
+            when = now - timedelta(days=rnd.randint(0, 27), hours=rnd.randint(0, 20))
+            ContactEnquiry.objects.filter(pk=e.pk).update(created_at=when, updated_at=when)

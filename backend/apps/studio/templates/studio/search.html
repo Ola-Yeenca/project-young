@@ -1,0 +1,14 @@
+{% extends "studio/base.html" %}
+{% block title %}Search{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="search" %}{% endblock %}
+{% block heading %}Search{% endblock %}
+{% block sub %}{% if q %}Results for “{{ q }}”{% else %}Events, talent, enquiries and albums{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<form method="get" class="side-search" style="max-width:560px">{% include "studio/_i.html" with i="search" %}<input name="q" value="{{ q }}" placeholder="Search" autofocus aria-label="Search"></form>
+<section class="card">
+  {% if results %}<div class="results">{% for r in results %}<a class="result" href="{{ r.url }}"><span class="pill nodot" style="min-width:74px;justify-content:center">{{ r.type }}</span><span style="flex:1;min-width:0"><b style="font-weight:500">{{ r.title }}</b><small class="muted" style="display:block">{{ r.sub }}</small></span>{% include "studio/_i.html" with i="arrow" %}</a>{% endfor %}</div>
+  {% elif q %}<div class="empty">{% include "studio/_i.html" with i="search" %}<b>Nothing matches “{{ q }}”</b><span>Try a name, venue or reference like HOY-BK.</span></div>
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="search" %}<b>Type at least two letters</b><span>Press / anywhere in Studio to jump here.</span></div>{% endif %}
+</section>
+{% endblock %}
