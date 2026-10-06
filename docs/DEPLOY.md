@@ -83,6 +83,7 @@ Each deploy runs the migrations and `ensure_admin`, then starts Gunicorn.
 |---|---|
 | `DJANGO_SECRET_KEY` | Long random string: `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
 | `DJANGO_ALLOWED_HOSTS` | `api.houseofyoung.com` (the Railway domain is added automatically) |
+| `CORS_ALLOWED_ORIGINS` | `https://houseofyoung.com,https://www.houseofyoung.com` (the public website) |
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (Railway reference) |
 | `AWS_STORAGE_BUCKET_NAME` | `hoy-media` |
 | `AWS_ACCESS_KEY_ID` | R2 access key ID |

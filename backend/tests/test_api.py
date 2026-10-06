@@ -25,6 +25,15 @@ class ReadAPITests(HOYTestCase):
     def test_health(self):
         self.assertEqual(self.api.get("/api/v1/health/").json(), {"status": "ok"})
 
+    @override_settings(CORS_ALLOWED_ORIGINS=["https://houseofyoung.example"])
+    def test_cors_allows_the_website_only(self):
+        ok = self.api.get("/api/v1/cities/", HTTP_ORIGIN="https://houseofyoung.example")
+        self.assertEqual(ok["Access-Control-Allow-Origin"], "https://houseofyoung.example")
+        other = self.api.get("/api/v1/cities/", HTTP_ORIGIN="https://evil.example")
+        self.assertNotIn("Access-Control-Allow-Origin", other)
+        studio = self.client.get("/studio/login/", HTTP_ORIGIN="https://houseofyoung.example")
+        self.assertNotIn("Access-Control-Allow-Origin", studio)
+
     def test_cities_only_active(self):
         f.city("Accra", is_active=False, country="Ghana", currency="GHS", timezone="Africa/Accra")
         self.assertEqual([c["slug"] for c in self.api.get("/api/v1/cities/").json()], ["lagos", "valencia"])
