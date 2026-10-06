@@ -18,6 +18,26 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+### Isolated local launch on this Mac
+
+After creating `.venv` and installing the dependencies above, use the launcher
+from this checkout. It explicitly selects project-local SQLite and file storage,
+console email, and local test scratch instead of inheriting service configuration.
+
+```bash
+./scripts/local.sh migrate
+./scripts/local.sh seed_demo                 # sample content only, on an empty database
+./scripts/local.sh createsuperuser
+./scripts/local.sh                           # http://127.0.0.1:8017
+./scripts/local.sh test                      # safe local test database
+```
+
+This Django server serves Studio, the API and the public coming-soon page. There
+is no separate frontend process in this branch. Use `/studio/` for the dashboard;
+the public event-discovery frontend still needs to be built. If port 8017 is in
+use, select another free loopback port with `./scripts/local.sh runserver
+127.0.0.1:<port>`; do not stop another project's server.
+
 Studio (team dashboard): http://localhost:8000/studio/ · Advanced admin: http://localhost:8000/admin/ · API: http://localhost:8000/api/v1/
 
 Emails print to the terminal in debug mode.

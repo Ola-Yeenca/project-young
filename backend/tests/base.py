@@ -7,6 +7,8 @@ _MEDIA = tempfile.mkdtemp(prefix="hoy-test-media-")
 
 
 @override_settings(
+    # Business-flow clients use HTTP; HTTPS enforcement has its own regression test.
+    SECURE_SSL_REDIRECT=False,
     MEDIA_ROOT=_MEDIA,
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
     STORAGES={

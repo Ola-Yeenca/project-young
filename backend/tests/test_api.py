@@ -25,6 +25,13 @@ class ReadAPITests(HOYTestCase):
     def test_health(self):
         self.assertEqual(self.api.get("/api/v1/health/").json(), {"status": "ok"})
 
+    @override_settings(SECURE_SSL_REDIRECT=True, SECURE_REDIRECT_EXEMPT=[r"^api/v1/health/$"])
+    def test_http_redirects_to_https_except_health(self):
+        response = self.api.get("/api/v1/cities/")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response["Location"], "https://testserver/api/v1/cities/")
+        self.assertEqual(self.api.get("/api/v1/health/").status_code, 200)
+
     def test_cities_only_active(self):
         f.city("Accra", is_active=False, country="Ghana", currency="GHS", timezone="Africa/Accra")
         self.assertEqual([c["slug"] for c in self.api.get("/api/v1/cities/").json()], ["lagos", "valencia"])
