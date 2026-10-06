@@ -1,0 +1,26 @@
+/* Connected event/gallery surfaces; the reviewed prototype stays unchanged. */
+[hidden]{display:none!important}
+.live-loading main{visibility:hidden}
+.live-event-card{width:100%;display:grid;grid-template-columns:72px minmax(0,1fr) auto;align-items:center;gap:20px;padding:18px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.live-event-card:hover{background:var(--bg-2)}
+.live-event-card .event-image{width:72px;height:90px;object-fit:contain;border-radius:8px;background:var(--bg-2)}
+.live-event-card .event-copy{display:grid;gap:6px;min-width:0}
+.live-event-card strong{font-size:1.15rem;font-weight:500;line-height:1.3;overflow-wrap:anywhere}
+.live-event-card small{font-size:.8rem;color:var(--mute);line-height:1.5}
+.live-event-card .event-price{font-size:.85rem;white-space:nowrap}
+.live-empty{padding:28px 0;color:var(--mute)}
+.live-record-art{position:absolute;inset:15%;width:70%;height:70%;object-fit:contain;border-radius:8px;pointer-events:none}
+.live-record-art.cover{inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+.live-detail-art{display:block;width:100%;height:100%;background:var(--bg-2)}
+.live-detail-body{display:grid;gap:18px;padding:24px}
+.live-detail-body h2{font-size:2rem;line-height:1.15}
+.live-detail-body p{white-space:pre-line;line-height:1.6}
+.live-gallery-img{display:block;width:100%;height:100%;object-fit:contain;background:var(--bg-2)}
+.frame .ph .live-gallery-img{position:absolute;inset:0}
+.live-failure{margin:30px;padding:28px;border:1px solid var(--line);border-radius:12px}
+@container app (max-width:600px){
+ .live-event-card{grid-template-columns:60px minmax(0,1fr);gap:14px;padding:14px 0}
+ .live-event-card .event-image{width:60px;height:80px}
+ .live-event-card strong{font-size:1rem}
+ .live-event-card .event-price{grid-column:2;font-size:.8rem}
+}

@@ -34,7 +34,11 @@ console email, and local test scratch instead of inheriting service configuratio
 
 This Django server serves Studio, the API and the public coming-soon page. There
 is no separate frontend process in this branch. Use `/studio/` for the dashboard;
-the public event-discovery frontend still needs to be built. If port 8017 is in
+the public event-discovery frontend still needs to be built for deployment.
+`/preview/` is a development-only connected preview: it preserves the standalone
+Claude prototype and reads published events and curated gallery items from the
+same-origin API. Talent, shop and contact remain sample prototype sections.
+The unmodified standalone comparison is in `../prototype/index.html`. If port 8017 is in
 use, select another free loopback port with `./scripts/local.sh runserver
 127.0.0.1:<port>`; do not stop another project's server.
 

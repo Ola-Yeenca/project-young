@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from apps.core.public import preview
+
 admin.site.site_header = "House of Young"
 admin.site.site_title = "HOY admin"
 
@@ -15,4 +17,5 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    urlpatterns += [path("preview/", preview, name="public-preview")]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
