@@ -10,14 +10,25 @@
     {% if album %}
     <section class="card card-b">
       <form method="post" enctype="multipart/form-data" style="display:grid;gap:12px">{% csrf_token %}<input type="hidden" name="action" value="upload">
-        <label class="file-drop" style="padding:40px">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the night's photos here">Drop the night's photos here</b><span>or click to choose as many as you like</span><input type="file" name="m-photos" accept="image/*" multiple><div class="file-preview"></div></label>
+        <label class="file-drop" for="id_m-photos" style="padding:40px">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the night's photos here">Drop the night's photos here</b><span>JPEG, PNG or WebP · maximum 10 MiB and 40 MP each</span><input id="id_m-photos" type="file" name="m-photos" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple><div class="file-preview"></div></label>
+        {% for e in upload.photos.errors %}<span class="err">{{ e }}</span>{% endfor %}{% for e in upload.non_field_errors %}<span class="err">{{ e }}</span>{% endfor %}
         <div class="fgrid">{{ upload.video_url }}{{ upload.caption }}</div>
-        <div><button class="btn pri">{% include "studio/_i.html" with i="upload" %}Add to album</button></div>
+        <div><button class="btn pri">{% include "studio/_i.html" with i="upload" %}Add as unpublished</button></div>
       </form>
     </section>
     <section class="masonry">
-      {% for it in items %}<figure class="tile" style="margin:0 0 10px">{% if it.image %}<img src="{{ it.image.url }}" alt="{{ it.caption }}" loading="lazy">{% else %}<a class="vid" href="{{ it.video_url }}" target="_blank" rel="noopener">▶ {{ it.video_url|truncatechars:40 }}</a>{% endif %}{% if it.caption %}<figcaption class="cap">{{ it.caption }}</figcaption>{% endif %}
-        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_item"><input type="hidden" name="item" value="{{ it.pk }}"><button class="btn sm confirm" data-confirm="Remove?" aria-label="Remove">{% include "studio/_i.html" with i="trash" %}</button></form></figure>
+      {% for it in items %}<article class="tile card-b" style="margin:0 0 10px"><img id="album-item-preview-{{ it.pk }}" {% if it.image %}src="{{ it.image.url }}"{% else %}hidden{% endif %} alt="{{ it.alt|default:it.caption }}" loading="lazy">{% if not it.image %}<a class="vid" href="{{ it.video_url }}" target="_blank" rel="noopener">▶ {{ it.video_url|truncatechars:40 }}</a>{% endif %}
+        <form method="post" enctype="multipart/form-data" style="display:grid;gap:10px;margin-top:12px" novalidate>{% csrf_token %}<input type="hidden" name="action" value="edit_item"><input type="hidden" name="item" value="{{ it.pk }}">
+          <div class="f {% if it.edit_form.image.errors %}has-err{% endif %}"><label for="{{ it.edit_form.image.id_for_label }}">Replace image</label>{{ it.edit_form.image }}{% for e in it.edit_form.image.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+          {% include "studio/_field.html" with f=it.edit_form.alt wide=1 %}
+          {% include "studio/_field.html" with f=it.edit_form.caption wide=1 %}
+          {% include "studio/_field.html" with f=it.edit_form.order %}
+          {% include "studio/_field.html" with f=it.edit_form.is_published %}
+          {% for e in it.edit_form.non_field_errors %}<span class="err">{{ e }}</span>{% endfor %}
+          <button class="btn pri">Save item</button>
+        </form>
+        <form method="post" style="margin-top:8px">{% csrf_token %}<input type="hidden" name="action" value="delete_item"><input type="hidden" name="item" value="{{ it.pk }}"><button class="btn sm confirm" data-confirm="Remove?" aria-label="Remove item {{ it.pk }}">{% include "studio/_i.html" with i="trash" %}Remove</button></form>
+      </article>
       {% empty %}<div class="card empty">{% include "studio/_i.html" with i="image" %}<b>No photos yet</b><span>Drop some above.</span></div>{% endfor %}
     </section>
     {% else %}
@@ -30,7 +41,7 @@
       {% include "studio/_field.html" with f=form.title %}
       <div class="f"><label for="id_a-slug">Web address</label><input class="in" id="id_a-slug" name="a-slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_a-title" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
       {% include "studio/_field.html" with f=form.city %}{% include "studio/_field.html" with f=form.event %}{% include "studio/_field.html" with f=form.date %}
-      {% include "studio/_field.html" with f=form.cover %}{% include "studio/_field.html" with f=form.is_published %}
+      {% include "studio/_field.html" with f=form.cover %}{% include "studio/_field.html" with f=form.is_published %}{% include "studio/_field.html" with f=form.order %}
       <button class="btn pri">{% if album %}Save details{% else %}Create album{% endif %}</button>
     </form>
   </aside>

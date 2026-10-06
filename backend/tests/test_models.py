@@ -1,8 +1,11 @@
+import io
 from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
+from PIL import Image
 
 from apps.core.models import City, MediaKind, SiteSettings
 from apps.events.models import Event
@@ -102,6 +105,71 @@ class MediaRulesTests(HOYTestCase):
         with self.assertRaises(ValidationError):
             AlbumItem(album=album, kind=MediaKind.VIDEO).full_clean()
         AlbumItem(album=album, kind=MediaKind.VIDEO, video_url="https://youtube.com/watch?v=1").full_clean()
+
+    def test_managed_images_accept_jpeg_png_and_webp(self):
+        city = f.city()
+        album = Album.objects.create(title="A", slug="a", city=city)
+        for image_format, extension in (("JPEG", "jpg"), ("PNG", "png"), ("WEBP", "webp")):
+            content = io.BytesIO()
+            Image.new("RGB", (20, 20), "#c9a043").save(content, image_format)
+            item = AlbumItem(
+                album=album,
+                image=SimpleUploadedFile(f"photo.{extension}", content.getvalue(), content_type=f"image/{extension}"),
+            )
+            item.full_clean()
+
+    def test_event_and_gallery_reject_invalid_or_unsupported_images(self):
+        city = f.city()
+        event = Event(
+            title="Night",
+            slug="night",
+            city=city,
+            venue=f.venue(city),
+            starts_at=timezone.now(),
+            poster=SimpleUploadedFile("poster.svg", b'<svg xmlns="http://www.w3.org/2000/svg"></svg>', content_type="image/svg+xml"),
+        )
+        with self.assertRaisesMessage(ValidationError, "valid JPEG, PNG or WebP"):
+            event.full_clean()
+
+        album = Album.objects.create(title="A", slug="a", city=city)
+        item = AlbumItem(
+            album=album,
+            image=SimpleUploadedFile("photo.gif", b"GIF89a-not-an-image", content_type="image/gif"),
+        )
+        with self.assertRaisesMessage(ValidationError, "valid JPEG, PNG or WebP"):
+            item.full_clean()
+
+        album.cover = SimpleUploadedFile("cover.svg", b"<svg></svg>", content_type="image/svg+xml")
+        with self.assertRaisesMessage(ValidationError, "valid JPEG, PNG or WebP"):
+            album.full_clean()
+
+    def test_managed_images_enforce_file_and_pixel_limits(self):
+        city = f.city()
+        small = f.image_file("large.jpg")
+        too_large = SimpleUploadedFile(
+            "large.jpg",
+            small.read() + b"0" * (10 * 1024 * 1024),
+            content_type="image/jpeg",
+        )
+        event = Event(
+            title="Night",
+            slug="night",
+            city=city,
+            venue=f.venue(city),
+            starts_at=timezone.now(),
+            poster=too_large,
+        )
+        with self.assertRaisesMessage(ValidationError, "10 MiB"):
+            event.full_clean()
+
+        pixels = io.BytesIO()
+        Image.new("1", (8000, 5001)).save(pixels, "PNG")
+        item = AlbumItem(
+            album=Album.objects.create(title="A", slug="a", city=city),
+            image=SimpleUploadedFile("huge.png", pixels.getvalue(), content_type="image/png"),
+        )
+        with self.assertRaisesMessage(ValidationError, "40 megapixels"):
+            item.full_clean()
 
 
 class TalentTests(HOYTestCase):

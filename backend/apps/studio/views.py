@@ -27,6 +27,7 @@ from .access import ADDED, CHANGED, DELETED, SCOPE_KEY, current_city, log, scope
 from .forms import (
     COUNTRY_PRESETS,
     AlbumForm,
+    AlbumItemForm,
     CityForm,
     EnquiryUpdateForm,
     EventForm,
@@ -586,14 +587,26 @@ def talent_toggle(request, pk, field):
     return redirect(request.POST.get("back") or "studio:talent")
 
 
-def _add_media(model, owner, data, start):
+def _add_media(model, owner, data, start, **defaults):
     n = 0
     for i, image in enumerate(data.get("photos") or []):
-        model.objects.create(**owner, kind=MediaKind.PHOTO, image=image, caption=data.get("caption", ""), order=start + i + 1)
+        model.objects.create(
+            **owner,
+            **defaults,
+            kind=MediaKind.PHOTO,
+            image=image,
+            caption=data.get("caption", ""),
+            order=start + i + 1,
+        )
         n += 1
     if data.get("video_url"):
         model.objects.create(
-            **owner, kind=MediaKind.VIDEO, video_url=data["video_url"], caption=data.get("caption", ""), order=start + n + 1
+            **owner,
+            **defaults,
+            kind=MediaKind.VIDEO,
+            video_url=data["video_url"],
+            caption=data.get("caption", ""),
+            order=start + n + 1,
         )
         n += 1
     return n
@@ -610,35 +623,73 @@ def gallery(request):
 
 @studio_view("gallery.change_album")
 def album_edit(request, pk=None):
-    album = get_object_or_404(Album, pk=pk) if pk else None
+    album = get_object_or_404(scoped(Album.objects.all(), request), pk=pk) if pk else None
     initial = {"city": current_city(request), "date": timezone.localdate()} if not album else {}
-    form = AlbumForm(request.POST or None, request.FILES or None, instance=album, initial=initial, prefix="a")
-    upload = UploadForm(request.POST or None, request.FILES or None, prefix="m") if album else None
+    action = request.POST.get("action") if request.method == "POST" else None
+    edit_actions = {"upload", "delete_item", "edit_item"}
+    form = AlbumForm(
+        request.POST if request.method == "POST" and action not in edit_actions else None,
+        request.FILES if request.method == "POST" and action not in edit_actions else None,
+        instance=album,
+        initial=initial,
+        prefix="a",
+    )
+    upload = (
+        UploadForm(
+            request.POST if action == "upload" else None,
+            request.FILES if action == "upload" else None,
+            prefix="m",
+        )
+        if album
+        else None
+    )
     if request.method == "POST":
-        action = request.POST.get("action")
         if action == "upload" and album:
             if upload.is_valid():
-                n = _add_media(AlbumItem, {"album": album}, upload.cleaned_data, album.items.count())
+                last_order = album.items.order_by("-order").values_list("order", flat=True).first() or 0
+                n = _add_media(
+                    AlbumItem,
+                    {"album": album},
+                    upload.cleaned_data,
+                    last_order,
+                    is_published=False,
+                )
                 log(request, album, CHANGED, f"added {n} items")
                 messages.success(request, f"Added {n} item(s) to {album.title}.")
-            else:
-                messages.error(request, " ".join(upload.non_field_errors()) or "Couldn't add that.")
-            return redirect("studio:album_edit", pk=album.pk)
-        if action == "delete_item" and album:
+                return redirect("studio:album_edit", pk=album.pk)
+            messages.error(request, "Some uploads need attention.")
+        elif action == "delete_item" and album:
             album.items.filter(pk=request.POST.get("item")).delete()
             messages.success(request, "Removed from the album.")
             return redirect("studio:album_edit", pk=album.pk)
-        if form.is_valid():
+        elif action == "edit_item" and album:
+            item = get_object_or_404(album.items, pk=request.POST.get("item"))
+            item_form = AlbumItemForm(request.POST, request.FILES, instance=item, prefix=f"item-{item.pk}")
+            if item_form.is_valid():
+                changed = item_form.changed_data
+                item_form.save()
+                log(request, item, CHANGED, "Studio item: " + ", ".join(changed))
+                messages.success(request, "Album item saved.")
+                return redirect("studio:album_edit", pk=album.pk)
+            messages.error(request, "That album item needs attention.")
+        elif form.is_valid():
             created = album is None
             obj = form.save()
             log(request, obj, ADDED if created else CHANGED, "saved in Studio")
             messages.success(request, f"{'Created' if created else 'Saved'} {obj.title}." + (" Now add some photos." if created else ""))
             return redirect("studio:album_edit", pk=obj.pk)
-        messages.error(request, "Some fields need attention.")
+        elif action not in {"upload", "edit_item"}:
+            messages.error(request, "Some fields need attention.")
+    items = list(album.items.all()) if album else []
+    for item in items:
+        if request.method == "POST" and request.POST.get("action") == "edit_item" and request.POST.get("item") == str(item.pk):
+            item.edit_form = item_form
+        else:
+            item.edit_form = AlbumItemForm(instance=item, prefix=f"item-{item.pk}")
     return render(
         request,
         "studio/album_form.html",
-        {"nav": "gallery", "form": form, "album": album, "upload": upload, "items": album.items.all() if album else []},
+        {"nav": "gallery", "form": form, "album": album, "upload": upload, "items": items},
     )
 
 

@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 
+from apps.core.image_validation import validate_managed_image
 from apps.core.models import MediaKind
 
 from .models import Album, AlbumItem
@@ -24,6 +25,7 @@ class MultipleImageField(forms.ImageField):
 class AlbumAdminForm(forms.ModelForm):
     upload = MultipleImageField(
         required=False,
+        validators=[validate_managed_image],
         label="Add photos",
         help_text="Select as many photos as you like. They are added to the end of the album.",
     )
@@ -36,13 +38,17 @@ class AlbumAdminForm(forms.ModelForm):
 class AlbumItemInline(admin.TabularInline):
     model = AlbumItem
     extra = 0
-    fields = ("preview", "kind", "image", "video_url", "caption", "order")
+    fields = ("preview", "kind", "image", "alt", "video_url", "caption", "is_published", "order")
     readonly_fields = ("preview",)
 
     @admin.display(description="")
     def preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" style="width:64px;height:64px;object-fit:cover;border-radius:6px">', obj.image.url)
+            return format_html(
+                '<img src="{}" alt="{}" style="width:64px;height:64px;object-fit:cover;border-radius:6px">',
+                obj.image.url,
+                obj.alt,
+            )
         return "▶" if obj.kind == MediaKind.VIDEO else "—"
 
 

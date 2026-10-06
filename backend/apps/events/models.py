@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
+from apps.core.image_validation import validate_managed_image
 from apps.core.models import City, TimeStampedModel, Venue
 from apps.talent.models import Talent
 
@@ -41,6 +42,10 @@ class Event(TimeStampedModel):
         HIGHLIFE = "highlife", "Highlife"
         MIXED = "mixed", "Mixed"
 
+    class PosterFit(models.TextChoices):
+        CONTAIN = "contain", "Show the full poster"
+        COVER = "cover", "Fill the frame"
+
     title = models.CharField(max_length=120)
     slug = models.SlugField(max_length=140, unique=True)
     city = models.ForeignKey(City, on_delete=models.PROTECT, related_name="events")
@@ -49,7 +54,23 @@ class Event(TimeStampedModel):
     starts_at = models.DateTimeField(help_text="Doors open. Entered in the event city's local time.")
     ends_at = models.DateTimeField(null=True, blank=True)
 
-    poster = models.ImageField(upload_to="events/", blank=True, help_text="Artwork or poster. Square or portrait.")
+    poster = models.ImageField(
+        upload_to="events/",
+        blank=True,
+        validators=[validate_managed_image],
+        help_text="JPEG, PNG or WebP. Maximum 10 MiB and 40 megapixels.",
+    )
+    poster_alt = models.CharField(
+        max_length=240,
+        blank=True,
+        help_text="Describe the poster for people who cannot see it.",
+    )
+    poster_fit = models.CharField(
+        max_length=7,
+        choices=PosterFit.choices,
+        default=PosterFit.CONTAIN,
+        help_text="Show the full poster to preserve text, or fill the frame and crop its edges.",
+    )
     caption = models.CharField(
         max_length=160, blank=True, help_text="One line for the homepage, e.g. “Log drums, salt air, an early finish.”"
     )

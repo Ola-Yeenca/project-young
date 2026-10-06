@@ -23,9 +23,12 @@ class EventAdminForm(forms.ModelForm):
         for name in self.TIME_FIELDS:
             if name in self.fields:
                 self.fields[name].help_text = "Local time in the event's city."
+        self.fields["poster_fit"].required = False
 
     def clean(self):
         cleaned = super().clean()
+        cleaned["poster_fit"] = cleaned.get("poster_fit") or Event.PosterFit.CONTAIN
+        self.instance.poster_fit = cleaned["poster_fit"]
         city = cleaned.get("city")
         for name in self.TIME_FIELDS:
             if cleaned.get(name) is not None:
@@ -82,7 +85,7 @@ class EventAdmin(admin.ModelAdmin):
     list_select_related = ("city", "venue")
     fieldsets = (
         ("Event", {"fields": ("title", "slug", "city", "venue", "kind", "starts_at", "ends_at", "status")}),
-        ("Artwork and copy", {"fields": ("poster", "caption", "description")}),
+        ("Artwork and copy", {"fields": ("poster", "poster_alt", "poster_fit", "caption", "description")}),
         ("Line-up and sound", {"fields": ("lineup", "lineup_extra", "music_style", "bpm")}),
         ("Tickets", {"fields": ("ticket_url", "ticket_provider", "price_from", "sold_out", "sold_percent", "age_restriction")}),
         ("Homepage", {"fields": ("is_featured", "featured_order")}),
@@ -91,7 +94,12 @@ class EventAdmin(admin.ModelAdmin):
     @admin.display(description="", ordering=None)
     def poster_thumb(self, obj):
         if obj.poster:
-            return format_html('<img src="{}" style="width:44px;height:44px;object-fit:cover;border-radius:6px">', obj.poster.url)
+            return format_html(
+                '<img src="{}" alt="{}" style="width:44px;height:44px;object-fit:{};border-radius:6px">',
+                obj.poster.url,
+                obj.poster_alt,
+                obj.poster_fit,
+            )
         return "—"
 
     @admin.display(description="Starts (local)", ordering="starts_at")

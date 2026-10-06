@@ -46,6 +46,18 @@ class ReadAPITests(HOYTestCase):
         self.assertEqual(data[0]["local"]["timezone"], "Africa/Lagos")
         self.assertEqual(data[0]["ticket_provider"], "Tix.africa")
 
+    def test_event_poster_url_alt_and_fit_are_exposed(self):
+        event = f.event(
+            self.vlc,
+            poster=f.image_file("poster.jpg"),
+            poster_alt="Gold poster announcing Afrobeats Night",
+            poster_fit=Event.PosterFit.COVER,
+        )
+        data = self.api.get(f"/api/v1/events/{event.slug}/").json()
+        self.assertTrue(data["poster"].startswith("http://testserver/media/events/poster"))
+        self.assertEqual(data["poster_alt"], "Gold poster announcing Afrobeats Night")
+        self.assertEqual(data["poster_fit"], "cover")
+
     def test_drafts_never_exposed(self):
         f.event(self.vlc, title="Secret", status=Event.Status.DRAFT)
         self.assertEqual(self.api.get("/api/v1/events/").json()["results"], [])
@@ -79,6 +91,43 @@ class ReadAPITests(HOYTestCase):
         AlbumItem.objects.create(album=album, kind="video", video_url="https://youtu.be/a", order=1)
         items = self.api.get("/api/v1/gallery/night/").json()["items"]
         self.assertEqual([i["video_url"] for i in items], ["https://youtu.be/a", "https://youtu.be/b"])
+
+    def test_gallery_hides_unpublished_items_from_items_cover_and_count(self):
+        album = Album.objects.create(title="Night", slug="night", city=self.vlc)
+        hidden = AlbumItem.objects.create(
+            album=album,
+            image=f.image_file("hidden.jpg"),
+            alt="Hidden photo",
+            order=0,
+            is_published=False,
+        )
+        second = AlbumItem.objects.create(
+            album=album,
+            image=f.image_file("second.jpg"),
+            alt="Second published photo",
+            order=2,
+        )
+        first = AlbumItem.objects.create(
+            album=album,
+            image=f.image_file("first.jpg"),
+            alt="First published photo",
+            order=1,
+        )
+
+        listing = self.api.get("/api/v1/gallery/").json()["results"][0]
+        self.assertEqual(listing["item_count"], 2)
+        self.assertIn("first", listing["cover"])
+        self.assertNotIn("hidden", listing["cover"])
+
+        detail = self.api.get("/api/v1/gallery/night/").json()
+        self.assertEqual([item["id"] for item in detail["items"]], [first.pk, second.pk])
+        self.assertEqual([item["alt"] for item in detail["items"]], ["First published photo", "Second published photo"])
+        self.assertNotIn(hidden.pk, [item["id"] for item in detail["items"]])
+
+    def test_unpublished_album_is_not_public(self):
+        Album.objects.create(title="Private", slug="private", city=self.vlc, is_published=False)
+        self.assertEqual(self.api.get("/api/v1/gallery/private/").status_code, 404)
+        self.assertEqual(self.api.get("/api/v1/gallery/").json()["results"], [])
 
     def test_products_priced_per_city(self):
         p = Product.objects.create(name="Tee", slug="tee", image=f.image_file(), is_published=True)

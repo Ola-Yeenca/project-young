@@ -11,7 +11,7 @@ from django.utils import timezone
 from apps.core.roles import TEAM_GROUP
 from apps.enquiries.models import BookingEnquiry
 from apps.events.models import Event
-from apps.gallery.models import Album
+from apps.gallery.models import Album, AlbumItem
 
 from . import factories as f
 from .base import HOYTestCase
@@ -159,13 +159,105 @@ class StudioActionTests(HOYTestCase):
 
     def test_album_bulk_upload_and_video(self):
         album = Album.objects.create(title="Night", slug="night", city=self.los)
+        AlbumItem.objects.create(album=album, kind="video", video_url="https://youtu.be/existing", order=8)
         url = reverse("studio:album_edit", args=[album.pk])
         self.client.post(
             url, {"action": "upload", "m-photos": [f.image_file("a.jpg"), f.image_file("b.jpg")], "m-video_url": "https://youtu.be/x"}
         )
+        uploaded = list(album.items.exclude(order=8).order_by("order"))
+        self.assertEqual([item.order for item in uploaded], [9, 10, 11])
+        self.assertFalse(any(item.is_published for item in uploaded))
+        self.client.post(url, {"action": "delete_item", "item": uploaded[0].pk})
         self.assertEqual(album.items.count(), 3)
-        self.client.post(url, {"action": "delete_item", "item": album.items.first().pk})
-        self.assertEqual(album.items.count(), 2)
+
+    def test_album_item_edit_replaces_image_and_saves_metadata(self):
+        album = Album.objects.create(title="Night", slug="night", city=self.los)
+        item = AlbumItem.objects.create(album=album, image=f.image_file("old.jpg"), order=2, is_published=False)
+        old_path = item.image.path
+        url = reverse("studio:album_edit", args=[album.pk])
+        response = self.client.post(
+            url,
+            {
+                "action": "edit_item",
+                "item": item.pk,
+                f"item-{item.pk}-alt": "Crowd dancing under gold lights",
+                f"item-{item.pk}-caption": "Opening night",
+                f"item-{item.pk}-order": 1,
+                f"item-{item.pk}-is_published": "on",
+                f"item-{item.pk}-image": f.image_file("replacement.webp"),
+            },
+        )
+        self.assertRedirects(response, url, fetch_redirect_response=False)
+        item.refresh_from_db()
+        self.assertIn("replacement", item.image.name)
+        self.assertEqual(
+            (item.alt, item.caption, item.order, item.is_published), ("Crowd dancing under gold lights", "Opening night", 1, True)
+        )
+        self.assertTrue(item.image.storage.exists(old_path))
+        self.assertTrue(LogEntry.objects.filter(object_id=str(item.pk), change_message__contains="alt").exists())
+
+    def test_album_item_edit_is_album_scoped_and_renders_validation_errors(self):
+        album = Album.objects.create(title="Night", slug="night", city=self.los)
+        other = Album.objects.create(title="Other", slug="other", city=self.los)
+        item = AlbumItem.objects.create(album=album, image=f.image_file("one.jpg"), order=4)
+        foreign = AlbumItem.objects.create(album=other, image=f.image_file("foreign.jpg"))
+        url = reverse("studio:album_edit", args=[album.pk])
+        self.assertEqual(self.client.post(url, {"action": "edit_item", "item": foreign.pk}).status_code, 404)
+
+        response = self.client.post(
+            url,
+            {
+                "action": "edit_item",
+                "item": item.pk,
+                f"item-{item.pk}-alt": "Still here",
+                f"item-{item.pk}-caption": "",
+                f"item-{item.pk}-order": -1,
+                f"item-{item.pk}-is_published": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ensure this value is greater than or equal to 0")
+        item.refresh_from_db()
+        self.assertEqual(item.order, 4)
+
+    def test_event_poster_replacement_metadata_and_clear_control(self):
+        event = f.event(self.los, self.venue, status=Event.Status.DRAFT, poster=f.image_file("old-poster.jpg"))
+        old_path = event.poster.path
+        data = {
+            "title": event.title,
+            "slug": event.slug,
+            "city": self.los.pk,
+            "venue": self.venue.pk,
+            "kind": event.kind,
+            "starts_at": event.local_starts_at.strftime("%Y-%m-%dT%H:%M"),
+            "status": Event.Status.DRAFT,
+            "poster_alt": "Poster with the artists and venue in gold type",
+            "poster_fit": Event.PosterFit.COVER,
+            "music_style": event.music_style,
+            "featured_order": 0,
+            "age_restriction": "18+",
+            "action": "save_continue",
+            "poster": f.image_file("new-poster.png"),
+        }
+        response = self.client.post(reverse("studio:event_edit", args=[event.pk]), data)
+        self.assertEqual(response.status_code, 302, response.content[:3000])
+        event.refresh_from_db()
+        self.assertIn("new-poster", event.poster.name)
+        self.assertEqual((event.poster_alt, event.poster_fit), ("Poster with the artists and venue in gold type", "cover"))
+        self.assertTrue(event.poster.storage.exists(old_path))
+        replacement_path = event.poster.path
+
+        html = self.client.get(reverse("studio:event_edit", args=[event.pk])).content.decode()
+        self.assertIn('for="id_poster"', html)
+        self.assertIn('id="poster-clear"', html)
+
+        clear_data = {**data, "poster-clear": "on"}
+        clear_data.pop("poster")
+        response = self.client.post(reverse("studio:event_edit", args=[event.pk]), clear_data)
+        self.assertEqual(response.status_code, 302)
+        event.refresh_from_db()
+        self.assertFalse(event.poster)
+        self.assertTrue(event.poster.storage.exists(replacement_path))
 
     def test_site_settings_and_faqs_save(self):
         r = self.client.post(

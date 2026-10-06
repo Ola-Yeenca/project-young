@@ -2,11 +2,12 @@ from django import forms
 from django.forms import inlineformset_factory, modelformset_factory
 from django.utils.text import slugify
 
+from apps.core.image_validation import validate_managed_image
 from apps.core.models import FAQ, City, SiteSettings, Venue
 from apps.enquiries.models import EnquiryBase
 from apps.events.models import Event
 from apps.events.timezones import from_city_wall_time, to_city_wall_time
-from apps.gallery.models import Album
+from apps.gallery.models import Album, AlbumItem
 from apps.shop.models import Product, ProductPrice, ProductVariant
 from apps.talent.models import Talent
 
@@ -31,7 +32,7 @@ class StyledMixin:
                 continue
             if isinstance(widget, forms.ClearableFileInput):
                 widget.attrs.setdefault("class", "file")
-                widget.attrs.setdefault("accept", "image/*")
+                widget.attrs.setdefault("accept", ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp")
                 continue
             widget.attrs.setdefault("class", "in")
             if isinstance(widget, forms.Textarea):
@@ -53,6 +54,8 @@ class EventForm(StyledMixin, forms.ModelForm):
             "ends_at",
             "status",
             "poster",
+            "poster_alt",
+            "poster_fit",
             "caption",
             "description",
             "lineup",
@@ -73,6 +76,7 @@ class EventForm(StyledMixin, forms.ModelForm):
             "ends_at": LocalDateTimeInput(),
             "lineup": forms.CheckboxSelectMultiple,
             "description": forms.Textarea(attrs={"rows": 5}),
+            "poster_alt": forms.TextInput(attrs={"placeholder": "Example: Gold event poster with the date and venue"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -84,9 +88,12 @@ class EventForm(StyledMixin, forms.ModelForm):
         self.fields["venue"].queryset = self.fields["venue"].queryset.select_related("city")
         self.fields["lineup"].queryset = Talent.objects.select_related("city").order_by("city__order", "name")
         self.fields["slug"].help_text = "Web address. Filled in from the title."
+        self.fields["poster_fit"].required = False
 
     def clean(self):
         cleaned = super().clean()
+        cleaned["poster_fit"] = cleaned.get("poster_fit") or Event.PosterFit.CONTAIN
+        self.instance.poster_fit = cleaned["poster_fit"]
         city = cleaned.get("city")
         for name in self.TIME_FIELDS:
             if cleaned.get(name) is not None:
@@ -138,7 +145,7 @@ class MultiImageField(forms.ImageField):
 
 
 class UploadForm(forms.Form):
-    photos = MultiImageField(required=False)
+    photos = MultiImageField(required=False, validators=[validate_managed_image])
     video_url = forms.URLField(
         required=False, widget=forms.URLInput(attrs={"class": "in", "placeholder": "Paste a YouTube, Instagram or TikTok link"})
     )
@@ -156,8 +163,20 @@ class UploadForm(forms.Form):
 class AlbumForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Album
-        fields = ("title", "slug", "city", "event", "date", "cover", "is_published")
+        fields = ("title", "slug", "city", "event", "date", "cover", "is_published", "order")
         widgets = {"date": forms.DateInput(attrs={"type": "date"})}
+
+
+class AlbumItemForm(StyledMixin, forms.ModelForm):
+    class Meta:
+        model = AlbumItem
+        fields = ("image", "alt", "caption", "order", "is_published")
+        widgets = {"alt": forms.TextInput(attrs={"placeholder": "Describe this image"})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["image"].widget.attrs["data-preview"] = f"#album-item-preview-{self.instance.pk}"
 
 
 class ProductForm(StyledMixin, forms.ModelForm):

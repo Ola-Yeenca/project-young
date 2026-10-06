@@ -6,7 +6,7 @@ from rest_framework import serializers
 from apps.core.models import FAQ, City, SiteSettings, Venue
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry
 from apps.events.models import Event
-from apps.gallery.models import Album
+from apps.gallery.models import Album, AlbumItem
 from apps.shop.models import Product
 from apps.talent.models import Talent
 
@@ -88,6 +88,8 @@ class EventSerializer(serializers.ModelSerializer):
             "ends_at",
             "local",
             "poster",
+            "poster_alt",
+            "poster_fit",
             "caption",
             "description",
             "lineup",
@@ -153,18 +155,35 @@ class AlbumListSerializer(serializers.ModelSerializer):
     city = CityRefSerializer()
     event = serializers.SlugRelatedField(slug_field="slug", read_only=True)
     cover = serializers.SerializerMethodField()
-    item_count = serializers.IntegerField(source="items.count")
+    item_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Album
         fields = ("title", "slug", "city", "event", "date", "cover", "item_count")
 
     def get_cover(self, obj):
-        return file_url(self.context.get("request"), obj.cover_image)
+        image = obj.cover
+        if not image:
+            image = next((item.image for item in obj.published_items if item.image), None)
+        return file_url(self.context.get("request"), image)
+
+    def get_item_count(self, obj):
+        return len(obj.published_items)
+
+
+class AlbumItemSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AlbumItem
+        fields = ("id", "kind", "image", "video_url", "caption", "alt", "order")
+
+    def get_image(self, obj):
+        return file_url(self.context.get("request"), obj.image)
 
 
 class AlbumDetailSerializer(AlbumListSerializer):
-    items = MediaSerializer(many=True)
+    items = AlbumItemSerializer(source="published_items", many=True)
 
     class Meta(AlbumListSerializer.Meta):
         fields = AlbumListSerializer.Meta.fields + ("items",)

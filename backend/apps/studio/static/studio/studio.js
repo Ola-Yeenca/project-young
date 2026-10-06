@@ -71,6 +71,7 @@
   $$("input[type=file][data-preview]").forEach((input) => input.addEventListener("change", () => {
     const f = input.files[0]; if (!f) return; const url = URL.createObjectURL(f);
     $$(input.dataset.preview).forEach((img) => { img.src = url; img.hidden = false; });
+    if (input.id === "id_poster") { const clear = $("#poster-clear"); if (clear) clear.checked = false; }
   }));
 
   // Slug follows the name/title until edited by hand.
@@ -101,9 +102,19 @@
       $("#pv-provider").textContent = val("id_ticket_provider") || c.provider || "Ticket partner";
       $("#pv-tz").textContent = c.tz ? `Times are ${c.name} local (${c.tz})` : "Pick a city to set the time zone";
       $("#pv-status").textContent = { draft: "Draft", published: "Published", cancelled: "Cancelled" }[val("id_status")] || "Draft";
+      $("#pv-img").alt = val("id_poster_alt");
+      $("#pv-img").style.objectFit = val("id_poster_fit") || "contain";
+      const clearPoster = $("#poster-clear");
+      if (clearPoster) {
+        if (clearPoster.checked) $("#pv-img").hidden = true;
+        else {
+          if (!$("#pv-img").src && $("#pv-img").dataset.currentSrc) $("#pv-img").src = $("#pv-img").dataset.currentSrc;
+          $("#pv-img").hidden = false;
+        }
+      }
       const checks = {
         "ck-title": !!val("id_title"), "ck-when": !!val("id_starts_at") && !!venue.value,
-        "ck-poster": !!$("#pv-img").getAttribute("src"), "ck-tickets": !!val("id_ticket_url") || Number(p) === 0 || $("#id_sold_out").checked,
+        "ck-poster": !!$("#pv-img").getAttribute("src") && !(clearPoster && clearPoster.checked), "ck-tickets": !!val("id_ticket_url") || Number(p) === 0 || $("#id_sold_out").checked,
         "ck-lineup": $$("input[name=lineup]:checked").length > 0 || !!val("id_lineup_extra"), "ck-caption": !!val("id_caption"),
       };
       Object.entries(checks).forEach(([id, ok]) => $("#" + id).classList.toggle("ok", ok));

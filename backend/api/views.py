@@ -90,7 +90,13 @@ class AlbumViewSet(viewsets.ReadOnlyModelViewSet):
         qs = (
             Album.objects.published()
             .select_related("city", "event")
-            .prefetch_related(Prefetch("items", queryset=AlbumItem.objects.order_by("order", "id")))
+            .prefetch_related(
+                Prefetch(
+                    "items",
+                    queryset=AlbumItem.objects.filter(is_published=True).order_by("order", "id"),
+                    to_attr="published_items",
+                )
+            )
         )
         if city := city_from(self.request):
             qs = qs.filter(city=city)

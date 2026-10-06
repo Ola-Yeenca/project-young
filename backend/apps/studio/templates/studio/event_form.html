@@ -28,11 +28,14 @@
         <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="image" %}</span>Artwork and copy</div>
         <div class="fgrid">
           <div class="f full">
-            <label>Poster</label>
-            <label class="file-drop">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the poster here or click to choose">{% if event.poster %}Replace the poster{% else %}Drop the poster here or click to choose{% endif %}</b><span style="font-size:.8rem">Square or portrait, JPG or PNG</span>
-              <input type="file" name="poster" accept="image/*" data-preview="#pv-img"></label>
+            <label for="id_poster">Poster</label>
+            <label class="file-drop" for="id_poster">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the poster here or click to choose">{% if event.poster %}Replace the poster{% else %}Drop the poster here or click to choose{% endif %}</b><span style="font-size:.8rem">JPEG, PNG or WebP · maximum 10 MiB and 40 MP</span>
+              <input id="id_poster" type="file" name="poster" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-preview="#pv-img"></label>
             {% for e in form.poster.errors %}<span class="err">{{ e }}</span>{% endfor %}
+            {% if event.poster %}<label class="switch" for="poster-clear" style="margin-top:10px"><span><b>Clear current poster</b><small>The stored original remains intact.</small></span><input id="poster-clear" type="checkbox" name="poster-clear"></label>{% endif %}
           </div>
+          {% include "studio/_field.html" with f=form.poster_alt wide=1 %}
+          {% include "studio/_field.html" with f=form.poster_fit wide=1 %}
           {% include "studio/_field.html" with f=form.caption wide=1 %}
           {% include "studio/_field.html" with f=form.description wide=1 %}
         </div>
@@ -79,7 +82,7 @@
     <aside class="preview">
       <section class="card">
         <div class="pv-art">
-          <img id="pv-img" alt="" {% if event.poster %}src="{{ event.poster.url }}"{% else %}hidden{% endif %}>
+          <img id="pv-img" alt="{{ form.poster_alt.value|default:'' }}" style="object-fit:{{ form.poster_fit.value|default:'contain' }}" {% if event.poster %}src="{{ event.poster.url }}" data-current-src="{{ event.poster.url }}"{% else %}hidden{% endif %}>
           <span class="tag pill" id="pv-status">Draft</span>
           <div class="ov"><b id="pv-title">Event title</b><span id="pv-when"></span></div>
         </div>
