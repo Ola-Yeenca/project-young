@@ -1,0 +1,3 @@
+/* Event times are entered in the event city's local time (see EventAdminForm), so
+   Django's "you are N hours behind server time" note is misleading here. */
+.timezonewarning { display: none !important; }

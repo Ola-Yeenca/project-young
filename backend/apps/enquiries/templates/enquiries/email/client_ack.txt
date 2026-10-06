@@ -1,0 +1,9 @@
+Hi {% if kind == "booking" %}{{ e.client_name }}{% else %}{{ e.name }}{% endif %},
+
+Thanks for getting in touch with House of Young. {% if kind == "booking" %}We have your booking enquiry{% if e.talent %} for {{ e.talent.name }}{% endif %} on {{ e.event_date|date:"j F Y" }}.{% else %}We have your message.{% endif %}
+
+Someone from the team will reply within one working day.
+Your reference is {{ e.reference }}.
+
+House of Young
+Valencia · Lagos
