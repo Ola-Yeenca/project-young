@@ -12,10 +12,10 @@
     <h3>{{ c.name }}</h3>
     <span class="muted" style="font-size:.86rem">{{ c.n_events }} upcoming event{{ c.n_events|pluralize }} · {{ c.n_talent }} on the roster</span>
     <span class="muted" style="font-size:.86rem">Tickets via {{ c.ticket_provider|default:"—" }} · WhatsApp {{ c.whatsapp_number|default:"—" }}</span>
-    <a class="btn sm" style="justify-self:start;margin-top:4px" href="{% url 'admin:core_city_change' c.pk %}">Edit city</a>
+    <a class="btn sm" style="justify-self:start;margin-top:4px" href="{% url 'studio:city_edit' c.pk %}">Edit city</a>
   </section>
   {% endfor %}
-  <a class="new-card" style="min-height:150px" href="{% url 'admin:core_city_add' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.8rem">Accra, London… one form</span></a>
+  {% if perms.core.add_city %}<a class="new-card" style="min-height:150px" href="{% url 'studio:city_new' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.8rem">Accra, London… one form</span></a>{% endif %}
 </div>
 
 <form class="card" method="post">{% csrf_token %}<input type="hidden" name="action" value="site">

@@ -176,3 +176,81 @@ class StudioActionTests(HOYTestCase):
         from apps.core.models import SiteSettings
 
         self.assertEqual(SiteSettings.load().booking_email, "b@hoy.example")
+
+
+class StudioCityTests(HOYTestCase):
+    def setUp(self):
+        self.boss = User.objects.create_superuser("boss", "boss@hoy.example", "a-long-password-1")
+        self.client.force_login(self.boss)
+
+    def city_data(self, **kw):
+        data = {
+            "name": "Accra",
+            "slug": "",
+            "country": "Ghana",
+            "currency": "GHS",
+            "timezone": "Africa/Accra",
+            "ticket_provider": "",
+            "whatsapp_number": "+233 20 000 0000",
+            "instagram_url": "",
+            "order": 3,
+            "v-TOTAL_FORMS": 2,
+            "v-INITIAL_FORMS": 0,
+            "v-MIN_NUM_FORMS": 0,
+            "v-MAX_NUM_FORMS": 1000,
+            "v-0-name": "Front/Back",
+            "v-0-address": "Osu",
+            "v-0-map_url": "",
+            "v-0-capacity": "400",
+            "v-1-name": "",
+            "v-1-address": "",
+            "v-1-map_url": "",
+            "v-1-capacity": "",
+        }
+        data.update(kw)
+        return data
+
+    def test_admin_adds_a_city_with_venues(self):
+        r = self.client.post(reverse("studio:city_new"), self.city_data())
+        from apps.core.models import City
+
+        city = City.objects.get(slug="accra")
+        self.assertRedirects(r, reverse("studio:city_edit", args=[city.pk]), fetch_redirect_response=False)
+        self.assertEqual(city.currency_symbol, "₵")
+        self.assertEqual([v.slug for v in city.venues.all()], ["frontback"])
+        self.assertFalse(city.is_active)  # new cities start hidden unless switched on
+
+    def test_new_city_is_hidden_from_public_api_until_switched_on(self):
+        self.client.post(reverse("studio:city_new"), self.city_data())
+        self.assertNotIn("accra", [c["slug"] for c in self.client.get("/api/v1/cities/").json()])
+        from apps.core.models import City
+
+        city = City.objects.get(slug="accra")
+        self.client.post(reverse("studio:city_edit", args=[city.pk]), self.city_data(is_active="on", **{"v-TOTAL_FORMS": 0}))
+        self.assertIn("accra", [c["slug"] for c in self.client.get("/api/v1/cities/").json()])
+        # and it shows up in Studio's city switch
+        self.assertIn("Accra", self.client.get(reverse("studio:overview")).content.decode())
+
+    def test_bad_timezone_is_rejected(self):
+        r = self.client.post(reverse("studio:city_new"), self.city_data(timezone="Africa/Atlantis"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "not a known time zone")
+
+    def test_team_members_cannot_add_cities_but_can_edit_them(self):
+        u = User.objects.create_user("ada", password="a-long-password-1", is_staff=True)
+        u.groups.add(Group.objects.get(name=TEAM_GROUP))
+        self.client.force_login(u)
+        r = self.client.post(reverse("studio:city_new"), self.city_data())
+        self.assertRedirects(r, reverse("studio:cities"), fetch_redirect_response=False)
+        from apps.core.models import City
+
+        self.assertFalse(City.objects.filter(slug="accra").exists())
+        vlc = f.city("Valencia")
+        self.assertEqual(self.client.get(reverse("studio:city_edit", args=[vlc.pk])).status_code, 200)
+
+    def test_cities_page_and_readiness(self):
+        call_command("seed_demo", verbosity=0)
+        html = self.client.get(reverse("studio:cities")).content.decode()
+        self.assertIn("Valencia", html)
+        self.assertIn("Lagos", html)
+        self.assertIn("Add a city", html)

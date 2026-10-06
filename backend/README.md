@@ -41,7 +41,11 @@ dark mode.
   Times are entered in the event city's local time.
 - **Talent, Gallery, Shop, Site & FAQs**: roster with booking counts, drag-and-drop
   photo uploads, per-city prices and checkout links, company copy and FAQs.
-- The city switch at the top filters everything to Valencia, Lagos or both.
+- **Cities**: admins add a new city in one form (country fills in currency and time
+  zone), manage its venues and see a launch-readiness checklist. A new city stays
+  hidden from the public site until it's switched on, but the team can prepare it in
+  Studio straight away. Team members can edit cities but not add them.
+- The city switch at the top filters everything to one city or all of them.
 - Every change made in Studio is recorded in the same history as the admin.
 
 The classic Django admin stays available as "Advanced admin" for rare tasks such

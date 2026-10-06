@@ -1,12 +1,13 @@
 import re
 from datetime import timedelta
+from zoneinfo import ZoneInfo, available_timezones
 
 from django.contrib import messages
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q
+from django.db.models import Count, ProtectedError, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -24,7 +25,9 @@ from apps.talent.models import Talent, TalentMedia
 from . import charts
 from .access import ADDED, CHANGED, DELETED, SCOPE_KEY, current_city, log, scoped, studio_view
 from .forms import (
+    COUNTRY_PRESETS,
     AlbumForm,
+    CityForm,
     EnquiryUpdateForm,
     EventForm,
     FAQFormSet,
@@ -34,6 +37,7 @@ from .forms import (
     TalentForm,
     UploadForm,
     VariantFormSet,
+    VenueFormSet,
 )
 
 OVERDUE_AFTER = timedelta(hours=24)
@@ -696,6 +700,79 @@ def content(request):
         n_talent=Count("talent", distinct=True),
     )
     return render(request, "studio/content.html", {"nav": "content", "site_form": site_form, "faqs": faqs, "cities_list": cities})
+
+
+# ---------------------------------------------------------------- cities
+
+
+def city_readiness(city):
+    now = timezone.now()
+    checks = [
+        ("Country, currency and time zone", bool(city.pk and city.country and city.currency and city.timezone)),
+        ("At least one venue", bool(city.pk) and city.venues.exists()),
+        ("Ticket partner chosen", bool(city.ticket_provider)),
+        ("WhatsApp number for enquiries", bool(city.whatsapp_number)),
+        ("Talent on the roster", bool(city.pk) and city.talent.filter(is_published=True).exists()),
+        ("An upcoming published event", bool(city.pk) and city.events.filter(status=Event.Status.PUBLISHED, starts_at__gte=now).exists()),
+    ]
+    done = sum(ok for _, ok in checks)
+    return {"checks": checks, "done": done, "total": len(checks), "pct": round(done / len(checks) * 100)}
+
+
+@studio_view("core.view_city")
+def cities(request):
+    rows = []
+    qs = City.objects.annotate(
+        n_venues=Count("venues", distinct=True),
+        n_talent=Count("talent", filter=Q(talent__is_published=True), distinct=True),
+        n_events=Count("events", filter=Q(events__starts_at__gte=timezone.now()), distinct=True),
+    ).order_by("order", "name")
+    for c in qs:
+        rows.append(
+            {"c": c, "ready": city_readiness(c), "time": timezone.localtime(timezone.now(), ZoneInfo(c.timezone)).strftime("%H:%M")}
+        )
+    return render(request, "studio/cities.html", {"nav": "cities", "rows": rows})
+
+
+@studio_view("core.change_city")
+def city_edit(request, pk=None):
+    city = get_object_or_404(City, pk=pk) if pk else None
+    if city is None and not request.user.has_perm("core.add_city"):
+        messages.error(request, "Only admins can add a new city.")
+        return redirect("studio:cities")
+    form = CityForm(request.POST or None, instance=city, initial={} if city else {"is_active": False, "order": City.objects.count() + 1})
+    venues = VenueFormSet(request.POST or None, instance=city or City(), prefix="v")
+    if request.method == "POST":
+        if form.is_valid() and venues.is_valid():
+            created = city is None
+            obj = form.save()
+            venues.instance = obj
+            try:
+                venues.save()
+            except ProtectedError:
+                messages.error(request, "A venue that has events can't be removed. Move or delete those events first.")
+                return redirect("studio:city_edit", pk=obj.pk)
+            log(request, obj, ADDED if created else CHANGED, "saved in Studio")
+            if created:
+                messages.success(request, f"{obj.name} added. It's hidden from the site until you switch it on.")
+            else:
+                messages.success(request, f"Saved {obj.name}.")
+            return redirect("studio:city_edit", pk=obj.pk)
+        messages.error(request, "Some fields need attention.")
+    zones = sorted(z for z in available_timezones() if "/" in z and not z.startswith(("Etc/", "SystemV/", "posix/", "right/")))
+    return render(
+        request,
+        "studio/city_form.html",
+        {
+            "nav": "cities",
+            "form": form,
+            "venues": venues,
+            "city": city,
+            "ready": city_readiness(city or City()),
+            "presets": COUNTRY_PRESETS,
+            "zones": zones,
+        },
+    )
 
 
 # ---------------------------------------------------------------- search

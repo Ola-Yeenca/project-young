@@ -1,0 +1,59 @@
+{% extends "studio/base.html" %}
+{% block title %}{% if city %}{{ city.name }}{% else %}Add city{% endif %}{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="pin" %}{% endblock %}
+{% block heading %}{% if city %}{{ city.name }}{% else %}Add a city{% endif %}{% endblock %}
+{% block sub %}<a href="{% url 'studio:cities' %}">Cities</a> / {% if city %}Edit{% else %}New{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<form method="post" novalidate id="city-form">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="card card-b" style="color:var(--crit);margin-bottom:14px">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="editor">
+    <div class="stack">
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="pin" %}</span>The city</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.name %}
+          <div class="f {% if form.slug.errors %}has-err{% endif %}"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_name">{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">houseofyoung.com/<b id="slug-pv">{{ form.slug.value|default:'…' }}</b></span></div>
+          {% include "studio/_field.html" with f=form.country %}
+          {% include "studio/_field.html" with f=form.currency %}
+          {% include "studio/_field.html" with f=form.timezone %}
+          {% include "studio/_field.html" with f=form.ticket_provider %}
+        </div>
+        <p class="help muted" id="preset-note" style="margin-top:10px;font-size:.8rem" hidden>Currency and time zone filled in from the country. Change them if they're wrong.</p>
+      </section>
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="chat" %}</span>Contact and visibility</div>
+        <div class="fgrid">
+          {% include "studio/_field.html" with f=form.whatsapp_number %}
+          {% include "studio/_field.html" with f=form.instagram_url %}
+          {% include "studio/_field.html" with f=form.is_active wide=1 %}
+          {% include "studio/_field.html" with f=form.order %}
+        </div>
+      </section>
+      <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="home" %}</span>Venues</div>
+        <p class="muted" style="font-size:.84rem;margin:-6px 0 8px">Events in this city pick from these. Leave a row empty to skip it.</p>
+        {% include "studio/_formset.html" with fs=venues %}
+      </section>
+    </div>
+    <aside class="preview">
+      <section class="card">
+        <div class="city-hero">
+          <span class="mono" id="pv-country">{{ city.country|default:"Country" }} · <span id="pv-currency">{{ city.currency|default:"—" }}</span></span>
+          <b id="pv-name">{{ city.name|default:"City name" }}</b>
+          <span class="num" id="pv-time">--:--</span><span class="muted" id="pv-tz" style="font-size:.8rem">{{ city.timezone|default:"Pick a time zone" }}</span>
+        </div>
+      </section>
+      <section class="card card-b">
+        <div class="sect-h" style="margin-bottom:12px">Ready to launch? <span class="muted" style="font-weight:400;font-size:.86rem;margin-left:auto">{{ ready.done }} of {{ ready.total }}</span></div>
+        <div class="checklist">{% for label, ok in ready.checks %}<div class="{% if ok %}ok{% endif %}"><i></i>{{ label }}</div>{% endfor %}</div>
+        <p class="muted" style="font-size:.78rem;margin-top:12px">Talent and events are added in their own sections once the city exists.</p>
+      </section>
+      <div class="formbar"><span class="grow"></span><a class="btn ghost" href="{% url 'studio:cities' %}">Cancel</a><button class="btn pri">{% if city %}Save city{% else %}Add city{% endif %}</button></div>
+    </aside>
+  </div>
+</form>
+<datalist id="country-list">{% for name in presets %}<option value="{{ name }}">{% endfor %}</datalist>
+<datalist id="tz-list">{% for z in zones %}<option value="{{ z }}">{% endfor %}</datalist>
+{{ presets|json_script:"country-presets" }}
+{% endblock %}

@@ -118,3 +118,36 @@
   document.querySelectorAll("[data-nav-close], .scrim").forEach((b) => b.addEventListener("click", close));
   addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 })();
+
+// City form: fill currency and time zone from the country, live preview, local clock.
+(function () {
+  const form = document.getElementById("city-form");
+  if (!form) return;
+  const $ = (id) => document.getElementById(id);
+  const presets = JSON.parse($("country-presets").textContent);
+  const country = $("id_country"), currency = $("id_currency"), tz = $("id_timezone"), provider = $("id_ticket_provider"), name = $("id_name");
+  const touched = new Set();
+  [currency, tz, provider].forEach((el) => el.addEventListener("input", () => touched.add(el.id)));
+  country.addEventListener("input", () => {
+    const p = presets[country.value.trim()];
+    if (!p) return;
+    if (!touched.has(currency.id) || !currency.value) currency.value = p.currency;
+    if (!touched.has(tz.id) || !tz.value) tz.value = p.timezone;
+    if (p.provider && !provider.value) provider.value = p.provider;
+    $("preset-note").hidden = false;
+    paint();
+  });
+  const clock = () => {
+    try { $("pv-time").textContent = new Intl.DateTimeFormat("en-GB", { timeZone: tz.value, hour: "2-digit", minute: "2-digit" }).format(new Date()) + " now"; }
+    catch (e) { $("pv-time").textContent = "--:--"; }
+  };
+  const paint = () => {
+    $("pv-name").textContent = name.value || "City name";
+    $("pv-country").firstChild.textContent = (country.value || "Country") + " · ";
+    $("pv-currency").textContent = currency.value || "—";
+    $("pv-tz").textContent = tz.value || "Pick a time zone";
+    const sp = $("slug-pv"); if (sp) sp.textContent = $("id_slug").value || "…";
+    clock();
+  };
+  form.addEventListener("input", paint); form.addEventListener("change", paint); paint(); setInterval(clock, 20000);
+})();

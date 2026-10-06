@@ -18,9 +18,29 @@ class Currency(models.TextChoices):
     GBP = "GBP", "Pound (£)"
     USD = "USD", "US dollar ($)"
     GHS = "GHS", "Cedi (₵)"
+    KES = "KES", "Kenyan shilling (KSh)"
+    ZAR = "ZAR", "Rand (R)"
+    XOF = "XOF", "West African CFA franc (CFA)"
+    MAD = "MAD", "Moroccan dirham (DH)"
+    EGP = "EGP", "Egyptian pound (E£)"
+    AED = "AED", "UAE dirham (AED)"
+    CAD = "CAD", "Canadian dollar (C$)"
 
 
-CURRENCY_SYMBOLS = {"EUR": "€", "NGN": "₦", "GBP": "£", "USD": "$", "GHS": "₵"}
+CURRENCY_SYMBOLS = {
+    "EUR": "€",
+    "NGN": "₦",
+    "GBP": "£",
+    "USD": "$",
+    "GHS": "₵",
+    "KES": "KSh ",
+    "ZAR": "R",
+    "XOF": "CFA ",
+    "MAD": "DH ",
+    "EGP": "E£",
+    "AED": "AED ",
+    "CAD": "C$",
+}
 
 
 def validate_timezone(value):

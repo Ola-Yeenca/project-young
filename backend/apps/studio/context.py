@@ -48,7 +48,7 @@ def studio(request):
     filt = {"city": city} if city else {}
     new = BookingEnquiry.objects.filter(status="new", **filt).count() + ContactEnquiry.objects.filter(status="new", **filt).count()
     upcoming = Event.objects.upcoming().filter(**filt).count()
-    cities = list(City.objects.filter(is_active=True))
+    cities = list(City.objects.order_by("order", "name"))
     now = timezone.now()
     clocks = [{"name": c.name, "tz": c.timezone, "time": timezone.localtime(now, ZoneInfo(c.timezone)).strftime("%H:%M")} for c in cities]
     steps = setup_steps()

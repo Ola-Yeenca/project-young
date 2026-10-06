@@ -82,6 +82,8 @@ form{margin:0}
 .setup .row{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:.78rem}
 .ring{width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--info) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:none}
 .ring::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--card)}
+.ring.done{background:var(--good)}
+.ring.done::after{width:7px;height:4px;border-radius:0;background:none;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
 .setup .row .grow{flex:1}
 .side .bottom{display:grid;gap:2px;padding-top:10px}
 .me{display:flex;align-items:center;gap:10px;padding:10px 8px 2px;border-top:1px solid var(--line);margin-top:6px}
@@ -430,6 +432,20 @@ input.file{font:inherit;font-size:.84rem;color:var(--mute);max-width:100%}
 .cities-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 .city-card{padding:18px;display:grid;gap:8px}
 .city-card h3{font-size:1.5rem;letter-spacing:-.03em}
+.city{padding:18px;display:grid;gap:8px;transition:transform .2s var(--ease),box-shadow .2s}
+.city:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
+.city-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.city h3{font-size:1.9rem;letter-spacing:-.04em}
+.city-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.city-stats div{background:var(--sunk);border-radius:11px;padding:10px 12px}
+.city-stats b{display:block;font-size:1.3rem;font-weight:500}
+.city-stats span{font-size:.76rem;color:var(--mute)}
+.city-ready{display:flex;align-items:center;gap:8px;padding-top:12px;margin-top:4px;border-top:1px solid var(--line);font-size:.86rem}
+.city-ready .grow{flex:1}
+.city-hero{margin:6px;border-radius:12px;padding:22px;min-height:190px;display:grid;align-content:end;gap:4px;color:#f1eee7;background:radial-gradient(120% 120% at 85% 0%,rgba(201,160,67,.55),transparent 55%),linear-gradient(160deg,#2a2112,#111110 70%)}
+.city-hero .mono{color:#cbb98e}
+.city-hero b{font-size:2.2rem;font-weight:500;letter-spacing:-.04em;line-height:1.05}
+.city-hero .num{font-family:var(--mono);font-size:1.2rem}
 .results{display:grid;gap:4px;padding:6px}
 .result{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px}
 .result:hover{background:var(--sunk)}

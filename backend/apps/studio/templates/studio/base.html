@@ -29,6 +29,8 @@
     <a class="nl {% if nav == 'gallery' %}on{% endif %}" href="{% url 'studio:gallery' %}">{% include "studio/_i.html" with i="image" %}Gallery</a>
     <span class="grp">Business</span>
     <a class="nl {% if nav == 'shop' %}on{% endif %}" href="{% url 'studio:shop' %}">{% include "studio/_i.html" with i="bag" %}Shop</a>
+    <span class="grp">Settings</span>
+    <a class="nl {% if nav == 'cities' %}on{% endif %}" href="{% url 'studio:cities' %}">{% include "studio/_i.html" with i="pin" %}Cities<span class="count">{{ scope_cities|length }}</span></a>
     <a class="nl {% if nav == 'content' %}on{% endif %}" href="{% url 'studio:content' %}">{% include "studio/_i.html" with i="sliders" %}Site &amp; FAQs</a>
 
     {% if setup.next %}
@@ -86,7 +88,7 @@
   <a href="{% url 'studio:enquiries' %}" class="{% if nav == 'enquiries' %}on{% endif %}">{% include "studio/_i.html" with i="inbox" %}Inbox{% if new_enquiries %}<span class="badge">{{ new_enquiries }}</span>{% endif %}</a>
   <a href="{% url 'studio:events' %}" class="{% if nav == 'events' %}on{% endif %}">{% include "studio/_i.html" with i="calendar" %}Events</a>
   <a href="{% url 'studio:talent' %}" class="{% if nav == 'talent' %}on{% endif %}">{% include "studio/_i.html" with i="mic" %}Talent</a>
-  <a href="#" data-nav-open class="{% if nav in 'gallery shop content' %}on{% endif %}"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg>More</a>
+  <a href="#" data-nav-open class="{% if nav in 'gallery shop content cities' %}on{% endif %}"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg>More</a>
 </nav>
 
 {% if messages %}<div class="toasts" role="status">{% for m in messages %}<div class="toast {{ m.tags }}">{% if m.tags == 'error' %}{% include "studio/_i.html" with i="x" %}{% else %}{% include "studio/_i.html" with i="check" %}{% endif %}<span>{{ m }}</span><button type="button" aria-label="Dismiss">✕</button></div>{% endfor %}</div>{% endif %}

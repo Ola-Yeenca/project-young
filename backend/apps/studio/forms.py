@@ -1,7 +1,8 @@
 from django import forms
 from django.forms import inlineformset_factory, modelformset_factory
+from django.utils.text import slugify
 
-from apps.core.models import FAQ, SiteSettings
+from apps.core.models import FAQ, City, SiteSettings, Venue
 from apps.enquiries.models import EnquiryBase
 from apps.events.models import Event
 from apps.events.timezones import from_city_wall_time, to_city_wall_time
@@ -203,3 +204,87 @@ class EnquiryUpdateForm(forms.Form):
     status = forms.ChoiceField(choices=EnquiryBase.Status.choices, required=False)
     internal_notes = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4, "class": "in"}))
     assign = forms.CharField(required=False)  # "me", "none" or a user id
+
+
+# Country presets used to pre-fill the city form. Only facts the form can't get
+# wrong: currency and the main time zone. Ticket partners are pre-filled only for
+# the two markets HOY already works in.
+COUNTRY_PRESETS = {
+    "Spain": {"currency": "EUR", "timezone": "Europe/Madrid", "provider": "Fourvenues"},
+    "Nigeria": {"currency": "NGN", "timezone": "Africa/Lagos", "provider": "Tix.africa"},
+    "Ghana": {"currency": "GHS", "timezone": "Africa/Accra"},
+    "United Kingdom": {"currency": "GBP", "timezone": "Europe/London"},
+    "Ireland": {"currency": "EUR", "timezone": "Europe/Dublin"},
+    "Portugal": {"currency": "EUR", "timezone": "Europe/Lisbon"},
+    "France": {"currency": "EUR", "timezone": "Europe/Paris"},
+    "Germany": {"currency": "EUR", "timezone": "Europe/Berlin"},
+    "Netherlands": {"currency": "EUR", "timezone": "Europe/Amsterdam"},
+    "Belgium": {"currency": "EUR", "timezone": "Europe/Brussels"},
+    "Italy": {"currency": "EUR", "timezone": "Europe/Rome"},
+    "Kenya": {"currency": "KES", "timezone": "Africa/Nairobi"},
+    "South Africa": {"currency": "ZAR", "timezone": "Africa/Johannesburg"},
+    "Senegal": {"currency": "XOF", "timezone": "Africa/Dakar"},
+    "Côte d'Ivoire": {"currency": "XOF", "timezone": "Africa/Abidjan"},
+    "Morocco": {"currency": "MAD", "timezone": "Africa/Casablanca"},
+    "Egypt": {"currency": "EGP", "timezone": "Africa/Cairo"},
+    "United Arab Emirates": {"currency": "AED", "timezone": "Asia/Dubai"},
+    "United States": {"currency": "USD", "timezone": "America/New_York"},
+    "Canada": {"currency": "CAD", "timezone": "America/Toronto"},
+}
+
+
+class CityForm(StyledMixin, forms.ModelForm):
+    class Meta:
+        model = City
+        fields = (
+            "name",
+            "slug",
+            "country",
+            "currency",
+            "timezone",
+            "ticket_provider",
+            "whatsapp_number",
+            "instagram_url",
+            "is_active",
+            "order",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["country"].widget.attrs.update({"list": "country-list", "autocomplete": "off"})
+        self.fields["timezone"].widget.attrs.update({"list": "tz-list", "autocomplete": "off", "placeholder": "Africa/Accra"})
+        self.fields["whatsapp_number"].widget.attrs["placeholder"] = "+233 20 000 0000"
+        self.fields["is_active"].label = "Show this city on the site"
+        self.fields["is_active"].help_text = "Leave off while you set it up. It appears in Studio either way."
+        self.fields["slug"].required = False
+        self.fields["timezone"].label = "Time zone"
+        self.fields["ticket_provider"].label = "Ticket partner"
+        self.fields["whatsapp_number"].label = "WhatsApp number"
+        self.fields["instagram_url"].label = "Instagram"
+        self.fields["order"].label = "Position in lists"
+
+    def clean_slug(self):
+        return self.cleaned_data.get("slug") or slugify(self.cleaned_data.get("name", ""))
+
+
+class VenueForm(StyledMixin, forms.ModelForm):
+    class Meta:
+        model = Venue
+        fields = ("name", "address", "map_url", "capacity")
+        widgets = {"address": forms.TextInput()}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["map_url"].widget.attrs["placeholder"] = "Google Maps link"
+        self.fields["capacity"].widget.attrs["placeholder"] = "e.g. 600"
+
+    def save(self, commit=True):
+        venue = super().save(commit=False)
+        if not venue.slug:
+            venue.slug = slugify(venue.name)
+        if commit:
+            venue.save()
+        return venue
+
+
+VenueFormSet = inlineformset_factory(City, Venue, form=VenueForm, extra=2, can_delete=True)
