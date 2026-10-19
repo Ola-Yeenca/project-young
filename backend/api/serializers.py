@@ -1,12 +1,15 @@
+import re
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.community.models import INTERESTS, Member
 from apps.core.models import FAQ, City, MusicStyle, SiteSettings, Venue
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem
+from apps.radio.models import Track
 from apps.shop.models import Product
 from apps.talent.models import Talent
 from apps.ticketing.client import local_enabled
@@ -176,12 +179,13 @@ class TalentDetailSerializer(TalentListSerializer):
 class AlbumListSerializer(serializers.ModelSerializer):
     city = CityRefSerializer()
     event = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    event_title = serializers.CharField(source="event.title", default=None, read_only=True)
     cover = serializers.SerializerMethodField()
     item_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Album
-        fields = ("title", "slug", "city", "event", "date", "cover", "item_count")
+        fields = ("title", "slug", "city", "event", "event_title", "date", "cover", "item_count")
 
     def get_cover(self, obj):
         image = obj.cover
@@ -198,7 +202,7 @@ class AlbumItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AlbumItem
-        fields = ("id", "kind", "image", "video_url", "caption", "alt", "order")
+        fields = ("id", "kind", "image", "video_url", "caption", "alt", "order", "views", "downloads")
 
     def get_image(self, obj):
         return file_url(self.context.get("request"), obj.image)
@@ -255,7 +259,18 @@ class FAQSerializer(serializers.ModelSerializer):
 class SiteSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteSettings
-        fields = ("tagline", "about", "instagram_url", "tiktok_url", "youtube_url", "show_powered_by")
+        fields = (
+            "tagline",
+            "intro",
+            "about",
+            "vision",
+            "community",
+            "business_enabled",
+            "instagram_url",
+            "tiktok_url",
+            "youtube_url",
+            "show_powered_by",
+        )
 
 
 # ---------- enquiries ----------
@@ -321,3 +336,72 @@ class ContactEnquiryCreateSerializer(EnquiryCreateMixin, serializers.ModelSerial
     class Meta:
         model = ContactEnquiry
         fields = ("reference", "category", "city", "name", "email", "phone", "subject", "message", "privacy_accepted", "website")
+
+
+# ---------- radio ----------
+
+
+class TrackSerializer(serializers.ModelSerializer):
+    city = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Track
+        fields = ("title", "artist", "genre", "city", "url")
+
+    def get_url(self, obj):
+        return file_url(self.context.get("request"), obj.file)
+
+
+# ---------- community ----------
+
+INSTAGRAM = re.compile(r"^[A-Za-z0-9._]{1,30}$")
+
+
+class CommunityJoinSerializer(serializers.Serializer):
+    """Joining twice with the same email updates the member, so the response never says who is already on the list."""
+
+    name = serializers.CharField(max_length=120)
+    email = serializers.EmailField()
+    phone = serializers.CharField(max_length=32, required=False, allow_blank=True)
+    city = serializers.SlugRelatedField(slug_field="slug", queryset=City.objects.filter(is_active=True), required=False, allow_null=True)
+    instagram = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    channel = serializers.ChoiceField(choices=Member.Channel.choices, default=Member.Channel.EMAIL)
+    interests = serializers.ListField(child=serializers.ChoiceField(choices=list(INTERESTS)), required=False)
+    consent = serializers.BooleanField()
+    website = serializers.CharField(required=False, allow_blank=True, write_only=True, help_text="Leave empty. Spam trap.")
+
+    def validate_consent(self, value):
+        if not value:
+            raise serializers.ValidationError("Tick the box so we're allowed to message you.")
+        return value
+
+    def validate_instagram(self, value):
+        handle = re.sub(r"^(https?://)?(www\.)?instagram\.com/", "", value.strip()).strip("/").lstrip("@")
+        if handle and not INSTAGRAM.match(handle):
+            raise serializers.ValidationError("That doesn't look like an Instagram handle.")
+        return handle
+
+    def validate(self, attrs):
+        if attrs.get("website"):
+            raise serializers.ValidationError("Submission rejected.")
+        if attrs["channel"] != Member.Channel.EMAIL and not attrs.get("phone"):
+            raise serializers.ValidationError({"phone": "Add a WhatsApp number, or choose email only."})
+        return attrs
+
+    def create(self, validated_data):
+        picked = set(validated_data.get("interests", []))
+        fields = {
+            "name": validated_data["name"],
+            "phone": validated_data.get("phone", ""),
+            "city": validated_data.get("city"),
+            "instagram": validated_data.get("instagram", ""),
+            "channel": validated_data["channel"],
+            **{key: key in picked for key in INTERESTS},
+            "consent_at": timezone.now(),
+            "unsubscribed_at": None,
+        }
+        member, _ = Member.objects.update_or_create(
+            email__iexact=validated_data["email"], defaults=fields, create_defaults={"email": validated_data["email"], **fields}
+        )
+        return member

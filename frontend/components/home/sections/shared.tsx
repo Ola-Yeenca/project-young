@@ -2,9 +2,10 @@
 
 // Markup shared by Home and the pages: the prototype's row(), hd, strip() frames and countUp().
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useSite } from "../../site";
 import { Img, peekOf } from "../../ui";
+import { Lightbox } from "../../gallery/Lightbox";
 import { money, pad, priceOf, RM, seedOf, tagOf } from "@/lib/format";
 import type { Album, AlbumItem, EventItem } from "@/lib/types";
 
@@ -85,9 +86,12 @@ export function interleave(albums: Album[]): Shot[] {
 
 const ARS = ["4/5", "3/2", "4/5", "1/1", "4/5", "3/2", "4/5", "4/5"];
 
-/** Prototype strip() frames. A video frame opens its link in a new tab (unless the strip was dragged). */
-export function Frames({ shots, prefix }: { shots: Shot[]; prefix: string }) {
+export type Rank = "views" | "downloads";
+
+/** Prototype strip() frames. A frame opens full screen, unless the strip was being dragged. */
+export function Frames({ shots, prefix, rank }: { shots: Shot[]; prefix: string; rank?: Rank }) {
   const down = useRef(0);
+  const [open, setOpen] = useState<number | null>(null);
   return (
     <>
       {shots.map(({ album, item }, i) => {
@@ -100,13 +104,7 @@ export function Frames({ shots, prefix }: { shots: Shot[]; prefix: string }) {
             data-rv=""
             style={{ "--d": `${Math.min(i, 4) * 90}ms` } as CSS}
             onPointerDown={(ev) => (down.current = ev.clientX)}
-            onClick={
-              video && item.video_url
-                ? (ev) => {
-                    if (Math.abs(ev.clientX - down.current) < 6) window.open(item.video_url, "_blank", "noopener");
-                  }
-                : undefined
-            }
+            onClick={(ev) => Math.abs(ev.clientX - down.current) < 6 && setOpen(i)}
           >
             <div className="ph" style={{ "--ar": ar } as CSS}>
               <Img src={item.image} alt={item.alt || item.caption || album.title} seed={seedOf(album.slug) + item.id} w={ar === "3/2" ? 820 : 560} h={480} />
@@ -114,13 +112,12 @@ export function Frames({ shots, prefix }: { shots: Shot[]; prefix: string }) {
             </div>
             <figcaption className="meta">
               <span>{album.title}</span>
-              <span>
-                {video ? "Film" : "Frame"} {pad(i + 1)}
-              </span>
+              <span>{rank ? `#${i + 1} · ${item[rank]} ${rank}` : `${video ? "Film" : "Frame"} ${pad(i + 1)}`}</span>
             </figcaption>
           </figure>
         );
       })}
+      <Lightbox shots={shots} at={open} go={setOpen} close={() => setOpen(null)} />
     </>
   );
 }

@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     "apps.gallery",
     "apps.shop",
     "apps.enquiries",
+    "apps.community",
+    "apps.radio",
     "apps.studio",
     "apps.ticketing",
 ]
@@ -191,7 +193,7 @@ REST_FRAMEWORK = {
     + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
-    "DEFAULT_THROTTLE_RATES": {"enquiries": env("HOY_ENQUIRY_RATE", "10/hour")},
+    "DEFAULT_THROTTLE_RATES": {"enquiries": env("HOY_ENQUIRY_RATE", "10/hour"), "photos": env("HOY_PHOTO_RATE", "240/hour")},
     "UNAUTHENTICATED_USER": None,
 }
 

@@ -5,11 +5,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSite } from "../site";
-import { Img, Peek, Words } from "../ui";
+import { Img, Peek } from "../ui";
 import { RowsSkeleton } from "../skeleton";
 import { Lineup } from "../home/Sections";
-import { countUp, Frames, IdxHead, interleave, NoDates, Row } from "../home/sections/shared";
+import { countUp, Frames, IdxHead, interleave, NoDates, Row, type Rank } from "../home/sections/shared";
 import { ContactForm } from "../forms/ContactForm";
+import { ContactPortal, EventsPortal, GalleryPortal, ShopPortal, TalentPortal } from "./Portal";
 import { kindLabel, pad, seedOf, shipLine } from "@/lib/format";
 import type { City, Product } from "@/lib/types";
 
@@ -27,7 +28,7 @@ function Events() {
     <div className="wrap blk">
       <div className="sh" data-rv="">
         <h2>
-          Events in <span className="it">{city?.name}</span>
+          All <span className="it">dates</span>
         </h2>
         <span className="r">{city ? `Tickets via ${city.ticket_provider}` : ""}</span>
       </div>
@@ -69,6 +70,7 @@ export function EventsView() {
   const { slug } = useSite();
   return (
     <section className="view active" id="v-events" key={slug}>
+      <EventsPortal />
       <Events />
     </section>
   );
@@ -80,6 +82,7 @@ export function TalentView() {
   const { slug } = useSite();
   return (
     <section className="view active" id="v-talent" key={slug}>
+      <TalentPortal />
       <div className="night grain">
         <div className="wrap blk" id="all-lineup">
           <Lineup home={false} />
@@ -91,13 +94,21 @@ export function TalentView() {
 
 /* ---------------- /gallery ---------------- */
 
+const SORTS: [Rank | null, string][] = [
+  [null, "Latest"],
+  ["views", "Most viewed"],
+  ["downloads", "Most downloaded"],
+];
+
 function Gallery({ initial }: { initial?: string }) {
   const { bundle } = useSite();
   const [sel, setSel] = useState(initial ?? "All");
   const albums = bundle?.albums ?? [];
   const current = albums.find((a) => a.slug === sel);
   const album = current ? sel : "All";
-  const shots = current ? interleave([current]) : interleave(albums);
+  const [rank, setRank] = useState<Rank | null>(null);
+  const all = current ? interleave([current]) : interleave(albums);
+  const shots = rank ? [...all].sort((a, b) => b.item[rank] - a.item[rank]) : all;
 
   // An album slug from the URL that this city doesn't have falls back to All.
   useEffect(() => {
@@ -111,8 +122,8 @@ function Gallery({ initial }: { initial?: string }) {
   return (
     <div className="wrap blk">
       <div className="sh" data-rv="">
-        <h2>Gallery</h2>
-        <span className="r">Drag or swipe</span>
+        <h2>Albums</h2>
+        <span className="r">Tap a photo to open it</span>
       </div>
       <div className="chips" style={{ marginBottom: "22px" }}>
         <button className={album === "All" ? "on" : ""} onClick={() => pick("All")}>
@@ -124,8 +135,15 @@ function Gallery({ initial }: { initial?: string }) {
           </button>
         ))}
       </div>
+      <div className="chips rank" style={{ marginBottom: "22px" }} role="group" aria-label="Order photos">
+        {SORTS.map(([k, label]) => (
+          <button key={label} className={k === rank ? "on" : ""} aria-pressed={k === rank} onClick={() => setRank(k)}>
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="strip">
-        <Frames shots={shots} prefix={album} />
+        <Frames shots={shots} prefix={`${album}-${rank ?? "latest"}`} rank={rank ?? undefined} />
       </div>
     </div>
   );
@@ -135,6 +153,7 @@ export function GalleryView({ album }: { album?: string }) {
   const { slug } = useSite();
   return (
     <section className="view active" id="v-gallery" key={slug}>
+      <GalleryPortal />
       {/* Keyed by the album prop: it can arrive after first render (params resolve inside Suspense). */}
       <Gallery key={album ?? ""} initial={album} />
     </section>
@@ -249,6 +268,7 @@ export function ShopView() {
   const { slug } = useSite();
   return (
     <section className="view active" id="v-shop" key={slug}>
+      <ShopPortal />
       <Shop />
     </section>
   );
@@ -256,22 +276,17 @@ export function ShopView() {
 
 /* ---------------- /contact ---------------- */
 
-const ABOUT =
-  "House of Young started as a collective putting on nights for the African diaspora in Valencia. It grew into an entertainment company with a second home in Lagos. We produce events, represent and book artists, and keep a record of every room we fill.";
-
 export function ContactView() {
-  const { global, city, slug } = useSite();
+  const { global, city } = useSite();
   const wa = city?.whatsapp_number;
-  // Keyed by city like the other views, except the form, so a half-written message survives a switch.
+  // Not keyed by city: the form keeps a half-written message and the clocks glide on a switch.
   return (
     <section className="view active" id="v-contact">
+      <ContactPortal />
       <div className="wrap blk">
-        <h2 className="big" id="bigline" key={slug}>
-          <Words parts={[{ t: "Book an act, plan a night, or" }, { t: "just say hi.", it: true }]} />
-        </h2>
         <div className="split">
           <div className="about" data-rv="">
-            <p>{global.site?.about || ABOUT}</p>
+            <p>Questions about an event, booking an act or working with us? Send a message and the team will get back to you. Quick answers are below the form.</p>
             <div id="wa">
               {wa && (
                 <a className="wa" href={`https://wa.me/${wa.replace(/\D/g, "")}`} target="_blank" rel="noopener">
@@ -279,18 +294,27 @@ export function ContactView() {
                 </a>
               )}
             </div>
-            <div className="faq">
-              {global.faqs.map((f) => (
-                <details key={f.question}>
-                  <summary>{f.question}</summary>
-                  <p>{f.answer}</p>
-                </details>
-              ))}
-            </div>
           </div>
           <ContactForm />
         </div>
       </div>
+      {global.faqs.length > 0 && (
+        <div className="wrap blk" id="faqs" style={{ paddingTop: 0 }}>
+          <div className="sh" data-rv="">
+            <h2>
+              Quick <span className="it">answers</span>
+            </h2>
+          </div>
+          <div className="faq" data-rv="">
+            {global.faqs.map((f) => (
+              <details key={f.question}>
+                <summary>{f.question}</summary>
+                <p>{f.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

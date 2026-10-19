@@ -39,8 +39,6 @@ export const KINDS: Record<string, string> = {
 export const kindLabel = (k: string) => KINDS[k] ?? k.charAt(0).toUpperCase() + k.slice(1);
 
 /** Prototype style switch: amapiano → piano pattern, everything else → afro. */
-export const styleOf = (e: Pick<EventItem, "music_style">) => (e.music_style === "amapiano" ? "piano" : "afro");
-export const bpmOf = (e: Pick<EventItem, "bpm">) => e.bpm || 104;
 export const soldOf = (e: EventItem) => (e.sold_out ? 100 : Math.max(0, Math.min(100, e.sold_percent || 0)));
 
 /** row() tag: Sold out at 100, Selling fast from 70 on upcoming rows. */

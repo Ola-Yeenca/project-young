@@ -64,6 +64,7 @@ export function useEnquiry(path: string) {
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
   const [reference, setReference] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
   const send = useCallback(
     async (body: Record<string, unknown>) => {
@@ -71,8 +72,10 @@ export function useEnquiry(path: string) {
       setErrors({});
       const r = await post(path, body);
       setSending(false);
-      if (r.ok) setReference(r.reference);
-      else setErrors(r.errors);
+      if (r.ok) {
+        setReference(r.reference);
+        setDone(true);
+      } else setErrors(r.errors);
     },
     [path],
   );
@@ -83,7 +86,7 @@ export function useEnquiry(path: string) {
     if (name) setErrors((m) => (m[name] ? Object.fromEntries(Object.entries(m).filter(([k]) => k !== name)) : m));
   }, []);
 
-  return { errors, setErrors, sending, reference, send, clear };
+  return { errors, setErrors, sending, reference, done, send, clear };
 }
 
 export const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();

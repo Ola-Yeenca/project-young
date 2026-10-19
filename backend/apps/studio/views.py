@@ -1,3 +1,4 @@
+import csv
 import re
 from datetime import timedelta
 from zoneinfo import ZoneInfo, available_timezones
@@ -8,8 +9,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count, ProtectedError, Q
-from django.http import Http404, JsonResponse
+from django.db.models import Count, ProtectedError, Q, Sum
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -17,10 +18,12 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 
+from apps.community.models import INTERESTS, Member
 from apps.core.models import City, MediaKind, MusicStyle, SiteSettings
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry, EnquiryBase
 from apps.events.models import Event
-from apps.gallery.models import Album, AlbumItem
+from apps.gallery.models import Album, AlbumItem, PhotoHit
+from apps.radio.models import Track
 from apps.shop.models import Product
 from apps.talent.models import Talent, TalentMedia
 
@@ -41,6 +44,7 @@ from .forms import (
     QuickVenueForm,
     SiteSettingsForm,
     TalentForm,
+    TrackForm,
     UploadForm,
     VariantFormSet,
     VenueFormSet,
@@ -629,8 +633,22 @@ def _add_media(model, owner, data, start, **defaults):
 
 @studio_view("gallery.view_album")
 def gallery(request):
-    albums = scoped(Album.objects.select_related("city", "event"), request).annotate(n=Count("items")).order_by("-date", "-id")
-    return render(request, "studio/gallery.html", {"nav": "gallery", "albums": albums})
+    albums = (
+        scoped(Album.objects.select_related("city", "event"), request)
+        .annotate(n=Count("items"), views=Sum("items__views"), downloads=Sum("items__downloads"))
+        .order_by("-date", "-id")
+    )
+    rank = "downloads" if request.GET.get("rank") == "downloads" else "views"
+    photos = scoped(AlbumItem.objects.filter(kind=MediaKind.PHOTO), request, "album__city").select_related("album", "album__event")
+    hits = scoped(PhotoHit.objects.filter(day__gte=timezone.localdate() - timedelta(days=29)), request, "item__album__city")
+    stats = hits.aggregate(
+        views=Count("id", filter=Q(kind=PhotoHit.Kind.VIEW)),
+        downloads=Count("id", filter=Q(kind=PhotoHit.Kind.DOWNLOAD)),
+        visitors=Count("visitor", distinct=True),
+        devices=Count("device", distinct=True, filter=~Q(device="")),
+    )
+    top = photos.filter(**{f"{rank}__gt": 0}).order_by(f"-{rank}", "-views")[:10]
+    return render(request, "studio/gallery.html", {"nav": "gallery", "albums": albums, "top": top, "rank": rank, "stats": stats})
 
 
 @studio_view("gallery.change_album")
@@ -737,6 +755,132 @@ def product_edit(request, pk=None):
     return render(
         request, "studio/product_form.html", {"nav": "shop", "form": form, "prices": prices, "variants": variants, "product": product}
     )
+
+
+# ---------------------------------------------------------------- community
+
+
+@studio_view("community.view_member")
+def community(request):
+    q = request.GET.get("q", "").strip()
+    interest = request.GET.get("interest", "")
+    show = request.GET.get("show", "")
+    qs = scoped(Member.objects.select_related("city"), request)
+    if show != "left":
+        qs = qs.subscribed()
+    else:
+        qs = qs.filter(unsubscribed_at__isnull=False)
+    if interest in INTERESTS:
+        qs = qs.filter(**{interest: True})
+    if q:
+        qs = qs.filter(Q(name__icontains=q) | Q(email__icontains=q) | Q(phone__icontains=q) | Q(instagram__icontains=q))
+    if request.GET.get("format") == "csv" and show != "left":
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="hoy-community-{timezone.localdate():%Y-%m-%d}.csv"'
+        out = csv.writer(response)
+        out.writerow(["name", "email", "phone", "city", "instagram", "prefers", *INTERESTS, "joined"])
+        for m in qs:
+            out.writerow(
+                [
+                    m.name,
+                    m.email,
+                    m.phone,
+                    m.city.name if m.city else "",
+                    m.instagram,
+                    m.channel,
+                    *(int(getattr(m, k)) for k in INTERESTS),
+                    f"{m.created_at:%Y-%m-%d}",
+                ]
+            )
+        return response
+    week = timezone.now() - timedelta(days=7)
+    members = scoped(Member.objects.subscribed(), request)
+    return render(
+        request,
+        "studio/community.html",
+        {
+            "nav": "community",
+            "rows": qs[:500],
+            "total": qs.count(),
+            "q": q,
+            "interest": interest,
+            "show": show,
+            "interests": [{"key": k, "label": v, "on": k == interest} for k, v in INTERESTS.items()],
+            "stats": {
+                "members": members.count(),
+                "week": members.filter(created_at__gte=week).count(),
+                "whatsapp": members.exclude(channel=Member.Channel.EMAIL).count(),
+            },
+        },
+    )
+
+
+@require_POST
+@studio_view("community.change_member")
+def member_update(request, pk):
+    member = get_object_or_404(Member, pk=pk)
+    back = request.POST.get("back") or reverse("studio:community")
+    if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}):
+        back = reverse("studio:community")
+    action = request.POST.get("action")
+    if action == "unsubscribe" and not member.unsubscribed_at:
+        member.unsubscribed_at = timezone.now()
+        member.save(update_fields=["unsubscribed_at", "updated_at"])
+        log(request, member, CHANGED, "unsubscribed in Studio")
+        messages.success(request, f"{member.name} won't get community messages any more.")
+    elif action == "delete":
+        if not request.user.has_perm("community.delete_member"):
+            raise PermissionDenied
+        log(request, member, DELETED, "deleted in Studio")
+        name = member.name
+        member.delete()
+        messages.success(request, f"Deleted {name} and their details.")
+    return redirect(back)
+
+
+# ---------------------------------------------------------------- radio
+
+
+@studio_view("radio.view_track")
+def radio(request):
+    form = TrackForm(request.POST or None, request.FILES or None, prefix="t")
+    if request.method == "POST":
+        if not request.user.has_perm("radio.add_track"):
+            raise PermissionDenied
+        if form.is_valid():
+            track = form.save()
+            log(request, track, ADDED, "uploaded in Studio")
+            messages.success(request, f"Added {track}. {'It’s on air.' if track.is_published else 'It’s off air until you switch it on.'}")
+            return redirect("studio:radio")
+        messages.error(request, "Some fields need attention.")
+    tracks = Track.objects.select_related("city")
+    city = current_city(request)
+    if city:
+        tracks = tracks.filter(Q(city=city) | Q(city__isnull=True))
+    on_air = {g: 0 for g, _ in Track.Genre.choices}
+    for g in tracks.filter(is_published=True).values_list("genre", flat=True):
+        on_air[g] += 1
+    genres = [{"label": label, "n": on_air[g]} for g, label in Track.Genre.choices]
+    return render(request, "studio/radio.html", {"nav": "radio", "form": form, "tracks": tracks, "genres": genres})
+
+
+@require_POST
+@studio_view("radio.change_track")
+def track_update(request, pk):
+    track = get_object_or_404(Track, pk=pk)
+    action = request.POST.get("action")
+    if action == "toggle":
+        track.is_published = not track.is_published
+        track.save(update_fields=["is_published", "updated_at"])
+        log(request, track, CHANGED, "on air" if track.is_published else "off air")
+    elif action == "delete":
+        if not request.user.has_perm("radio.delete_track"):
+            raise PermissionDenied
+        log(request, track, DELETED, "deleted in Studio")
+        track.file.delete(save=False)
+        track.delete()
+        messages.success(request, "Track deleted.")
+    return redirect("studio:radio")
 
 
 # ---------------------------------------------------------------- content

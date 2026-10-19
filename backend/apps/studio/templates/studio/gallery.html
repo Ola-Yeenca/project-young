@@ -2,14 +2,32 @@
 {% block title %}Gallery{% endblock %}
 {% block icon %}{% include "studio/_i.html" with i="image" %}{% endblock %}
 {% block heading %}Gallery{% endblock %}
-{% block sub %}Albums from the nights{% endblock %}
+{% block sub %}Albums from the nights · last 30 days: {{ stats.views }} view{{ stats.views|pluralize }}, {{ stats.downloads }} download{{ stats.downloads|pluralize }}, {{ stats.visitors }} visitor-day{{ stats.visitors|pluralize }}, {{ stats.devices }} recognised device{{ stats.devices|pluralize }}{% endblock %}
 {% block action %}<a class="btn pri" href="{% url 'studio:album_new' %}">{% include "studio/_i.html" with i="plus" %}<span>New album</span></a>{% endblock %}
 {% block content %}
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="image" %}</span><h2>Top photos</h2>
+    <span class="grow"></span>
+    <div class="seg"><a href="?rank=views" class="{% if rank == 'views' %}on{% endif %}">Most viewed</a><a href="?rank=downloads" class="{% if rank == 'downloads' %}on{% endif %}">Most downloaded</a></div>
+  </div>
+  {% if top %}
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>#</th><th>Photo</th><th>Album</th><th class="num">Views</th><th class="num">Downloads</th></tr></thead>
+    <tbody>{% for p in top %}<tr>
+      <td class="num muted">{{ forloop.counter }}</td>
+      <td>{% if p.image %}<img src="{{ p.image.url }}" alt="" loading="lazy" style="width:56px;height:56px;object-fit:cover;border-radius:8px;display:block">{% endif %}</td>
+      <td><a href="{% url 'studio:album_edit' p.album.pk %}"><b>{{ p.album.title }}</b></a>{% if p.album.event %}<small class="muted" style="display:block">{{ p.album.event.title }}</small>{% endif %}</td>
+      <td class="num">{{ p.views }}</td>
+      <td class="num">{{ p.downloads }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="image" %}<b>No {{ rank }} yet</b><span>Counts appear when people open and download photos in the gallery.</span></div>{% endif %}
+</section>
 <div class="board">
   {% for a in albums %}
   <a class="card album" href="{% url 'studio:album_edit' a.pk %}">
     <div class="cov">{% for it in a.items.all|slice:":3" %}{% if it.image %}<img src="{{ it.image.url }}" alt="" loading="lazy">{% endif %}{% endfor %}</div>
-    <div class="body"><span style="flex:1;min-width:0"><b>{{ a.title }}</b><small>{{ a.n }} item{{ a.n|pluralize }} · {{ a.city }}{% if a.date %} · {{ a.date|date:"j M Y" }}{% endif %}</small></span>{% if not a.is_published %}<span class="pill gold">Hidden</span>{% endif %}</div>
+    <div class="body"><span style="flex:1;min-width:0"><b>{{ a.title }}</b><small>{{ a.n }} item{{ a.n|pluralize }} · {{ a.city }}{% if a.date %} · {{ a.date|date:"j M Y" }}{% endif %}</small><small>{{ a.views|default:0 }} views · {{ a.downloads|default:0 }} downloads</small></span>{% if not a.is_published %}<span class="pill gold">Hidden</span>{% endif %}</div>
   </a>
   {% endfor %}
   <a class="new-card" href="{% url 'studio:album_new' %}" style="min-height:220px">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">New album</b><span style="font-size:.84rem">Then drop in the photos from the night</span></a>

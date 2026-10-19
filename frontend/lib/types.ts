@@ -78,6 +78,8 @@ export type AlbumItem = {
   caption: string;
   alt: string;
   order: number;
+  views: number;
+  downloads: number;
 };
 
 export type Album = {
@@ -85,6 +87,7 @@ export type Album = {
   slug: string;
   city: Ref;
   event: string | null;
+  event_title: string | null;
   date: string | null;
   cover: string | null;
   item_count: number;
@@ -106,8 +109,13 @@ export type Product = {
 export type FAQ = { category: string; question: string; answer: string };
 
 export type Site = {
+  /** The motto. */
   tagline: string;
+  intro: string;
   about: string;
+  vision: string;
+  community: string;
+  business_enabled: boolean;
   instagram_url: string;
   tiktok_url: string;
   youtube_url: string;
@@ -125,4 +133,7 @@ export type CityBundle = {
   products: Product[];
 };
 
-export type Global = { cities: City[]; site: Site | null; faqs: FAQ[] };
+/** A HOY Radio track uploaded in Studio. `city` null plays everywhere. */
+export type Track = { title: string; artist: string; genre: string; city: string | null; url: string };
+
+export type Global = { cities: City[]; site: Site | null; faqs: FAQ[]; radio: Track[] };

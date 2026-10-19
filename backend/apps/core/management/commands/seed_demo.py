@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFilter
 
+from apps.core.content import ABOUT, FAQS
 from apps.core.models import FAQ, City, SiteSettings, Venue
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry
 from apps.events.models import Event
@@ -181,26 +182,6 @@ EVENTS = {
     ],
 }
 
-FAQS = [
-    (
-        "tickets",
-        "How do I buy tickets?",
-        "Every event has a Buy tickets button. It opens our ticket partner for that city, where you pay and get a QR ticket by email.",
-    ),
-    (
-        "talent",
-        "How do I book an artist?",
-        "Open the artist and send an enquiry with date, location and audience. We reply within one working day with availability and a quote.",
-    ),
-    (
-        "collaboration",
-        "Can we collaborate on an event?",
-        "Yes. Use the contact form, pick Event collaboration and tell us the venue, date and what you bring.",
-    ),
-    ("talent", "Do you work outside Valencia and Lagos?", "We travel for the right booking. Send the location and we will confirm."),
-    ("other", "Press and media", "Pick Media / Press in the contact form and we send the press kit."),
-]
-
 PRODUCTS = [
     ("Heavyweight Tee", "240 gsm cotton", "Boxy", ["S", "M", "L", "XL"], {"Valencia": "30", "Lagos": "25000"}),
     ("Gold Mark Cap", "Washed cotton", "One size", ["One size"], {"Valencia": "25", "Lagos": "18000"}),
@@ -221,7 +202,7 @@ class Command(BaseCommand):
         seed = 1
         now = timezone.now()
         site = SiteSettings.load()
-        site.about = "House of Young started as a collective putting on nights for the African diaspora in Valencia. It grew into an entertainment company with a second home in Lagos."
+        site.about = ABOUT
         site.save()
 
         for row in CITIES:
@@ -383,7 +364,7 @@ class Command(BaseCommand):
             e = ContactEnquiry.objects.create(
                 name=rnd.choice(names),
                 email=f"contact{i}@example.com",
-                category=rnd.choice(["general", "press", "collaboration", "business"]),
+                category=rnd.choice(["general", "events", "business", "merchandise"]),
                 subject=rnd.choice(["Partnership idea", "Press request", "Venue collaboration", "Question about tickets"]),
                 message="Sample message.",
                 status=rnd.choice(["new", "in_progress", "closed"]),

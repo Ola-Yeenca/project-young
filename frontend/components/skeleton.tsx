@@ -1,3 +1,6 @@
+import Image from "next/image";
+import mark from "@/public/hoy-mark.jpg";
+
 // Static shell shown while the first city's data streams in: same shapes as the real page.
 export function ShellSkeleton() {
   return (
@@ -5,7 +8,9 @@ export function ShellSkeleton() {
       <header>
         <div className="wrap bar">
           <span className="brand">
-            <span className="m">HOY</span>
+            <span className="m">
+              <Image src={mark} alt="" width={34} height={34} priority />
+            </span>
             <span className="w">House of Young</span>
           </span>
         </div>

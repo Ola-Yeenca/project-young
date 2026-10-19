@@ -8,6 +8,7 @@ from apps.enquiries.models import EnquiryBase
 from apps.events.models import Event
 from apps.events.timezones import from_city_wall_time, to_city_wall_time
 from apps.gallery.models import Album, AlbumItem
+from apps.radio.models import Track
 from apps.shop.models import Product, ProductPrice, ProductVariant
 from apps.talent.models import Talent
 
@@ -253,8 +254,26 @@ FAQFormSet = modelformset_factory(FAQ, form=FAQForm, extra=1, can_delete=True)
 class SiteSettingsForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = SiteSettings
-        fields = ("tagline", "about", "contact_email", "booking_email", "instagram_url", "tiktok_url", "youtube_url", "show_powered_by")
-        widgets = {"about": forms.Textarea(attrs={"rows": 6})}
+        fields = (
+            "tagline",
+            "intro",
+            "about",
+            "vision",
+            "community",
+            "business_enabled",
+            "contact_email",
+            "booking_email",
+            "instagram_url",
+            "tiktok_url",
+            "youtube_url",
+            "show_powered_by",
+        )
+        widgets = {
+            "intro": forms.Textarea(attrs={"rows": 3}),
+            "about": forms.Textarea(attrs={"rows": 6}),
+            "vision": forms.Textarea(attrs={"rows": 5}),
+            "community": forms.Textarea(attrs={"rows": 5}),
+        }
 
 
 class EnquiryUpdateForm(forms.Form):
@@ -465,3 +484,14 @@ class BaseVenueFormSet(BaseInlineFormSet):
 
 
 VenueFormSet = inlineformset_factory(City, Venue, form=VenueForm, formset=BaseVenueFormSet, extra=2, can_delete=True)
+
+
+class TrackForm(StyledMixin, forms.ModelForm):
+    class Meta:
+        model = Track
+        fields = ("title", "artist", "genre", "city", "file", "rights", "is_published")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["city"].empty_label = "Every city"
+        self.fields["file"].widget.attrs["accept"] = ".mp3,.m4a,.aac,.ogg,.wav,audio/*"

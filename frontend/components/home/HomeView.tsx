@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { Hero } from "./Hero";
 import { Calendar, Cities, FloorStrip, Lineup, Marquee } from "./Sections";
+import { Closing, Community, Identity, WhatWeDo } from "./Story";
 import { useSite } from "../site";
 
 /**
- * Prototype section#v-home, in the same order. The hero handles a city switch itself (a record
- * change, like the prototype's render() → setRecord()); the rest is keyed by city so it re-renders.
+ * Prototype section#v-home, in the same order, with the brief's About-us sections around it.
+ * The hero handles a city switch itself (a record change, like the prototype's render() →
+ * setRecord()); the rest is keyed by city so it re-renders.
  */
 export function HomeView() {
   const { slug } = useSite();
@@ -17,6 +19,8 @@ export function HomeView() {
       <Hero />
       <Fragment key={slug}>
         <Marquee />
+        <Identity />
+        <WhatWeDo />
         <Cities />
         <div className="wrap blk">
           <div className="sh" data-rv>
@@ -34,17 +38,11 @@ export function HomeView() {
             <Lineup home />
           </div>
         </div>
-        <div className="wrap blk">
-          <div className="sh" data-rv>
-            <h2>
-              From the <span className="it">floor</span>
-            </h2>
-            <Link className="r" href="/gallery">
-              Gallery →
-            </Link>
-          </div>
+        <Community />
+        <div className="wrap blk" style={{ paddingTop: 0 }}>
           <FloorStrip />
         </div>
+        <Closing />
       </Fragment>
     </section>
   );

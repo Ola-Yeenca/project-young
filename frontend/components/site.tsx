@@ -3,12 +3,18 @@
 // Site state: the selected city and its data, the city wipe, detail sheets and the
 // now-playing record. Replaces the prototype's globals (city, cur, D) and render().
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { loadCity } from "@/lib/api";
-import { subscribe, A } from "@/lib/audio";
+import { grooves as groovesOf, subscribe, A, type Groove } from "@/lib/audio";
 import { fmtT } from "@/lib/format";
-import type { City, CityBundle, EventItem, Global } from "@/lib/types";
+import type { City, CityBundle, EventItem, Global, Track } from "@/lib/types";
+
+/** One random seed per page load: HOY Radio's running order and variations for this visit. */
+let visitSeed = 0;
+const getVisit = () => (visitSeed ||= 1 + Math.floor(Math.random() * 2 ** 31));
+const noSub = () => () => {};
+const useVisit = () => useSyncExternalStore(noSub, getVisit, () => 0);
 
 export type SheetState = { type: "event" | "talent"; slug: string; pushed: boolean; base: string } | null;
 
@@ -22,9 +28,15 @@ type Ctx = {
   bundles: Record<string, CityBundle>;
   /** Records on the turntable: featured, falling back to upcoming. */
   records: EventItem[];
+  /** The groove for each record, from its city's sound, varied for this visit. */
+  grooves: Groove[];
+  /** This visit's seed (0 until hydrated). */
+  visit: number;
   cur: number;
   setCur: (n: number) => void;
   playing: boolean;
+  /** The uploaded track HOY Radio is playing, or null for the generated groove. */
+  onAir: Track | null;
   switchCity: (to: string) => void;
   wipe: { to: City; phase: "in" | "out" } | null;
   sheet: SheetState;
@@ -92,11 +104,21 @@ export function SiteProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => subscribe(setPlaying), []);
+  const [onAir, setOnAir] = useState<Track | null>(null);
+  useEffect(
+    () =>
+      subscribe((on) => {
+        setPlaying(on);
+        setOnAir(on ? A.track : null);
+      }),
+    [],
+  );
+  const visit = useVisit();
 
   const bundle = bundles[slug] ?? null;
   const city = cities.find((c) => c.slug === slug) ?? null;
   const records = useMemo(() => (bundle ? (bundle.featured.length ? bundle.featured : bundle.events) : []), [bundle]);
+  const grooves = useMemo(() => groovesOf(records, visit), [records, visit]);
 
   const setCur = useCallback((n: number) => {
     idle.current = 0;
@@ -205,9 +227,12 @@ export function SiteProvider({
     bundle,
     bundles,
     records,
+    grooves,
+    visit,
     cur: records.length ? Math.min(cur, records.length - 1) : 0,
     setCur,
     playing,
+    onAir,
     switchCity,
     wipe,
     sheet,

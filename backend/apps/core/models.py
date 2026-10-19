@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 
+from . import content
+
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -168,6 +170,7 @@ class MediaBase(models.Model):
 
 class FAQ(TimeStampedModel):
     class Category(models.TextChoices):
+        GENERAL = "general", "General"
         TICKETS = "tickets", "Events and tickets"
         TALENT = "talent", "Talent bookings"
         COLLABORATION = "collaboration", "Collaborations"
@@ -192,8 +195,16 @@ class FAQ(TimeStampedModel):
 class SiteSettings(models.Model):
     """One row of site-wide content the team can edit without a developer."""
 
-    tagline = models.CharField(max_length=200, default="Events, talent and culture from Valencia to Lagos.")
-    about = models.TextField(blank=True, help_text="Company biography for the Contact Us page.")
+    tagline = models.CharField("motto", max_length=200, default=content.MOTTO, help_text="Shown on the homepage and in the footer.")
+    intro = models.TextField("homepage introduction", blank=True, default=content.INTRO)
+    about = models.TextField(
+        blank=True, help_text="About House of Young, on the homepage and the Contact page. Blank lines start new paragraphs."
+    )
+    vision = models.TextField("our vision", blank=True, default=content.VISION)
+    community = models.TextField("our community", blank=True, default=content.COMMUNITY)
+    business_enabled = models.BooleanField(
+        "business section live", default=False, help_text="Shows the Business page and its menu link. Leave off until its content is ready."
+    )
     contact_email = models.EmailField(blank=True, help_text="Receives contact form messages.")
     booking_email = models.EmailField(blank=True, help_text="Receives talent booking enquiries. Falls back to the contact email.")
     instagram_url = models.URLField(blank=True)

@@ -1,5 +1,6 @@
 from django.db import connection, transaction
 from django.db.models import Prefetch
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, viewsets
 from rest_framework.decorators import api_view, permission_classes
@@ -10,7 +11,10 @@ from rest_framework.throttling import ScopedRateThrottle
 from apps.core.models import FAQ, City, SiteSettings
 from apps.enquiries.notifications import notify
 from apps.events.models import Event
-from apps.gallery.models import Album, AlbumItem
+from apps.gallery.models import Album, AlbumItem, PhotoHit
+from apps.gallery.stamp import stamped
+from apps.gallery.stats import record
+from apps.radio.models import Track
 from apps.shop.models import Product, ProductPrice
 from apps.talent.models import Talent
 
@@ -120,6 +124,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return {**super().get_serializer_context(), "city": city_from(self.request)}
 
 
+class TrackList(generics.ListAPIView):
+    """HOY Radio tracks that are on air. The site shuffles them per visit."""
+
+    serializer_class = s.TrackSerializer
+    queryset = Track.objects.published().select_related("city")
+    pagination_class = None
+
+
 class FAQList(generics.ListAPIView):
     serializer_class = s.FAQSerializer
     queryset = FAQ.objects.filter(is_published=True)
@@ -162,3 +174,54 @@ class BookingEnquiryCreate(EnquiryCreate):
 
 class ContactEnquiryCreate(EnquiryCreate):
     serializer_class = s.ContactEnquiryCreateSerializer
+
+
+class CommunityJoin(generics.GenericAPIView):
+    serializer_class = s.CommunityJoinSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "enquiries"
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "joined"}, status=201)
+
+
+def published_photo(pk):
+    return get_object_or_404(
+        AlbumItem.objects.select_related("album__city", "album__event").exclude(image=""),
+        pk=pk,
+        kind="photo",
+        is_published=True,
+        album__is_published=True,
+        album__city__is_active=True,
+    )
+
+
+class PhotoView(generics.GenericAPIView):
+    """Count a photo opened full screen. Body: {"device": <sha-256 hex, only with consent>}"""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "photos"
+
+    def post(self, request, pk):
+        item = published_photo(pk)
+        record(item, PhotoHit.Kind.VIEW, request, str(request.data.get("device", "")))
+        item.refresh_from_db(fields=("views", "downloads"))
+        return Response({"views": item.views, "downloads": item.downloads})
+
+
+class PhotoDownload(generics.GenericAPIView):
+    """The credited JPEG of a photo, counted as a download. ?d=<device hash, only with consent>"""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "photos"
+
+    def get(self, request, pk):
+        item = published_photo(pk)
+        record(item, PhotoHit.Kind.DOWNLOAD, request, request.query_params.get("d", ""))
+        response = HttpResponse(stamped(item), content_type="image/jpeg")
+        response["Content-Disposition"] = f'attachment; filename="hoy-{item.album.slug}-{item.pk}.jpg"'
+        response["Cache-Control"] = "no-store"
+        return response

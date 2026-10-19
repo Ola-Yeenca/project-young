@@ -58,6 +58,8 @@ class AlbumItem(MediaBase):
     )
     alt = models.CharField(max_length=240, blank=True, help_text="Describe the image for people who cannot see it.")
     is_published = models.BooleanField(default=True)
+    views = models.PositiveIntegerField(default=0, editable=False)
+    downloads = models.PositiveIntegerField(default=0, editable=False)
 
     class Meta(MediaBase.Meta):
         verbose_name = "photo or video"
@@ -65,3 +67,31 @@ class AlbumItem(MediaBase):
 
     def __str__(self):
         return self.caption or f"{self.get_kind_display()} {self.pk}"
+
+
+class PhotoHit(models.Model):
+    """One person opening or downloading a photo, counted once per item, kind and day.
+
+    `visitor` is a hash of the address and browser that changes every day, so it counts unique
+    people without recognising anyone across days. `device` is only set when the visitor agreed
+    to device recognition on the site.
+    """
+
+    class Kind(models.TextChoices):
+        VIEW = "view", "View"
+        DOWNLOAD = "download", "Download"
+
+    item = models.ForeignKey(AlbumItem, on_delete=models.CASCADE, related_name="hits")
+    kind = models.CharField(max_length=8, choices=Kind.choices)
+    visitor = models.CharField(max_length=16)
+    device = models.CharField(max_length=16, blank=True)
+    day = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        constraints = [models.UniqueConstraint(fields=("item", "kind", "visitor", "day"), name="one_hit_per_visitor_day")]
+        indexes = [models.Index(fields=("day", "kind"))]
+
+    def __str__(self):
+        return f"{self.get_kind_display()} of {self.item_id} on {self.day}"

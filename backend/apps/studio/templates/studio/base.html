@@ -23,10 +23,12 @@
     <span class="grp">Today</span>
     <a class="nl {% if nav == 'overview' %}on{% endif %}" href="{% url 'studio:overview' %}">{% include "studio/_i.html" with i="home" %}Overview</a>
     <a class="nl {% if nav == 'enquiries' %}on{% endif %}" href="{% url 'studio:enquiries' %}">{% include "studio/_i.html" with i="inbox" %}Enquiries{% if new_enquiries %}<span class="count hot">{{ new_enquiries }}</span>{% endif %}</a>
+    <a class="nl {% if nav == 'community' %}on{% endif %}" href="{% url 'studio:community' %}">{% include "studio/_i.html" with i="user" %}Community</a>
     <span class="grp">Programme</span>
     <a class="nl {% if nav == 'events' %}on{% endif %}" href="{% url 'studio:events' %}">{% include "studio/_i.html" with i="calendar" %}Events{% if upcoming_count %}<span class="count">{{ upcoming_count }}</span>{% endif %}</a>
     <a class="nl {% if nav == 'talent' %}on{% endif %}" href="{% url 'studio:talent' %}">{% include "studio/_i.html" with i="mic" %}Talent</a>
     <a class="nl {% if nav == 'gallery' %}on{% endif %}" href="{% url 'studio:gallery' %}">{% include "studio/_i.html" with i="image" %}Gallery</a>
+    <a class="nl {% if nav == 'radio' %}on{% endif %}" href="{% url 'studio:radio' %}">{% include "studio/_i.html" with i="play" %}HOY Radio</a>
     <span class="grp">Business</span>
     <a class="nl {% if nav == 'shop' %}on{% endif %}" href="{% url 'studio:shop' %}">{% include "studio/_i.html" with i="bag" %}Shop</a>
     <span class="grp">Settings</span>

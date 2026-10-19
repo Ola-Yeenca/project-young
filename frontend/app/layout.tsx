@@ -21,7 +21,8 @@ const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: [
 
 export const metadata: Metadata = {
   title: { default: "House of Young", template: "%s · House of Young" },
-  description: "Events, talent and nights from House of Young, in Valencia and Lagos.",
+  description:
+    "House of Young (HOY) is a creative and entertainment-driven platform: events, talent, merchandise and collaborations, in Valencia and Lagos. The Vision Is Ours.",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };

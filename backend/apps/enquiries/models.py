@@ -76,11 +76,14 @@ class BookingEnquiry(EnquiryBase):
 class ContactEnquiry(EnquiryBase):
     class Category(models.TextChoices):
         GENERAL = "general", "General enquiry"
-        TALENT = "talent", "Talent booking"
-        COLLABORATION = "collaboration", "Event collaboration"
-        BUSINESS = "business", "Business enquiry"
-        PRESS = "press", "Media / press"
+        EVENTS = "events", "Events"
+        TALENT = "talent", "Talent"
+        BUSINESS = "business", "Business collaboration"
+        MERCHANDISE = "merchandise", "Merchandise"
         OTHER = "other", "Other"
+        # Kept for messages sent before the current categories.
+        COLLABORATION = "collaboration", "Event collaboration"
+        PRESS = "press", "Media / press"
 
     category = models.CharField(max_length=20, choices=Category.choices, default=Category.GENERAL)
     name = models.CharField(max_length=120)

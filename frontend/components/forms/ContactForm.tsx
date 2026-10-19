@@ -7,23 +7,15 @@ import { useSite } from "../site";
 import { Err, Fail, Honeypot, Privacy, errProps, str, useEnquiry } from "./fields";
 
 const REASONS: [string, string][] = [
-  ["General", "general"],
-  ["Talent booking", "talent"],
-  ["Collaboration", "collaboration"],
-  ["Business", "business"],
-  ["Press", "press"],
+  ["General enquiry", "general"],
+  ["Events", "events"],
+  ["Talent", "talent"],
+  ["Business collaboration", "business"],
+  ["Merchandise", "merchandise"],
   ["Other", "other"],
 ];
-const FIELDS = ["name", "email", "phone", "message", "privacy_accepted"];
+const FIELDS = ["name", "email", "phone", "subject", "message", "privacy_accepted"];
 const ID = "c";
-
-/** First line of the message, trimmed to the API's 160 characters. */
-const subjectOf = (m: string) =>
-  m
-    .split("\n")
-    .map((l) => l.trim())
-    .find(Boolean)
-    ?.slice(0, 160) || "Website enquiry";
 
 export function ContactForm() {
   const { slug } = useSite();
@@ -39,13 +31,12 @@ export function ContactForm() {
     e.preventDefault();
     if (sending) return;
     const fd = new FormData(e.currentTarget);
-    const message = str(fd, "message");
     send({
       name: str(fd, "name"),
       email: str(fd, "email"),
       phone: str(fd, "phone"),
-      message,
-      subject: subjectOf(message),
+      message: str(fd, "message"),
+      subject: str(fd, "subject"),
       category: reason,
       city: slug || null,
       privacy_accepted: fd.get("privacy_accepted") === "on",
@@ -82,11 +73,18 @@ export function ContactForm() {
               <Err errors={errors} id={ID} name="email" />
             </label>
           </div>
-          <label>
-            Phone
-            <input name="phone" type="tel" placeholder="+34 / +234" autoComplete="tel" {...errProps(errors, ID, "phone")} />
-            <Err errors={errors} id={ID} name="phone" />
-          </label>
+          <div className="f2">
+            <label>
+              Phone
+              <input name="phone" type="tel" placeholder="+34 / +234" autoComplete="tel" {...errProps(errors, ID, "phone")} />
+              <Err errors={errors} id={ID} name="phone" />
+            </label>
+            <label>
+              Subject
+              <input name="subject" required maxLength={160} {...errProps(errors, ID, "subject")} />
+              <Err errors={errors} id={ID} name="subject" />
+            </label>
+          </div>
           <label>
             Message
             <textarea name="message" required {...errProps(errors, ID, "message")} />

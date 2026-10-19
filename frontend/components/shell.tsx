@@ -1,18 +1,23 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSite } from "./site";
 import { beatEnv, stop } from "@/lib/audio";
-import { bpmOf, fmtT } from "@/lib/format";
+import { fmtT } from "@/lib/format";
+import mark from "@/public/hoy-mark.jpg";
 
 const NAV = [
   ["/events", "Events"],
   ["/talent", "Talent"],
   ["/gallery", "Gallery"],
   ["/shop", "Shop"],
+  ["/business", "Business"],
   ["/contact", "Contact"],
 ] as const;
+
+export const MOTTO = "The Vision Is Ours.";
 
 const section = (path: string) => "/" + (path.split("/")[1] ?? "");
 
@@ -75,17 +80,20 @@ function CitySwitch() {
 }
 
 export function Header() {
-  const { view } = useSite();
+  const { view, global } = useSite();
   const on = section(view);
+  const business = !!global.site?.business_enabled;
   return (
     <header>
       <div className="wrap bar">
-        <Link className="brand" href="/">
-          <span className="m">HOY</span>
+        <Link className="brand" href="/" aria-label="House of Young, home">
+          <span className="m">
+            <Image src={mark} alt="" width={34} height={34} priority />
+          </span>
           <span className="w">House of Young</span>
         </Link>
         <nav className="top">
-          {NAV.map(([href, label]) => (
+          {NAV.filter(([href]) => business || href !== "/business").map(([href, label]) => (
             <Link key={href} href={href} className={on === href ? "on" : ""}>
               {label}
             </Link>
@@ -107,10 +115,10 @@ export function Footer() {
     <footer>
       <div className="wrap">
         <span>
-          © {new Date().getFullYear()} House of Young · {names}
+          © {new Date().getFullYear()} House of Young · {names} · {global.site?.tagline || MOTTO}
         </span>
         <span>
-          <Link href="/privacy">Privacy</Link> · <Link href="/legal">Legal notice</Link> · <Link href="/terms">Terms</Link>
+          <Link href="/about">About</Link> · <Link href="/privacy">Privacy</Link> · <Link href="/legal">Legal notice</Link> · <Link href="/terms">Terms</Link>
         </span>
         {global.site?.show_powered_by && <span>Powered by SME Analytica</span>}
       </div>
@@ -119,10 +127,11 @@ export function Footer() {
 }
 
 const TABS = [
-  ["/", "Now", <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /></>],
   ["/events", "Events", <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" /></>],
   ["/talent", "Talent", <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M6 11a6 6 0 0 0 12 0M12 17v4" /></>],
   ["/gallery", "Gallery", <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="M21 16l-5-5-8 8" /></>],
+  ["/shop", "Shop", <><path d="M5 8h14l-1.2 12H6.2z" /><path d="M9 8a3 3 0 0 1 6 0" /></>],
+  ["/business", "Business", <><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5h6v2M3 13h18" /></>],
   ["/contact", "Contact", <><path d="M4 6h16v10H8l-4 4z" /></>],
 ] as const;
 
@@ -131,7 +140,8 @@ const TABS = [
  * always sits above the tab bar, never behind it. Keep .np inside .dock.
  */
 export function Dock() {
-  const { view, playing, records, cur } = useSite();
+  const { view, playing, records, grooves, cur, global, onAir } = useSite();
+  const business = !!global.site?.business_enabled;
   const on = section(view);
   const e = records[cur];
   const eq = useRef<HTMLSpanElement>(null);
@@ -159,13 +169,13 @@ export function Dock() {
           <i></i>
           <i></i>
         </span>
-        <span>{e ? `${e.title} · ${bpmOf(e)} BPM` : ""}</span>
+        <span>{onAir ? `HOY Radio · ${onAir.artist} – ${onAir.title}` : e ? `HOY Radio · ${grooves[cur]?.label} · ${grooves[cur]?.bpm} BPM` : ""}</span>
         <button aria-label="Stop" onClick={() => stop()}>
           ■
         </button>
       </div>
       <nav className="tabs">
-        {TABS.map(([href, label, icon]) => (
+        {TABS.filter(([href]) => business || href !== "/business").map(([href, label, icon]) => (
           <Link key={href} href={href} className={on === href ? "on" : ""}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               {icon}

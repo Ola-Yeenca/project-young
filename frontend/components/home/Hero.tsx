@@ -5,10 +5,10 @@
 // interval and the Home keyboard. Per-frame work writes styles directly, never React state.
 
 import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
-import { A, beatEnv, dueBars, muffle, play, retune, scratch, stop } from "@/lib/audio";
+import { A, beatEnv, dueBars, muffle, play, retune, scratch, stop, type Groove } from "@/lib/audio";
 import { mediaSrc } from "@/lib/api";
 import { loadImage, record } from "@/lib/art";
-import { AUTO, RM, bpmOf, money, pad, priceOf, purchaseUrl, seedOf, soldOf, styleOf } from "@/lib/format";
+import { AUTO, RM, money, pad, priceOf, purchaseUrl, seedOf, soldOf } from "@/lib/format";
 import type { EventItem } from "@/lib/types";
 import { useSite } from "../site";
 import { Words } from "../ui";
@@ -18,6 +18,7 @@ const T = { ang: 0, v: 360 / 12000, target: 360 / 12000, drag: false, last: 0, l
 let lastBar = -1;
 let first = true; // the very first record drops in without a lift
 let armDown = false; // the tonearm drops once, 700ms after load
+const FALLBACK: Groove = { style: "afrobeats", bpm: 104, label: "Afrobeats", key: 0, seed: 1 };
 
 const posters = new Map<string, Promise<HTMLImageElement | null>>();
 const poster = (src: string) => {
@@ -25,22 +26,25 @@ const poster = (src: string) => {
   if (!p) posters.set(src, (p = loadImage(src)));
   return p;
 };
+const VINYL = "/vinyl.jpg";
+
 /**
- * The record with its poster. Each draw runs a 900×900 grain pass, so the field-art fallback is
- * drawn only when there is no poster, it fails, or it takes longer than 150ms to arrive.
+ * The record: a vinyl photo. Its 900×900 field-art stand-in (a grain pass per draw) is drawn
+ * only if the photo fails or takes longer than 150ms to arrive.
  */
-function paint(cv: HTMLCanvasElement, seed: number, src: string | null | undefined) {
-  if (!src) return record(cv, seed);
+function paint(cv: HTMLCanvasElement, seed: number) {
   let drawn = false;
   const late = setTimeout(() => {
     drawn = true;
     record(cv, seed);
   }, 150);
-  poster(src).then((img) => {
+  poster(VINYL).then((img) => {
     clearTimeout(late);
     if (!cv.isConnected) return;
-    if (img) record(cv, seed, img);
-    else if (!drawn) record(cv, seed);
+    if (img) {
+      cv.width = cv.height = 900;
+      cv.getContext("2d")!.drawImage(img, 0, 0, 900, 900);
+    } else if (!drawn) record(cv, seed);
   });
 }
 
@@ -72,10 +76,11 @@ const titleParts = (t: string) => {
 };
 
 export function Hero() {
-  const { city, slug, records, cur, setCur, playing, idle: idleRef, sheet, openSheet, bundle } = useSite();
+  const { city, slug, records, grooves, visit, cur, setCur, playing, onAir, global, idle: idleRef, sheet, openSheet, bundle } = useSite();
   const ready = !!bundle;
   const n = records.length;
   const e: EventItem | undefined = records[cur];
+  const groove = grooves[cur];
   // Bumped on every setRecord() so a re-pick of the same record re-runs it, as the prototype does.
   // A city switch changes `slug` (and the site resets cur to 0): the same change path, no remount.
   const [spin, setSpin] = useState(0);
@@ -94,7 +99,7 @@ export function Hero() {
   const bpmRef = useRef(104);
   const shown = useRef<string | null>(null);
 
-  const bpm = e ? bpmOf(e) : 104;
+  const bpm = groove?.bpm ?? 104;
   useEffect(() => {
     bpmRef.current = bpm;
   }, [bpm]);
@@ -104,7 +109,7 @@ export function Hero() {
     setCur((cur + d + n) % n);
     setSpin((s) => s + 1);
   };
-  const toggle = () => (A.on ? stop() : play(bpm, e ? styleOf(e) : "afro"));
+  const toggle = () => (A.on ? stop() : play(groove ?? FALLBACK, slug, global.radio, visit));
 
   /* ---- ripple(): a gold ring under the disc ---- */
   const onRipple = useEffectEvent((o: number) => {
@@ -178,9 +183,9 @@ export function Hero() {
     const rot = rotRef.current;
     if (!rot || shown.current === tok) return;
     shown.current = tok;
-    if (e) retune(bpmOf(e), styleOf(e));
+    if (groove) retune(groove, slug);
     const nc = document.createElement("canvas");
-    paint(nc, seedOf(e ? e.slug : slug), mediaSrc(e?.poster));
+    paint(nc, seedOf(e ? e.slug : slug));
     if (first) {
       first = false;
       rot.appendChild(nc);
@@ -203,7 +208,32 @@ export function Hero() {
       while (nc.previousElementSibling) nc.previousElementSibling.remove();
       nc.className = "";
     }, 750);
-  }, [ready, tok, e, slug]);
+  }, [ready, tok, e, slug, groove]);
+
+  /* ---- the wallpaper: this record's flyer, cross-faded in once it has loaded ---- */
+  const wallRef = useRef<HTMLDivElement>(null);
+  const wallSrc = mediaSrc(e?.poster);
+  useEffect(() => {
+    const box = wallRef.current;
+    if (!box) return;
+    let live = true;
+    const show = (img: HTMLImageElement | null) => {
+      if (!live) return;
+      const old = [...box.children] as HTMLElement[];
+      old.forEach((o) => o.classList.remove("in"));
+      setTimeout(() => old.forEach((o) => o.remove()), 900);
+      if (!img) return;
+      const d = document.createElement("div");
+      d.style.backgroundImage = `url(${JSON.stringify(img.src)})`;
+      box.appendChild(d);
+      requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add("in")));
+    };
+    if (wallSrc) poster(wallSrc).then(show);
+    else show(null);
+    return () => {
+      live = false;
+    };
+  }, [wallSrc]);
 
   /* ---- setRecord(): price countUp + sold meter ---- */
   useEffect(() => {
@@ -323,6 +353,7 @@ export function Hero() {
 
   return (
     <div className="hero grain">
+      <div className="wall" ref={wallRef} aria-hidden="true"></div>
       <div className="glow" ref={glowRef}></div>
       {pv && nx && (
         <>
@@ -343,7 +374,7 @@ export function Hero() {
               <i></i>
               <i></i>
             </span>
-            <span className="mono">{`${playing ? "Now playing" : "Now spinning"} · ${city?.name ?? ""}`}</span>
+            <span className="mono">{`${playing ? "HOY Radio" : "Now spinning"} · ${city?.name ?? ""}${onAir ? ` · ${onAir.artist} – ${onAir.title}` : groove ? ` · ${groove.label}` : ""}`}</span>
           </div>
           <h1 key={tok}>{e ? <Words parts={titleParts(e.title)} /> : ready && <Words parts={titleParts("New dates soon")} />}</h1>
           <div className="kv swap" key={`kv:${tok}`}>

@@ -1,4 +1,4 @@
-import type { Album, City, CityBundle, EventItem, FAQ, Global, Product, Site, Talent } from "./types";
+import type { Album, City, CityBundle, EventItem, FAQ, Global, Product, Site, Talent, Track } from "./types";
 
 /**
  * The API base. On the server we call the Django API directly; in the browser we call our own
@@ -49,12 +49,13 @@ const safe = async <T>(p: Promise<T>, fallback: T): Promise<T> => {
 };
 
 export async function loadGlobal(): Promise<Global> {
-  const [cities, site, faqs] = await Promise.all([
+  const [cities, site, faqs, radio] = await Promise.all([
     safe(list<City>("/cities/"), []),
     safe(get<Site>("/site/"), null),
     safe(list<FAQ>("/faqs/"), []),
+    safe(list<Track>("/radio/"), []),
   ]);
-  return { cities, site, faqs };
+  return { cities, site, faqs, radio };
 }
 
 export async function loadCity(city: string): Promise<CityBundle> {

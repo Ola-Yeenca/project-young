@@ -235,6 +235,7 @@ class EnquiryAPITests(HOYTestCase):
         from rest_framework.settings import api_settings
         from rest_framework.throttling import ScopedRateThrottle
 
+        original = ScopedRateThrottle.THROTTLE_RATES
         api_settings.reload()
         ScopedRateThrottle.THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES
         try:
@@ -242,7 +243,7 @@ class EnquiryAPITests(HOYTestCase):
             self.assertEqual(codes, [201, 201, 429])
         finally:
             api_settings.reload()
-            ScopedRateThrottle.THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES
+            ScopedRateThrottle.THROTTLE_RATES = original
 
 
 class BrokenBackend:
