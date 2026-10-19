@@ -1,0 +1,290 @@
+[
+ {
+  "shot": "contact-1280x800-dark",
+  "protoH": 1073,
+  "buildH": 1101,
+  "diff": 1.48
+ },
+ {
+  "shot": "contact-1280x800-light",
+  "protoH": 1073,
+  "buildH": 1101,
+  "diff": 1.48
+ },
+ {
+  "shot": "contact-1440x900-dark",
+  "protoH": 1080,
+  "buildH": 1109,
+  "diff": 1.32
+ },
+ {
+  "shot": "contact-1440x900-light",
+  "protoH": 1080,
+  "buildH": 1109,
+  "diff": 1.33
+ },
+ {
+  "shot": "contact-390x844-dark",
+  "protoH": 1589,
+  "buildH": 1610,
+  "diff": 2.97
+ },
+ {
+  "shot": "contact-390x844-light",
+  "protoH": 1589,
+  "buildH": 1610,
+  "diff": 2.98
+ },
+ {
+  "shot": "contact-768x1024-dark",
+  "protoH": 1509,
+  "buildH": 1545,
+  "diff": 1.63
+ },
+ {
+  "shot": "contact-768x1024-light",
+  "protoH": 1509,
+  "buildH": 1545,
+  "diff": 1.63
+ },
+ {
+  "shot": "events-1280x800-dark",
+  "protoH": 1216,
+  "buildH": 1216,
+  "diff": 0
+ },
+ {
+  "shot": "events-1280x800-light",
+  "protoH": 1216,
+  "buildH": 1216,
+  "diff": 0
+ },
+ {
+  "shot": "events-1440x900-dark",
+  "protoH": 1216,
+  "buildH": 1216,
+  "diff": 0
+ },
+ {
+  "shot": "events-1440x900-light",
+  "protoH": 1216,
+  "buildH": 1216,
+  "diff": 0
+ },
+ {
+  "shot": "events-390x844-dark",
+  "protoH": 1214,
+  "buildH": 1214,
+  "diff": 0.01
+ },
+ {
+  "shot": "events-390x844-light",
+  "protoH": 1214,
+  "buildH": 1214,
+  "diff": 0.01
+ },
+ {
+  "shot": "events-768x1024-dark",
+  "protoH": 1290,
+  "buildH": 1290,
+  "diff": 0.01
+ },
+ {
+  "shot": "events-768x1024-light",
+  "protoH": 1290,
+  "buildH": 1290,
+  "diff": 0.01
+ },
+ {
+  "shot": "gallery-1280x800-dark",
+  "protoH": 1036,
+  "buildH": 1036,
+  "diff": 0.13
+ },
+ {
+  "shot": "gallery-1280x800-light",
+  "protoH": 1036,
+  "buildH": 1036,
+  "diff": 0.13
+ },
+ {
+  "shot": "gallery-1440x900-dark",
+  "protoH": 1036,
+  "buildH": 1036,
+  "diff": 0.12
+ },
+ {
+  "shot": "gallery-1440x900-light",
+  "protoH": 1036,
+  "buildH": 1036,
+  "diff": 0.12
+ },
+ {
+  "shot": "gallery-390x844-dark",
+  "protoH": 855,
+  "buildH": 855,
+  "diff": 0.11
+ },
+ {
+  "shot": "gallery-390x844-light",
+  "protoH": 855,
+  "buildH": 855,
+  "diff": 0.11
+ },
+ {
+  "shot": "gallery-768x1024-dark",
+  "protoH": 1024,
+  "buildH": 1024,
+  "diff": 1.35
+ },
+ {
+  "shot": "gallery-768x1024-light",
+  "protoH": 1024,
+  "buildH": 1024,
+  "diff": 1.35
+ },
+ {
+  "shot": "home-1280x800-dark",
+  "protoH": 3388,
+  "buildH": 3388,
+  "diff": 1.72
+ },
+ {
+  "shot": "home-1280x800-light",
+  "protoH": 3388,
+  "buildH": 3388,
+  "diff": 1.77
+ },
+ {
+  "shot": "home-1440x900-dark",
+  "protoH": 3392,
+  "buildH": 3392,
+  "diff": 1.56
+ },
+ {
+  "shot": "home-1440x900-light",
+  "protoH": 3392,
+  "buildH": 3392,
+  "diff": 1.55
+ },
+ {
+  "shot": "home-390x844-dark",
+  "protoH": 3446,
+  "buildH": 3446,
+  "diff": 2.58
+ },
+ {
+  "shot": "home-390x844-light",
+  "protoH": 3446,
+  "buildH": 3446,
+  "diff": 2.56
+ },
+ {
+  "shot": "home-768x1024-dark",
+  "protoH": 3806,
+  "buildH": 3806,
+  "diff": 2.62
+ },
+ {
+  "shot": "home-768x1024-light",
+  "protoH": 3806,
+  "buildH": 3806,
+  "diff": 2.6
+ },
+ {
+  "shot": "shop-1280x800-dark",
+  "protoH": 1097,
+  "buildH": 1097,
+  "diff": 0.2
+ },
+ {
+  "shot": "shop-1280x800-light",
+  "protoH": 1097,
+  "buildH": 1097,
+  "diff": 0.2
+ },
+ {
+  "shot": "shop-1440x900-dark",
+  "protoH": 1097,
+  "buildH": 1097,
+  "diff": 0.18
+ },
+ {
+  "shot": "shop-1440x900-light",
+  "protoH": 1097,
+  "buildH": 1097,
+  "diff": 0.17
+ },
+ {
+  "shot": "shop-390x844-dark",
+  "protoH": 1365,
+  "buildH": 1365,
+  "diff": 0.52
+ },
+ {
+  "shot": "shop-390x844-light",
+  "protoH": 1365,
+  "buildH": 1365,
+  "diff": 0.52
+ },
+ {
+  "shot": "shop-768x1024-dark",
+  "protoH": 1525,
+  "buildH": 1525,
+  "diff": 0.23
+ },
+ {
+  "shot": "shop-768x1024-light",
+  "protoH": 1525,
+  "buildH": 1525,
+  "diff": 0.23
+ },
+ {
+  "shot": "talent-1280x800-dark",
+  "protoH": 876,
+  "buildH": 876,
+  "diff": 0.19
+ },
+ {
+  "shot": "talent-1280x800-light",
+  "protoH": 876,
+  "buildH": 876,
+  "diff": 4.22
+ },
+ {
+  "shot": "talent-1440x900-dark",
+  "protoH": 900,
+  "buildH": 918,
+  "diff": 0.3
+ },
+ {
+  "shot": "talent-1440x900-light",
+  "protoH": 900,
+  "buildH": 918,
+  "diff": 3.13
+ },
+ {
+  "shot": "talent-390x844-dark",
+  "protoH": 844,
+  "buildH": 844,
+  "diff": 0.63
+ },
+ {
+  "shot": "talent-390x844-light",
+  "protoH": 844,
+  "buildH": 844,
+  "diff": 0.66
+ },
+ {
+  "shot": "talent-768x1024-dark",
+  "protoH": 1024,
+  "buildH": 1024,
+  "diff": 0.5
+ },
+ {
+  "shot": "talent-768x1024-light",
+  "protoH": 1024,
+  "buildH": 1024,
+  "diff": 3.9
+ }
+]
