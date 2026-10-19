@@ -7,6 +7,8 @@ from apps.core.image_validation import validate_managed_image
 from apps.core.models import City, TimeStampedModel, Venue
 from apps.talent.models import Talent
 
+from .ticket_links import usable_ticket_url
+
 
 class EventQuerySet(models.QuerySet):
     def published(self):
@@ -77,7 +79,7 @@ class Event(TimeStampedModel):
     description = models.TextField(blank=True)
     lineup = models.ManyToManyField(Talent, blank=True, related_name="events", help_text="HOY talent playing.")
     lineup_extra = models.CharField(max_length=255, blank=True, help_text="Other names, comma separated, e.g. “Special guest”.")
-    music_style = models.CharField(max_length=20, choices=Style.choices, default=Style.AFROBEATS)
+    music_style = models.CharField(max_length=120, default=Style.AFROBEATS)
     bpm = models.PositiveSmallIntegerField(
         null=True, blank=True, validators=[MaxValueValidator(200)], help_text="Tempo for the homepage record player."
     )
@@ -113,10 +115,14 @@ class Event(TimeStampedModel):
             errors["venue"] = f"{self.venue.name} is in {self.venue.city}, not {self.city}."
         if self.ends_at and self.starts_at and self.ends_at <= self.starts_at:
             errors["ends_at"] = "The end time must be after the start time."
-        if self.status == self.Status.PUBLISHED and not self.is_free and not self.sold_out and not self.ticket_url:
-            errors["ticket_url"] = "Add a ticket link before publishing, or set the price to 0 for free entry."
+        if self.status == self.Status.PUBLISHED and not self.is_free and not self.sold_out and not self.has_usable_ticket_link:
+            errors["ticket_url"] = "Add a usable HTTPS ticket link before publishing, or set the price to 0 for free entry."
         if errors:
             raise ValidationError(errors)
+
+    @property
+    def has_usable_ticket_link(self):
+        return usable_ticket_url(self.ticket_url)
 
     @property
     def is_free(self):

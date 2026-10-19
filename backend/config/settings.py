@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "apps.shop",
     "apps.enquiries",
     "apps.studio",
+    "apps.ticketing",
 ]
 
 MIDDLEWARE = [
@@ -159,6 +160,10 @@ STORAGES = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# This adapter is deliberately unavailable outside an explicitly enabled local runtime.
+HOY_NOCHEVA_LOCAL = env_bool("HOY_NOCHEVA_LOCAL", False)
+HOY_NOCHEVA_CREDENTIAL_FILE = env("HOY_NOCHEVA_CREDENTIAL_FILE", "")
+HOY_NOCHEVA_STAFF_FILE = env("HOY_NOCHEVA_STAFF_FILE", str(BASE_DIR / ".local/nocheva-staff.json"))
 LOGIN_URL = "studio:login"
 DATA_UPLOAD_MAX_NUMBER_FILES = 200
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024

@@ -124,7 +124,7 @@ class StudioActionTests(HOYTestCase):
         self.client.post(reverse("studio:event_toggle", args=[e.pk, "publish"]))
         e.refresh_from_db()
         self.assertEqual(e.status, Event.Status.DRAFT)
-        e.ticket_url = "https://example.com/t"
+        e.ticket_url = "https://tickets.fixture-provider.com/events/night"
         e.save()
         self.client.post(reverse("studio:event_toggle", args=[e.pk, "publish"]))
         e.refresh_from_db()

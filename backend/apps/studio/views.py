@@ -6,16 +6,18 @@ from django.contrib import messages
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import LoginView, LogoutView
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import IntegrityError, transaction
 from django.db.models import Count, ProtectedError, Q
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
-from apps.core.models import City, MediaKind, SiteSettings
+from apps.core.models import City, MediaKind, MusicStyle, SiteSettings
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry, EnquiryBase
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem
@@ -32,8 +34,11 @@ from .forms import (
     EnquiryUpdateForm,
     EventForm,
     FAQFormSet,
+    MusicStyleForm,
     PriceFormSet,
     ProductForm,
+    QuickCityForm,
+    QuickVenueForm,
     SiteSettingsForm,
     TalentForm,
     UploadForm,
@@ -249,7 +254,9 @@ def overview(request):
             }
         )
     no_tickets = [
-        e for e in upcoming.filter(starts_at__lte=now + timedelta(days=30)) if not e.ticket_url and not e.is_free and not e.sold_out
+        e
+        for e in upcoming.filter(starts_at__lte=now + timedelta(days=30))
+        if not e.has_usable_ticket_link and not e.is_free and not e.sold_out
     ]
     if no_tickets:
         e = no_tickets[0]
@@ -257,7 +264,7 @@ def overview(request):
             {
                 "tone": "warning",
                 "icon": "ticket",
-                "title": f"{e.title} has no ticket link",
+                "title": f"{e.title} has no usable ticket link",
                 "body": f"{_when(e, now)['date']} in {e.city}. Buyers can't purchase until it has one.",
                 "cta": "Add ticket link",
                 "url": reverse("studio:event_edit", args=[e.pk]),
@@ -494,6 +501,7 @@ def event_edit(request, pk=None):
             "cities": cities,
             "talent_by_city": talent_by_city,
             "selected_lineup": selected,
+            "music_styles": MusicStyle.objects.all(),
         },
     )
 
@@ -571,7 +579,11 @@ def talent_edit(request, pk=None):
             return redirect("studio:talent_edit", pk=obj.pk)
         messages.error(request, "Some fields need attention.")
     recent = BookingEnquiry.objects.filter(talent=person).order_by("-created_at")[:5] if person else []
-    return render(request, "studio/talent_form.html", {"nav": "talent", "form": form, "person": person, "upload": upload, "recent": recent})
+    return render(
+        request,
+        "studio/talent_form.html",
+        {"nav": "talent", "form": form, "person": person, "upload": upload, "recent": recent, "music_styles": MusicStyle.objects.all()},
+    )
 
 
 @require_POST
@@ -864,3 +876,44 @@ def search(request):
         for a in Album.objects.filter(title__icontains=q)[:4]:
             results.append({"type": "Album", "title": a.title, "sub": str(a.city), "url": reverse("studio:album_edit", args=[a.pk])})
     return render(request, "studio/search.html", {"nav": "", "q": q, "results": results})
+
+
+@studio_view()
+@require_http_methods(["GET", "POST"])
+def choice_create(request, kind):
+    """Create a reusable choice without submitting or leaving the parent draft."""
+    choices = {
+        "city": ("core.add_city", QuickCityForm, "Add city"),
+        "venue": ("core.add_venue", QuickVenueForm, "Add venue"),
+        "music-style": ("core.add_musicstyle", MusicStyleForm, "Add music style"),
+    }
+    if kind not in choices:
+        raise Http404
+    permission, form_class, title = choices[kind]
+    if not request.user.has_perm(permission):
+        raise PermissionDenied
+    form = form_class(request.POST if request.method == "POST" else None, prefix="quick", initial={"city": request.GET.get("city")})
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                obj = form.save(commit=False)
+                if kind == "city":
+                    obj.is_active = False
+                    obj.order = City.objects.count()
+                obj.save()
+                log(request, obj, ADDED, "added from an editor in Studio")
+        except IntegrityError:
+            form.add_error(None, "That choice already exists. Check the name and try again.")
+        except ValidationError as error:
+            form.add_error(None, " ".join(error.messages))
+        else:
+            data = {"kind": kind, "id": obj.pk, "name": obj.name, "slug": obj.slug}
+            if kind == "city":
+                data.update(symbol=obj.currency_symbol, provider=obj.ticket_provider, tz=obj.timezone)
+            elif kind == "venue":
+                data["city"] = obj.city_id
+            return JsonResponse(data, status=201)
+    context = {"form": form, "kind": kind, "title": title, "presets": COUNTRY_PRESETS}
+    if request.method == "POST":
+        return JsonResponse({"html": render_to_string("studio/_choice_form.html", context, request=request)}, status=400)
+    return render(request, "studio/_choice_form.html", context)

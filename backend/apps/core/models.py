@@ -1,7 +1,9 @@
+import unicodedata
 from zoneinfo import available_timezones
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.text import slugify
 
 
 class TimeStampedModel(models.Model):
@@ -41,6 +43,52 @@ CURRENCY_SYMBOLS = {
     "AED": "AED ",
     "CAD": "C$",
 }
+
+
+def normalize_catalog_name(value):
+    """Return the stable duplicate-detection key used by small shared catalogs."""
+
+    return " ".join(unicodedata.normalize("NFKC", value or "").split()).casefold()
+
+
+class MusicStyle(TimeStampedModel):
+    name = models.CharField(max_length=120)
+    slug = models.SlugField(max_length=120, unique=True)
+    normalized_name = models.CharField(max_length=120, unique=True, editable=False)
+
+    class Meta:
+        ordering = ("name",)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)[:120] or "style"
+            candidate = base
+            suffix = 2
+            existing = type(self).objects.exclude(pk=self.pk)
+            while existing.filter(slug=candidate).exists():
+                marker = f"-{suffix}"
+                candidate = f"{base[: 120 - len(marker)]}{marker}"
+                suffix += 1
+            self.slug = candidate
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        display_name = " ".join(unicodedata.normalize("NFKC", self.name or "").split())
+        if not display_name:
+            raise ValidationError({"name": "Enter a music style."})
+        normalized_name = normalize_catalog_name(display_name)
+        if len(display_name) > 120 or len(normalized_name) > 120:
+            raise ValidationError({"name": "Ensure the normalized music style has at most 120 characters."})
+        self.name = display_name
+        self.normalized_name = normalized_name
+        duplicate = type(self).objects.exclude(pk=self.pk).filter(normalized_name=self.normalized_name)
+        if duplicate.exists():
+            raise ValidationError({"name": "A music style with this name already exists."})
 
 
 def validate_timezone(value):

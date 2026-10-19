@@ -1,9 +1,9 @@
 from django import forms
-from django.forms import inlineformset_factory, modelformset_factory
+from django.forms import BaseInlineFormSet, inlineformset_factory, modelformset_factory
 from django.utils.text import slugify
 
 from apps.core.image_validation import validate_managed_image
-from apps.core.models import FAQ, City, SiteSettings, Venue
+from apps.core.models import FAQ, City, MusicStyle, SiteSettings, Venue, normalize_catalog_name
 from apps.enquiries.models import EnquiryBase
 from apps.events.models import Event
 from apps.events.timezones import from_city_wall_time, to_city_wall_time
@@ -12,6 +12,31 @@ from apps.shop.models import Product, ProductPrice, ProductVariant
 from apps.talent.models import Talent
 
 DT_FORMAT = "%Y-%m-%dT%H:%M"
+
+
+def music_style_choices(current=None):
+    """Catalog choices with built-ins available even after a test database flush."""
+
+    choices = dict(Event.Style.choices)
+    choices.update(MusicStyle.objects.values_list("slug", "name"))
+    if current and current not in choices:
+        choices[current] = current
+    return list(choices.items())
+
+
+def music_style_names():
+    """Display names for free-text genre suggestion lists."""
+
+    names = [label for _, label in Event.Style.choices]
+    names.extend(MusicStyle.objects.values_list("name", flat=True))
+    result = []
+    seen = set()
+    for name in names:
+        key = normalize_catalog_name(name)
+        if key and key not in seen:
+            seen.add(key)
+            result.append(name)
+    return result
 
 
 class LocalDateTimeInput(forms.DateTimeInput):
@@ -41,6 +66,7 @@ class StyledMixin:
 
 class EventForm(StyledMixin, forms.ModelForm):
     TIME_FIELDS = ("starts_at", "ends_at")
+    music_style = forms.ChoiceField(choices=(), label="Music style")
 
     class Meta:
         model = Event
@@ -81,6 +107,8 @@ class EventForm(StyledMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        current_style = self.instance.music_style if self.instance.pk else self.initial.get("music_style")
+        self.fields["music_style"].choices = music_style_choices(current_style)
         for name in self.TIME_FIELDS:
             self.fields[name].input_formats = [DT_FORMAT, "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"]
             if self.instance.pk and self.instance.city_id and getattr(self.instance, name):
@@ -128,6 +156,16 @@ class TalentForm(StyledMixin, forms.ModelForm):
             "featured_order",
         )
         widgets = {"bio": forms.Textarea(attrs={"rows": 4}), "previous_work": forms.Textarea(attrs={"rows": 4})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["genre"].widget.attrs.update({"list": "music-style-options", "autocomplete": "off"})
+
+
+class MusicStyleForm(StyledMixin, forms.ModelForm):
+    class Meta:
+        model = MusicStyle
+        fields = ("name",)
 
 
 class MultiImageInput(forms.ClearableFileInput):
@@ -270,20 +308,77 @@ class CityForm(StyledMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["country"].widget.attrs.update({"list": "country-list", "autocomplete": "off"})
-        self.fields["timezone"].widget.attrs.update({"list": "tz-list", "autocomplete": "off", "placeholder": "Africa/Accra"})
-        self.fields["whatsapp_number"].widget.attrs["placeholder"] = "+233 20 000 0000"
-        self.fields["is_active"].label = "Show this city on the site"
-        self.fields["is_active"].help_text = "Leave off while you set it up. It appears in Studio either way."
-        self.fields["slug"].required = False
-        self.fields["timezone"].label = "Time zone"
-        self.fields["ticket_provider"].label = "Ticket partner"
-        self.fields["whatsapp_number"].label = "WhatsApp number"
-        self.fields["instagram_url"].label = "Instagram"
-        self.fields["order"].label = "Position in lists"
+        if "country" in self.fields:
+            self.fields["country"].widget.attrs.update({"list": "country-list", "autocomplete": "off"})
+        if "timezone" in self.fields:
+            self.fields["timezone"].widget.attrs.update({"list": "tz-list", "autocomplete": "off", "placeholder": "Africa/Accra"})
+            self.fields["timezone"].label = "Time zone"
+        if "whatsapp_number" in self.fields:
+            self.fields["whatsapp_number"].widget.attrs["placeholder"] = "+233 20 000 0000"
+            self.fields["whatsapp_number"].label = "WhatsApp number"
+        if "is_active" in self.fields:
+            self.fields["is_active"].label = "Show this city on the site"
+            self.fields["is_active"].help_text = "Leave off while you set it up. It appears in Studio either way."
+        if "slug" in self.fields:
+            self.fields["slug"].required = False
+        if "ticket_provider" in self.fields:
+            self.fields["ticket_provider"].label = "Ticket partner"
+        if "instagram_url" in self.fields:
+            self.fields["instagram_url"].label = "Instagram"
+        if "order" in self.fields:
+            self.fields["order"].label = "Position in lists"
+
+    def clean_name(self):
+        name = " ".join(self.cleaned_data["name"].split())
+        key = normalize_catalog_name(name)
+        if self.instance.pk and normalize_catalog_name(self.instance.name) == key:
+            return self.instance.name
+        cities = City.objects.exclude(pk=self.instance.pk).only("name")
+        if any(normalize_catalog_name(city.name) == key for city in cities):
+            raise forms.ValidationError("A city with this name already exists.")
+        return name
 
     def clean_slug(self):
         return self.cleaned_data.get("slug") or slugify(self.cleaned_data.get("name", ""))
+
+    def clean(self):
+        cleaned = super().clean()
+        name = cleaned.get("name")
+        if not name:
+            return cleaned
+        proposed_slug = cleaned.get("slug") or slugify(name)[:80]
+        if not proposed_slug:
+            self.add_error("name", "Enter a city name that can form a web address.")
+            return cleaned
+        duplicate = City.objects.exclude(pk=self.instance.pk).filter(slug=proposed_slug).exists()
+        if duplicate:
+            self.add_error("name", "Another city already uses this web address.")
+        elif "slug" in self.fields:
+            cleaned["slug"] = proposed_slug
+        return cleaned
+
+    def save(self, commit=True):
+        city = super().save(commit=False)
+        if not city.slug:
+            city.slug = slugify(city.name)[:80]
+        if commit:
+            city.save()
+        return city
+
+
+class QuickCityForm(CityForm):
+    class Meta(CityForm.Meta):
+        fields = ("name", "country", "currency", "timezone")
+
+    def save(self, commit=True):
+        city = super().save(commit=False)
+        if not city.pk:
+            city.is_active = False
+            city.order = City.objects.count() + 1
+            city.ticket_provider = COUNTRY_PRESETS.get(city.country, {}).get("provider", "")
+        if commit:
+            city.save()
+        return city
 
 
 class VenueForm(StyledMixin, forms.ModelForm):
@@ -297,6 +392,35 @@ class VenueForm(StyledMixin, forms.ModelForm):
         self.fields["map_url"].widget.attrs["placeholder"] = "Google Maps link"
         self.fields["capacity"].widget.attrs["placeholder"] = "e.g. 600"
 
+    def _city_id(self):
+        city = self.cleaned_data.get("city")
+        return city.pk if city else self.instance.city_id
+
+    def clean_name(self):
+        name = " ".join(self.cleaned_data["name"].split())
+        key = normalize_catalog_name(name)
+        if self.instance.pk and normalize_catalog_name(self.instance.name) == key:
+            return self.instance.name
+        city_id = self._city_id()
+        if city_id:
+            venues = Venue.objects.filter(city_id=city_id).exclude(pk=self.instance.pk).only("name")
+            if any(normalize_catalog_name(venue.name) == key for venue in venues):
+                raise forms.ValidationError("This city already has a venue with this name.")
+        return name
+
+    def clean(self):
+        cleaned = super().clean()
+        name = cleaned.get("name")
+        city_id = self._city_id()
+        if not name or not city_id:
+            return cleaned
+        proposed_slug = self.instance.slug or slugify(name)[:120]
+        if not proposed_slug:
+            self.add_error("name", "Enter a venue name that can form a web address.")
+        elif Venue.objects.filter(city_id=city_id, slug=proposed_slug).exclude(pk=self.instance.pk).exists():
+            self.add_error("name", "Another venue in this city already uses this web address.")
+        return cleaned
+
     def save(self, commit=True):
         venue = super().save(commit=False)
         if not venue.slug:
@@ -306,4 +430,38 @@ class VenueForm(StyledMixin, forms.ModelForm):
         return venue
 
 
-VenueFormSet = inlineformset_factory(City, Venue, form=VenueForm, extra=2, can_delete=True)
+class QuickVenueForm(VenueForm):
+    class Meta(VenueForm.Meta):
+        fields = ("city", "name", "address", "map_url", "capacity")
+
+
+class BaseVenueFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        seen_names = {}
+        seen_slugs = {}
+        for form in self.forms:
+            if not hasattr(form, "cleaned_data") or form.cleaned_data.get("DELETE"):
+                continue
+            name = form.cleaned_data.get("name")
+            if not name:
+                continue
+            name_key = normalize_catalog_name(name)
+            slug_key = form.instance.slug or slugify(name)[:120]
+            if name_key in seen_names:
+                message = "Venue names must be unique within a city."
+                form.add_error("name", message)
+                seen_names[name_key].add_error("name", message)
+            else:
+                seen_names[name_key] = form
+            if not slug_key:
+                form.add_error("name", "Enter a venue name that can form a web address.")
+            elif slug_key in seen_slugs:
+                message = "Venue web addresses must be unique within a city."
+                form.add_error("name", message)
+                seen_slugs[slug_key].add_error("name", message)
+            else:
+                seen_slugs[slug_key] = form
+
+
+VenueFormSet = inlineformset_factory(City, Venue, form=VenueForm, formset=BaseVenueFormSet, extra=2, can_delete=True)

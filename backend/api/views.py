@@ -53,7 +53,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(is_featured=True).order_by("featured_order", "starts_at")
         if kind := params.get("kind"):
             qs = qs.filter(kind=kind)
-        return qs.select_related("city", "venue").prefetch_related("lineup")
+        return qs.select_related("city", "venue", "ticketing_mapping").prefetch_related("lineup")
 
 
 class TalentViewSet(viewsets.ReadOnlyModelViewSet):

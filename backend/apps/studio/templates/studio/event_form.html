@@ -14,8 +14,8 @@
         <div class="fgrid">
           {% include "studio/_field.html" with f=form.title %}
           <div class="f {% if form.slug.errors %}has-err{% endif %}"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_title" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">houseofyoung.com/events/<b>{{ form.slug.value|default:'…' }}</b></span></div>
-          {% include "studio/_field.html" with f=form.city %}
-          {% include "studio/_field.html" with f=form.venue %}
+          {% include "studio/_choice_field.html" with f=form.city kind="city" allowed=perms.core.add_city label="Add city" %}
+          {% include "studio/_choice_field.html" with f=form.venue kind="venue" allowed=perms.core.add_venue label="Add venue" %}
           {% include "studio/_field.html" with f=form.starts_at %}
           {% include "studio/_field.html" with f=form.ends_at %}
           {% include "studio/_field.html" with f=form.kind %}
@@ -53,7 +53,7 @@
         </div>
         <div class="fgrid" style="margin-top:16px">
           {% include "studio/_field.html" with f=form.lineup_extra wide=1 %}
-          {% include "studio/_field.html" with f=form.music_style %}
+          {% include "studio/_choice_field.html" with f=form.music_style kind="music-style" allowed=perms.core.add_musicstyle label="Add music style" %}
           {% include "studio/_field.html" with f=form.bpm %}
         </div>
       </section>
@@ -94,7 +94,7 @@
           <div id="ck-title"><i></i>Title</div>
           <div id="ck-when"><i></i>Date, time and venue</div>
           <div id="ck-poster"><i></i>Poster</div>
-          <div id="ck-tickets"><i></i>Ticket link, free entry or sold out</div>
+          <div id="ck-tickets"><i></i>Usable HTTPS ticket link, free entry or sold out</div>
           <div id="ck-lineup"><i></i>Line-up</div>
           <div id="ck-caption"><i></i>Homepage caption</div>
         </div>
@@ -110,5 +110,6 @@
     <button class="btn pri" name="action" value="save">{% if event %}Save changes{% else %}Create event{% endif %}</button>
   </div>
 </form>
+{% include "studio/_choice_dialog.html" %}
 {{ venues|json_script:"venues-data" }}{{ cities|json_script:"cities-data" }}
 {% endblock %}

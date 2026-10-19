@@ -18,8 +18,8 @@
           {% include "studio/_field.html" with f=form.name %}
           <div class="f"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_name" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
           {% include "studio/_field.html" with f=form.category %}
-          {% include "studio/_field.html" with f=form.genre %}
-          {% include "studio/_field.html" with f=form.city %}
+          {% include "studio/_choice_field.html" with f=form.genre kind="music-style" allowed=perms.core.add_musicstyle label="Add music style" %}
+          {% include "studio/_choice_field.html" with f=form.city kind="city" allowed=perms.core.add_city label="Add city" %}
           <span></span>
           {% include "studio/_field.html" with f=form.bio wide=1 %}
           {% include "studio/_field.html" with f=form.previous_work wide=1 %}
@@ -71,4 +71,5 @@
     {% endif %}
   </aside>
 </div>
+{% include "studio/_choice_dialog.html" %}
 {% endblock %}

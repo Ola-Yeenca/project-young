@@ -45,7 +45,7 @@ def event(c, v=None, title="Afrobeats Night", days=10, **kw):
         venue=v or venue(c, f"Venue {title}"),
         starts_at=timezone.now() + timedelta(days=days),
         price_from=Decimal("15"),
-        ticket_url="https://example.com/t",
+        ticket_url="https://tickets.fixture-provider.com/events/night",
         status=Event.Status.PUBLISHED,
     )
     defaults.update(kw)

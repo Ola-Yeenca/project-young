@@ -27,6 +27,7 @@ urlpatterns = [
     path("shop/new/", views.product_edit, name="product_new"),
     path("shop/<int:pk>/", views.product_edit, name="product_edit"),
     path("content/", views.content, name="content"),
+    path("choices/<slug:kind>/new/", views.choice_create, name="choice_create"),
     path("cities/", views.cities, name="cities"),
     path("cities/new/", views.city_edit, name="city_new"),
     path("cities/<int:pk>/", views.city_edit, name="city_edit"),

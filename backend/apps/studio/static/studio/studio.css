@@ -558,3 +558,8 @@ input.file{font:inherit;font-size:.84rem;color:var(--mute);max-width:100%}
 }
 @media (max-width:420px){.board{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Editor choice creation stays inside the unsaved parent draft. */
+.choice-field{min-width:0}.choice-add{margin-top:8px}.choice-dialog{width:min(620px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:18px;color:var(--ink);background:var(--bg)}.choice-dialog::backdrop{background:rgb(0 0 0 / .4)}.choice-dialog .sect-h{justify-content:space-between}.choice-dialog .formbar{position:static;margin-top:20px}.choice-dialog .fgrid{margin-top:16px}#choice-notice:empty{display:none}@media(max-width:600px){.choice-dialog{padding:20px}.choice-dialog .fgrid{grid-template-columns:1fr}}
+
+@media(max-width:760px){.top .ttl{flex:1;overflow:hidden}.top h1{min-width:0;overflow:hidden;text-overflow:ellipsis}.top .ttl>.ico,.top .burger,.top .acts{flex:none}.top>.grow{display:none}#event-form{min-width:0}.editor{grid-template-columns:minmax(0,1fr)}.fgrid{grid-template-columns:minmax(0,1fr)}.formbar{flex-wrap:wrap}.formbar .grow{display:none}.formbar .btn{flex:1 1 auto}}

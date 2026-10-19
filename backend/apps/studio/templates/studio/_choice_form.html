@@ -1,0 +1,8 @@
+<form id="choice-form" method="post" action="{% url 'studio:choice_create' kind %}" novalidate>{% csrf_token %}
+<div class="sect-h">{{ title }}<button type="button" class="btn ghost sm" data-choice-close aria-label="Close add choice">Close</button></div>
+{% if kind == 'city' %}<p class="help">The new city stays hidden from the public site until you activate it in Cities.</p>{% endif %}
+{% if kind == 'music-style' %}<p class="help">Reusable on events and talent profiles.</p>{% endif %}
+{% for error in form.non_field_errors %}<p class="err" role="alert">{{ error }}</p>{% endfor %}
+<div class="fgrid">{% for field in form %}{% include "studio/_field.html" with f=field %}{% endfor %}</div>
+{% if kind == 'city' %}<datalist id="country-list">{% for name in presets %}<option value="{{ name }}">{% endfor %}</datalist>{{ presets|json_script:'quick-presets' }}{% endif %}
+<div class="formbar"><button type="button" class="btn ghost" data-choice-close>Cancel</button><button type="submit" class="btn pri">Create and select</button></div></form>

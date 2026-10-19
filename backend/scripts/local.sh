@@ -5,7 +5,13 @@ cd "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 mkdir -p .local/tmp
 export DJANGO_DEBUG=1
 export DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-export DJANGO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8017,http://localhost:8017
+export DJANGO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8017,http://localhost:8017,http://127.0.0.1:3007,http://localhost:3007
+# Retained synthetic checkout is available only when deliberately opted into.
+export HOY_NOCHEVA_LOCAL="${HOY_NOCHEVA_LOCAL:-0}"
+# Machine-specific paths (e.g. HOY_NOCHEVA_CREDENTIAL_FILE) belong in the ignored .local/env.sh.
+if [ -f .local/env.sh ]; then . ./.local/env.sh; fi
+export HOY_NOCHEVA_CREDENTIAL_FILE="${HOY_NOCHEVA_CREDENTIAL_FILE:-}"
+export HOY_NOCHEVA_STAFF_FILE="$PWD/.local/nocheva-staff.json"
 export DATABASE_URL="sqlite:///$PWD/db.sqlite3"
 export DJANGO_EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 export HOY_TEAM_EMAIL=team@houseofyoung.example

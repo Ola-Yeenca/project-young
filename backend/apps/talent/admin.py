@@ -1,7 +1,24 @@
+from django import forms
 from django.contrib import admin
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
+
+from apps.studio.forms import music_style_names
 
 from .models import Talent, TalentMedia
+
+
+class MusicStyleDatalistInput(forms.TextInput):
+    def render(self, name, value, attrs=None, renderer=None):
+        text_input = super().render(name, value, attrs, renderer)
+        options = format_html_join("", '<option value="{}"></option>', ((style,) for style in music_style_names()))
+        return format_html('{}<datalist id="music-style-options">{}</datalist>', text_input, options)
+
+
+class TalentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Talent
+        fields = "__all__"
+        widgets = {"genre": MusicStyleDatalistInput(attrs={"list": "music-style-options", "autocomplete": "off"})}
 
 
 class TalentMediaInline(admin.TabularInline):
@@ -12,6 +29,7 @@ class TalentMediaInline(admin.TabularInline):
 
 @admin.register(Talent)
 class TalentAdmin(admin.ModelAdmin):
+    form = TalentAdminForm
     list_display = ("photo_thumb", "name", "category", "city", "booking_available", "is_published", "is_featured", "featured_order")
     list_display_links = ("photo_thumb", "name")
     list_editable = ("booking_available", "is_published", "is_featured", "featured_order")

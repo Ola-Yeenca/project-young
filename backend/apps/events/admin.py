@@ -2,12 +2,15 @@ from django import forms
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
+from apps.studio.forms import music_style_choices
+
 from .models import Event
 from .timezones import from_city_wall_time, to_city_wall_time
 
 
 class EventAdminForm(forms.ModelForm):
     TIME_FIELDS = ("starts_at", "ends_at")
+    music_style = forms.ChoiceField(choices=(), label="Music style")
 
     class Meta:
         model = Event
@@ -15,6 +18,8 @@ class EventAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        current_style = self.instance.music_style if self.instance.pk else self.initial.get("music_style")
+        self.fields["music_style"].choices = music_style_choices(current_style)
         if self.instance.pk and self.instance.city_id:
             for name in self.TIME_FIELDS:
                 value = getattr(self.instance, name)

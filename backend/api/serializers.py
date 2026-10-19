@@ -3,12 +3,13 @@ from zoneinfo import ZoneInfo
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.core.models import FAQ, City, SiteSettings, Venue
+from apps.core.models import FAQ, City, MusicStyle, SiteSettings, Venue
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem
 from apps.shop.models import Product
 from apps.talent.models import Talent
+from apps.ticketing.client import local_enabled
 
 
 def file_url(request, field):
@@ -75,6 +76,9 @@ class EventSerializer(serializers.ModelSerializer):
     currency_symbol = serializers.CharField(source="city.currency_symbol")
     is_free = serializers.BooleanField()
     is_cancelled = serializers.SerializerMethodField()
+    music_style_label = serializers.SerializerMethodField()
+    checkout_url = serializers.SerializerMethodField()
+    ticketing_mode = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -94,8 +98,11 @@ class EventSerializer(serializers.ModelSerializer):
             "description",
             "lineup",
             "music_style",
+            "music_style_label",
             "bpm",
             "ticket_url",
+            "checkout_url",
+            "ticketing_mode",
             "ticket_provider",
             "price_from",
             "currency",
@@ -111,6 +118,15 @@ class EventSerializer(serializers.ModelSerializer):
     def get_poster(self, obj):
         return file_url(self.context.get("request"), obj.poster)
 
+    def get_checkout_url(self, obj):
+        if not local_enabled() or obj.status != Event.Status.PUBLISHED or obj.is_past:
+            return ""
+        mapping = getattr(obj, "ticketing_mapping", None)
+        return f"/tickets/{obj.slug}/" if mapping and mapping.enabled and mapping.commerce_event_id else ""
+
+    def get_ticketing_mode(self, obj):
+        return "simulation" if self.get_checkout_url(obj) else ""
+
     def get_local(self, obj):
         start = timezone.localtime(obj.starts_at, ZoneInfo(obj.city.timezone))
         return {"date": start.strftime("%a %d %b"), "time": start.strftime("%H:%M"), "timezone": obj.city.timezone}
@@ -119,6 +135,12 @@ class EventSerializer(serializers.ModelSerializer):
         talent = [{"name": t.name, "slug": t.slug} for t in obj.lineup.all() if t.is_published]
         extra = [{"name": n.strip(), "slug": None} for n in obj.lineup_extra.split(",") if n.strip()]
         return talent + extra
+
+    def get_music_style_label(self, obj):
+        if not hasattr(self, "_music_labels"):
+            self._music_labels = dict(Event.Style.choices)
+            self._music_labels.update(MusicStyle.objects.values_list("slug", "name"))
+        return self._music_labels.get(obj.music_style, obj.music_style)
 
     def get_is_cancelled(self, obj):
         return obj.status == Event.Status.CANCELLED

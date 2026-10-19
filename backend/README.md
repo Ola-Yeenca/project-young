@@ -136,3 +136,55 @@ python manage.py test
 
 CI runs all of these against Postgres 16, plus `check --deploy`, on every
 change under `backend/` (`.github/workflows/backend.yml`).
+
+## Add choices while editing
+
+Studio event editors have **Add city**, **Add venue** and **Add music style**
+controls beside their fields. The dialogs create and select the new choice
+without submitting the event or clearing its text and artwork upload. New cities
+start hidden. Venues belong to the selected city; changing city filters its venues.
+Each action requires staff access plus the corresponding Django add permission.
+Existing Cities-page permissions are unchanged.
+
+Music styles are a shared catalogue, suggested on talent genre fields as well as
+selected on events. Existing free-text talent genres and event keys are preserved.
+The public event API keeps `music_style` and adds `music_style_label` for display.
+Case and whitespace variants of existing catalogue names return useful errors.
+Apply the local schema updates with `./scripts/local.sh migrate`; this does not
+configure Nocheva or enable ticketing commerce.
+### Local Nocheva ticket simulation
+
+The local launcher disables the loopback-only ticket adapter by default. Nocheva launch work is parked; retained simulation tests require an explicit `HOY_NOCHEVA_LOCAL=1` opt-in. It uses the existing
+Nocheva integration credential at port 8769; ordinary event saves never provision inventory.
+The adapter is disabled when `DEBUG` is false or `HOY_NOCHEVA_LOCAL` is not enabled.
+
+```sh
+./scripts/local.sh migrate --noinput
+HOY_NOCHEVA_LOCAL=1 ./scripts/local.sh nocheva_local_login
+HOY_NOCHEVA_LOCAL=1 ./scripts/local.sh provision_local_ticket_event EVENT_SLUG --config .local/FIXTURE.json
+```
+
+The fixture JSON contains `capacity`, `tiers` (name, positive `price_minor`, capacity) and
+`terms` (version and approved synthetic allocation terms). Repeating the same provisioning
+intent recovers its event; a changed intent is rejected. The existing-owner simulated login
+renews `.local/nocheva-staff.json` with mode 0600, without granting roles or expanding API key
+scopes. It uses Nocheva's simulated challenge inbox and sends no real email. Renew this session
+if a restart or expiry prevents the explicit simulated-payment action.
+
+The first-party `/tickets/<slug>/` page uses the `/api/v1/commerce/events/<slug>/` adapter.
+Private recovery uses `X-Order-Token`, reservations use `Idempotency-Key`, and every browser
+mutation requires CSRF. Tickets and QR come from confirmed Nocheva orders; local simulation
+collects no money and produces no valid real-world admission. The current Nocheva contract
+requires positive ticket prices; free events remain unavailable through this adapter.
+
+Run the full Django suite with `./scripts/local.sh test --noinput`. Frontend builds can use a
+separate `NEXT_DIST_DIR=.next-fourvenues-20261007` and
+`NEXT_PUBLIC_API_URL=http://127.0.0.1:8017/api/v1` to preserve another preview's build cache.
+
+Fourvenues is the selected external ticket provider for HOY. Configure each event through the existing Studio `ticket_url` and `ticket_provider` fields once its genuine HTTPS event page is supplied; use `Fourvenues` as that event's provider label. No real event URLs are configured by the default-mode change. Blank, placeholder, local, credential-bearing or non-HTTPS links produce no purchase button.
+
+Studio's ticket checklist, overview warning and paid-event publish validation now
+reject those unusable URLs too. A blank price is unannounced, not free; explicit
+free entry and sold-out events retain their existing publish exceptions. URL
+validation checks the destination's shape, not the provider account or event
+identity. A draft can be prepared before its genuine ticket link is available.

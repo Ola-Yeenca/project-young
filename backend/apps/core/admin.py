@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import FAQ, City, SiteSettings, Venue
+from .models import FAQ, City, MusicStyle, SiteSettings, Venue
 
 
 class VenueInline(admin.TabularInline):
@@ -24,6 +24,14 @@ class VenueAdmin(admin.ModelAdmin):
     list_filter = ("city",)
     search_fields = ("name", "address")
     prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(MusicStyle)
+class MusicStyleAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug")
+    search_fields = ("name",)
+    fields = ("name", "slug", "normalized_name")
+    readonly_fields = ("slug", "normalized_name")
 
 
 @admin.register(FAQ)

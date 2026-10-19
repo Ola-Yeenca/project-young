@@ -84,12 +84,25 @@
   // Event editor: venue list follows the city; preview card and checklist update live.
   const ef = $("#event-form");
   if (ef) {
+    // Match the public purchaseUrl rules; URL shape is not provider verification.
+    const usableTicketUrl = (value) => {
+      try {
+        const u = new URL(value), host = u.hostname.toLowerCase().replace(/\.$/, "");
+        const publicHost = host.includes(".") && !/^[\d.]+$/.test(host) && host.split(".").every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
+        const reserved = /(^|\.)(localhost|localdomain|local|internal|lan|test|invalid|example)$/.test(host) || /(^|\.)example\.(com|org|net|test)$/.test(host);
+        return u.protocol === "https:" && !u.username && !u.password && publicHost && !reserved;
+      } catch { return false; }
+    };
     const venues = JSON.parse($("#venues-data").textContent), cities = JSON.parse($("#cities-data").textContent);
     const city = $("#id_city"), venue = $("#id_venue");
     const syncVenues = () => {
       const keep = venue.value; venue.innerHTML = '<option value="">Choose a venue</option>';
       venues.filter((v) => String(v.city) === city.value).forEach((v) => { const o = new Option(v.name, v.id); if (String(v.id) === keep) o.selected = true; venue.add(o); });
     };
+    document.addEventListener("studio-choice-created", ({detail}) => {
+      if (detail.kind === "venue") venues.push(detail);
+      if (detail.kind === "city") cities[detail.id] = detail;
+    });
     city.addEventListener("change", syncVenues); syncVenues();
     const fmt = (v) => { if (!v) return "Date to be set"; const d = new Date(v); return d.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" }) + " · " + v.slice(11, 16); };
     const val = (id) => ($("#" + id) || {}).value || "";
@@ -114,7 +127,7 @@
       }
       const checks = {
         "ck-title": !!val("id_title"), "ck-when": !!val("id_starts_at") && !!venue.value,
-        "ck-poster": !!$("#pv-img").getAttribute("src") && !(clearPoster && clearPoster.checked), "ck-tickets": !!val("id_ticket_url") || Number(p) === 0 || $("#id_sold_out").checked,
+        "ck-poster": !!$("#pv-img").getAttribute("src") && !(clearPoster && clearPoster.checked), "ck-tickets": usableTicketUrl(val("id_ticket_url")) || (p !== "" && Number(p) === 0) || $("#id_sold_out").checked,
         "ck-lineup": $$("input[name=lineup]:checked").length > 0 || !!val("id_lineup_extra"), "ck-caption": !!val("id_caption"),
       };
       Object.entries(checks).forEach(([id, ok]) => $("#" + id).classList.toggle("ok", ok));
@@ -161,4 +174,74 @@
     clock();
   };
   form.addEventListener("input", paint); form.addEventListener("change", paint); paint(); setInterval(clock, 20000);
+})();
+
+// Add catalogue choices without replacing the parent form or its file inputs.
+(function () {
+  const dialog = document.getElementById("choice-dialog");
+  if (!dialog) return;
+  const content = document.getElementById("choice-content"), error = document.getElementById("choice-error");
+  let trigger, generation = 0, saving = false;
+  const fail = (message) => { error.textContent = message; error.hidden = false; };
+  const mount = (html) => {
+    content.innerHTML = html;
+    content.querySelectorAll("[data-choice-close]").forEach(button => button.addEventListener("click", () => dialog.close()));
+    const form = content.querySelector("form");
+    if (!form) return;
+    const country = form.querySelector('[name="quick-country"]'), presets = form.querySelector("#quick-presets");
+    if (country && presets) {
+      const values = JSON.parse(presets.textContent), touched = new Set();
+      ["currency", "timezone"].forEach(name => form.querySelector('[name="quick-'+name+'"]').addEventListener("input", () => touched.add(name)));
+      country.addEventListener("input", () => {
+        const preset = values[country.value.trim()];
+        if (!preset) return;
+        for (const [name,key] of [["currency","currency"],["timezone","timezone"]]) {
+          const field = form.querySelector('[name="quick-'+name+'"]');
+          if (!touched.has(name) || !field.value) field.value = preset[key];
+        }
+      });
+    }
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (saving) return;
+      saving = true; error.hidden = true;
+      const buttons = [...form.querySelectorAll("button")];buttons.forEach(button => button.disabled = true);
+      try {
+        const response = await fetch(form.action, {method:"POST",body:new FormData(form),credentials:"same-origin",redirect:"error",headers:{Accept:"application/json"}});
+        if (response.status === 400) { const data = await response.json();mount(data.html);content.querySelector(".has-err input,.has-err select")?.focus();return; }
+        if (!response.ok) throw new Error(response.status === 403 ? "You no longer have permission to add this choice." : "The choice could not be saved. Your draft is unchanged.");
+        const data = await response.json(), target = document.getElementById(trigger.dataset.choiceTarget);
+        document.dispatchEvent(new CustomEvent("studio-choice-created", {detail:data}));
+        if (data.kind === "venue") {
+          const city = document.getElementById("id_city");city.value = String(data.city);city.dispatchEvent(new Event("change",{bubbles:true}));
+        }
+        const value = data.kind === "music-style" ? (target.tagName === "SELECT" ? data.slug : data.name) : String(data.id);
+        if (target.tagName === "SELECT" && ![...target.options].some(option => option.value === value)) target.add(new Option(data.name,value));
+        if (data.kind === "music-style") {
+          const list = document.getElementById("music-style-options");
+          if (list && ![...list.options].some(option => option.value === data.name)) list.append(new Option(data.name,data.name));
+        }
+        target.value = value;target.dispatchEvent(new Event("change",{bubbles:true}));target.dispatchEvent(new Event("input",{bubbles:true}));
+        document.getElementById("choice-notice").textContent = data.name+" created and selected. Save the draft to keep this selection.";
+        dialog.close();target.focus();
+      } catch (exception) { fail(exception.message === "Failed to fetch" ? "The save could not be confirmed. Keep this dialog open and retry. Your draft is unchanged." : exception.message); }
+      finally {saving = false;buttons.forEach(button => button.disabled = false);}
+    });
+    form.querySelector("input:not([type=hidden]),select")?.focus();
+  };
+  dialog.addEventListener("cancel", event => {if (saving) event.preventDefault();});
+  dialog.addEventListener("close", () => {generation++;});
+  document.querySelectorAll("[data-choice-url]").forEach(button => button.addEventListener("click", async () => {
+    if (dialog.open) return;
+    trigger = button;error.hidden = true;const current = ++generation;
+    content.innerHTML = '<p>Loading…</p><button type="button" class="btn" data-choice-close>Cancel</button>';
+    content.querySelector("button").addEventListener("click", () => dialog.close());dialog.showModal();
+    const url = new URL(button.dataset.choiceUrl,location.origin);
+    if (button.dataset.choiceKind === "venue") url.searchParams.set("city",document.getElementById("id_city").value);
+    try {
+      const response = await fetch(url,{credentials:"same-origin",redirect:"error",cache:"no-store"});
+      if (!response.ok) throw new Error("Could not load this form. Check your access and try again.");
+      const html = await response.text();if (current === generation && dialog.open) mount(html);
+    } catch (exception) {if (current === generation && dialog.open) fail(exception.message);}
+  }));
 })();
