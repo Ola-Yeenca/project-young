@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated fixture art (node scripts/fixture/make-art.mjs)
+/scripts/fixture/art/
+/.next-*/

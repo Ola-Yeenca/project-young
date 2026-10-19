@@ -7,9 +7,9 @@
   --gold:#c9a043; --gold-deep:#8a6a22; --gold-wash:#efe3c2;
   --night:#0f0f0e; --night-fg:#f2f0ea; --night-mute:#8b877e; --night-line:#272623;
   --live:#2f9e5e; --noise:none;
-  --sans:var(--font-geist),"Geist",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
-  --mono:var(--font-geist-mono),"Geist Mono","SF Mono",Menlo,Consolas,monospace;
-  --serif:var(--font-instrument-serif),"Instrument Serif",Georgia,"Times New Roman",serif;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"Geist Mono","SF Mono",Menlo,Consolas,monospace;
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
   --ease:cubic-bezier(.2,.8,.2,1); --snap:cubic-bezier(.6,.05,.2,1);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -381,6 +381,9 @@ footer a:hover{color:var(--ink)}
 }
 
 /* ---- additions: not in the prototype, needed for live data. Same tokens and values. ---- */
+/* The grain texture ships as a static 140×140 grayscale noise PNG (same size and distribution as
+   the prototype's runtime-generated one) so the hero paints without waiting for JS. */
+:root{--noise:url(/noise.png)}
 .peek img,.frame .ph img,.focus .obj img,.hero-img img{display:block;object-fit:cover}
 .hero-img img.contain{object-fit:contain;background:var(--night)}
 .f2>label{align-content:start}
@@ -398,6 +401,11 @@ footer a:hover{color:var(--ink)}
 .sk-disc{position:absolute;inset:0;border-radius:50%}
 .sk-row{height:62px;border-radius:0;border-bottom:1px solid var(--line);background:none;display:flex;align-items:center;padding:0 14px}
 .sk-row::before{content:"";height:14px;width:42%;border-radius:6px;background:var(--bg-2)}
+/* The CSS minifier (Lightning CSS in Turbopack) collapses the ported
+   "backdrop-filter:…;-webkit-backdrop-filter:…" pairs on header and .tabs to the prefixed one only,
+   which Chromium ignores, so neither bar blurred. Restated unprefixed; same values. */
+header{backdrop-filter:saturate(1.4) blur(14px)}
+.tabs{backdrop-filter:blur(14px)}
 .legal{max-width:62ch;display:grid;gap:16px}
 .legal p{color:var(--mute)}
 @media(prefers-reduced-motion:reduce){.sk{animation:none}}

@@ -143,6 +143,8 @@ export function Cities() {
   const diff = b && mounted ? hoursApart(a.timezone, b.timezone) : null;
   return (
     <div className="cities" id="cities">
+      {/* Keeps the heading outline in order (h1 hero → h3 city names); visually hidden. */}
+      <h2 className="hp">Our cities</h2>
       <CityCard c={a} on={a.slug === slug} now={now} />
       {b && (
         <>

@@ -13,7 +13,9 @@ export function Close() {
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const card = ref.current?.closest(".card");
-    if (card && !card.contains(document.activeElement)) ref.current!.focus({ preventScroll: true });
+    if (card && !card.contains(document.activeElement)) // focusVisible: false — move focus for keyboard and screen-reader users without painting the
+    // ring on open (the prototype shows none); Tab from here shows it as usual.
+    ref.current!.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   }, []);
   return (
     <button ref={ref} className="x" type="button" data-close aria-label="Close" onClick={closeSheet}>

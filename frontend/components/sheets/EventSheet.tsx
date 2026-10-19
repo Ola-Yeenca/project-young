@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { get } from "@/lib/api";
-import { kindLabel, money, priceOf, seedOf, soldOf } from "@/lib/format";
+import { kindLabel, money, priceOf, purchaseUrl, seedOf, soldOf } from "@/lib/format";
 import type { EventItem } from "@/lib/types";
 import { Img } from "../ui";
 import { useSite } from "../site";
@@ -53,12 +53,13 @@ export function EventSheet({ slug }: { slug: string }) {
 
 function EventCard({ e, past, openTalent }: { e: EventItem; past: boolean; openTalent: (slug: string) => void }) {
   const { bundles } = useSite();
-  const [rsvp, setRsvp] = useState(0);
+  const checkout = purchaseUrl(e);
+  const simulation = e.ticketing_mode === "simulation";
   const sold = soldOf(e) >= 100;
   const price = priceOf(e);
   const tag = e.is_cancelled ? "Cancelled" : past ? "Past" : sold ? "Sold out" : kindLabel(e.kind);
   const album = past ? Object.values(bundles).flatMap((b) => b.albums).find((a) => a.event === e.slug) : undefined;
-  const style = styleLabel(e.music_style);
+  const style = e.music_style_label || styleLabel(e.music_style);
   const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
 
   return (
@@ -82,19 +83,14 @@ function EventCard({ e, past, openTalent }: { e: EventItem; past: boolean; openT
           </Link>
         ) : (
           <>
-            {!e.is_cancelled && e.ticket_url && (
-              <a className="btn ink" style={i(0)} href={e.ticket_url} target="_blank" rel="noopener">
-                {sold ? "Join the waitlist" : price === null ? "Buy tickets" : `Buy tickets · ${money(e.currency_symbol, price)}`} <span className="ar">↗</span>
+            {!e.is_cancelled && checkout && (
+              <a className="btn ink" style={i(0)} href={checkout} target={simulation ? undefined : "_blank"} rel="noopener">
+                {simulation ? "Get tickets · Nocheva" : sold ? "Join the waitlist" : price === null ? "Buy tickets" : `Buy tickets · ${money(e.currency_symbol, price)}`} <span className="ar">→</span>
               </a>
             )}
-            <div className="rsvp" style={i(1)} role="radiogroup" aria-label="RSVP">
-              <span className="k" style={{ transform: `translateX(${rsvp * 100}%)` }} />
-              {["Going", "Maybe", "Not going"].map((l, n) => (
-                <button key={l} type="button" role="radio" aria-checked={rsvp === n} className={rsvp === n ? "on" : ""} onClick={() => setRsvp(n)}>
-                  {l}
-                </button>
-              ))}
-            </div>
+            <p className="m" style={i(1)}>
+              {simulation ? "Local ticket simulation. No money is collected; test tickets are not valid for entry." : !checkout && !e.is_cancelled ? "Registration is not open for this event yet." : ""}
+            </p>
           </>
         )}
         <p style={{ ...i(2), fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "1.3rem", lineHeight: 1.3 }}>{e.caption || "Recap, photos and film from the night."}</p>
@@ -138,7 +134,7 @@ function EventCard({ e, past, openTalent }: { e: EventItem; past: boolean; openT
           ) : null}
           <div>
             <span>Tickets</span>
-            <span>{past ? "Closed" : `${e.ticket_provider} · QR by email`}</span>
+            <span>{past ? "Closed" : simulation ? "Nocheva · local simulation" : checkout ? e.ticket_provider : "Not open"}</span>
           </div>
           {e.age_restriction && (
             <div>

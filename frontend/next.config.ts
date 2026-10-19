@@ -5,6 +5,8 @@ const API = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8017/api/v1").
 const API_ORIGIN = new URL(API).origin;
 
 const nextConfig: NextConfig = {
+  // A second build (e.g. for Lighthouse) can go to its own folder without disturbing a running one.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   cacheComponents: true,
   partialPrefetching: true,
   // DRF URLs end in a slash; keep it (Next would otherwise redirect it away).
@@ -17,6 +19,9 @@ const nextConfig: NextConfig = {
       { source: "/api/v1/:path*", destination: `${API}/:path*` },
       // Same-origin media for canvas reads (see mediaSrc in lib/api.ts).
       { source: "/media/:path*", destination: `${API_ORIGIN}/media/:path*` },
+      { source: "/tickets/:slug/", destination: `${API_ORIGIN}/tickets/:slug/` },
+      { source: "/tickets/:slug", destination: `${API_ORIGIN}/tickets/:slug/` },
+      { source: "/static/ticketing/:path*", destination: `${API_ORIGIN}/static/ticketing/:path*` },
     ];
   },
 };

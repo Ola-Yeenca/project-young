@@ -10,8 +10,11 @@ import { SheetHost } from "@/components/sheets/SheetHost";
 import { ShellSkeleton } from "@/components/skeleton";
 import "./globals.css";
 
-// adjustFontFallback off: the size-adjusted Arial fallback would otherwise draw glyphs these fonts
-// lack (→ ↗ ✦ ■) before the prototype's system-ui fallback in --sans/--mono/--serif gets to.
+// Self-hosted faces keep the prototype's family names ("Geist", "Geist Mono", "Instrument Serif"),
+// so globals.css names them directly, exactly as the prototype does. The generated variables are
+// deliberately not used: they carry a size-adjusted Arial "Fallback" face (Turbopack ignores
+// adjustFontFallback: false) that would draw glyphs these fonts lack (← → ↗ ✦ ■) instead of the
+// prototype's system-ui fallback.
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"], weight: ["300", "400", "500", "600", "800", "900"], adjustFontFallback: false });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], weight: ["400", "500"], adjustFontFallback: false });
 const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: ["latin"], weight: "400", style: "italic", adjustFontFallback: false });

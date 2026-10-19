@@ -145,18 +145,3 @@ export function loadImage(src: string | null | undefined): Promise<HTMLImageElem
   // CORS first so the grain pass can read pixels; without CORS headers, load it plain (no grain).
   return src ? one(true).then((img) => img ?? one(false)) : Promise.resolve(null);
 }
-
-/** The 140×140 grain texture, set once as --noise. */
-export function installNoise() {
-  const c = document.createElement("canvas");
-  c.width = c.height = 140;
-  const g = c.getContext("2d", { willReadFrequently: true })!,
-    id = g.createImageData(140, 140);
-  for (let i = 0; i < id.data.length; i += 4) {
-    const v = Math.random() * 255;
-    id.data[i] = id.data[i + 1] = id.data[i + 2] = v;
-    id.data[i + 3] = 255;
-  }
-  g.putImageData(id, 0, 0);
-  document.documentElement.style.setProperty("--noise", `url(${c.toDataURL()})`);
-}

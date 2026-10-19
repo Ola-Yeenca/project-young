@@ -26,8 +26,11 @@ export function Privacy({ errors, id }: { errors: Errors; id: string }) {
   return (
     <>
       <label className="ck">
-        <input type="checkbox" name="privacy_accepted" required {...errProps(errors, id, "privacy_accepted")} /> I agree to the{" "}
-        <Link href="/privacy">privacy policy</Link>.
+        <input type="checkbox" name="privacy_accepted" required {...errProps(errors, id, "privacy_accepted")} />
+        {/* One flex item, so the label's gap doesn't split the sentence ("policy ."). */}
+        <span>
+          I agree to the <Link href="/privacy">privacy policy</Link>.
+        </span>
       </label>
       <Err errors={errors} id={id} name="privacy_accepted" />
     </>

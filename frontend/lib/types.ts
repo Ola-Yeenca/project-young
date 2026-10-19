@@ -30,8 +30,11 @@ export type EventItem = {
   description: string;
   lineup: { name: string; slug: string | null }[];
   music_style: string;
+  music_style_label?: string;
   bpm: number | null;
   ticket_url: string;
+  checkout_url?: string;
+  ticketing_mode?: "simulation" | "";
   ticket_provider: string;
   price_from: string | null;
   currency: string;

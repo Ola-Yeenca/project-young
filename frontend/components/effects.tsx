@@ -5,13 +5,12 @@
 // parallax and drag. Same constants as the prototype.
 
 import { useEffect } from "react";
-import { field, installNoise } from "@/lib/art";
+import { field } from "@/lib/art";
 
 type PeekState = { x: number; y: number; vx: number; tx?: number; ty?: number };
 
 export function Effects() {
   useEffect(() => {
-    installNoise();
     // Only touch nodes React has already hydrated (they carry React's fiber key); changing a
     // server-rendered node before its boundary hydrates causes a hydration mismatch.
     const hydrated = (el: Element) => Object.keys(el).some((k) => k.startsWith("__reactFiber$"));

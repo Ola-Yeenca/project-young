@@ -10,6 +10,24 @@ export const money = (cur: string, p: number) => (p === 0 ? "Free" : cur + Math.
 export const priceOf = (e: EventItem): number | null =>
   e.is_free ? 0 : e.price_from === null || e.price_from === "" ? null : Number(e.price_from);
 
+/** Default to a configured external ticket page; retained simulation requires explicit mode. */
+export const purchaseUrl = (e: EventItem): string => {
+  if (e.ticketing_mode === "simulation") return e.checkout_url?.startsWith("/tickets/") ? e.checkout_url : "";
+  if (!e.ticket_url) return "";
+  try {
+    const u = new URL(e.ticket_url);
+    const host = u.hostname.toLowerCase().replace(/\.$/, "");
+    const publicHost = host.includes(".") && !/^[\d.]+$/.test(host) && host.split(".").every((label) =>
+      /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label),
+    );
+    const reserved = /(^|\.)(localhost|localdomain|local|internal|lan|test|invalid|example)$/.test(host)
+      || /(^|\.)example\.(com|org|net|test)$/.test(host);
+    return u.protocol === "https:" && !u.username && !u.password && publicHost && !reserved ? u.href : "";
+  } catch {
+    return "";
+  }
+};
+
 export const KINDS: Record<string, string> = {
   club: "Club",
   live: "Live",

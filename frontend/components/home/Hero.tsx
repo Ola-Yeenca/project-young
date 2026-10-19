@@ -8,7 +8,7 @@ import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useRef, useState 
 import { A, beatEnv, dueBars, muffle, play, retune, scratch, stop } from "@/lib/audio";
 import { mediaSrc } from "@/lib/api";
 import { loadImage, record } from "@/lib/art";
-import { AUTO, RM, bpmOf, money, pad, priceOf, seedOf, soldOf, styleOf } from "@/lib/format";
+import { AUTO, RM, bpmOf, money, pad, priceOf, purchaseUrl, seedOf, soldOf, styleOf } from "@/lib/format";
 import type { EventItem } from "@/lib/types";
 import { useSite } from "../site";
 import { Words } from "../ui";
@@ -25,13 +25,23 @@ const poster = (src: string) => {
   if (!p) posters.set(src, (p = loadImage(src)));
   return p;
 };
-/** Field art at once, then the poster when it loads (only onto a canvas still on the platter). */
+/**
+ * The record with its poster. Each draw runs a 900×900 grain pass, so the field-art fallback is
+ * drawn only when there is no poster, it fails, or it takes longer than 150ms to arrive.
+ */
 function paint(cv: HTMLCanvasElement, seed: number, src: string | null | undefined) {
-  record(cv, seed);
-  if (src)
-    poster(src).then((img) => {
-      if (img && cv.isConnected) record(cv, seed, img);
-    });
+  if (!src) return record(cv, seed);
+  let drawn = false;
+  const late = setTimeout(() => {
+    drawn = true;
+    record(cv, seed);
+  }, 150);
+  poster(src).then((img) => {
+    clearTimeout(late);
+    if (!cv.isConnected) return;
+    if (img) record(cv, seed, img);
+    else if (!drawn) record(cv, seed);
+  });
 }
 
 function countUp(node: Text, to: number, cur: string, dur = 900) {
@@ -358,9 +368,18 @@ export function Hero() {
                       <Fragment key={i}>
                         {i > 0 && ", "}
                         {l.slug ? (
-                          <button type="button" onClick={() => openSheet("talent", l.slug!)}>
+                          // A link, not a button: a button is an atomic inline box, so a name could
+                          // not break across lines the way the prototype's plain text does.
+                          <a
+                            href={`/talent/${l.slug}`}
+                            onClick={(ev) => {
+                              if (ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
+                              ev.preventDefault();
+                              openSheet("talent", l.slug!);
+                            }}
+                          >
                             {l.name}
-                          </button>
+                          </a>
                         ) : (
                           l.name
                         )}
@@ -380,7 +399,7 @@ export function Hero() {
                 <div className="rot" ref={rotRef}></div>
                 <div className="sheen"></div>
               </div>
-              <button className="label" aria-label="Play or stop the groove" onClick={toggle}>
+              <button className="label" aria-pressed={playing} onClick={toggle}>
                 <span className="in">
                   <small>{`N° ${e ? pad(cur + 1) : "00"} · ${bpm} BPM`}</small>
                   <b>{e ? e.title : city?.name}</b>
@@ -407,7 +426,7 @@ export function Hero() {
           {e && (
             <>
               <div className="price" ref={priceRef}></div>
-              {!e.is_cancelled && (
+              {!e.is_cancelled && e.ticketing_mode !== "simulation" && (
                 <div className="meter">
                   <div className="track">
                     <div className="fill" ref={fillRef}></div>
@@ -415,9 +434,11 @@ export function Hero() {
                   <span ref={soldRef}></span>
                 </div>
               )}
-              {!e.is_cancelled && e.ticket_url && (
-                <a className="btn ink mag" href={e.ticket_url} target="_blank" rel="noopener">
-                  {sold >= 100 ? (
+              {!e.is_cancelled && purchaseUrl(e) && (
+                <a className="btn ink mag" href={purchaseUrl(e)} target={e.ticketing_mode === "simulation" ? undefined : "_blank"} rel="noopener">
+                  {e.ticketing_mode === "simulation" ? (
+                    <>Get tickets · Nocheva <span className="ar">→</span></>
+                  ) : sold >= 100 ? (
                     <>
                       Join waitlist <span className="ar">→</span>
                     </>
@@ -427,6 +448,9 @@ export function Hero() {
                     </>
                   )}
                 </a>
+              )}
+              {e.ticketing_mode === "simulation" && (
+                <small style={{ color: "var(--mute)", fontSize: ".75rem" }}>Local simulation · no money collected</small>
               )}
               <button className="btn sm" onClick={() => openSheet("event", e.slug)}>
                 Event details
