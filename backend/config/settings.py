@@ -5,6 +5,7 @@ code runs locally, in CI and in production. See ../.env.example for the list.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "axes",
     "rest_framework",
     "apps.core",
     "apps.events",
@@ -80,6 +82,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -117,6 +120,19 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+AUTHENTICATION_BACKENDS = ["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]
+
+# Studio and admin sign-in: five wrong passwords lock that username from that address for 15 minutes.
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
+AXES_LOCKOUT_CALLABLE = "apps.studio.views.locked_out"
+# Railway's edge sets X-Real-IP to the visitor's address; a visitor can prepend their own X-Forwarded-For entries.
+AXES_IPWARE_META_PRECEDENCE_ORDER = ("HTTP_X_REAL_IP", "HTTP_X_FORWARDED_FOR", "REMOTE_ADDR")
+AXES_IPWARE_PROXY_ORDER = "left-most"
 
 LANGUAGE_CODE = "en-gb"
 # The HOY team works from Valencia. Event times are entered in each event's own
