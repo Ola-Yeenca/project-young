@@ -233,6 +233,19 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": env("DJANGO_LOG_LEVEL", "INFO")},
 }
 
+SENTRY_DSN = env("SENTRY_DSN")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        environment=env("SENTRY_ENVIRONMENT", env("RAILWAY_ENVIRONMENT_NAME", "production")),
+        traces_sample_rate=float(env("SENTRY_TRACES_SAMPLE_RATE", "0")),
+        send_default_pii=False,
+    )
+
 JAZZMIN_SETTINGS = {
     "site_title": "HOY admin",
     "site_header": "House of Young",
