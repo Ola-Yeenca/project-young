@@ -552,5 +552,4 @@ header{backdrop-filter:saturate(1.4) blur(14px)}
 .legal h3{margin-top:28px}
 .legal p a,.legal .kv a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .legal .kv div{grid-template-columns:minmax(104px,28%) 1fr}
-.legal .tbc{color:var(--mute)}
 @media(prefers-reduced-motion:reduce){.sk{animation:none}}

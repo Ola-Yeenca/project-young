@@ -1,58 +1,32 @@
 // Shared bits of the Privacy, Terms and Legal notice pages. Company details come from Studio's
-// Site settings, so the pages read "Details to follow" until the team fills them in.
+// Site settings and show only once the team fills them in.
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { City, Site } from "@/lib/types";
 
 export const UPDATED = "29 October 2026";
 
-export function Detail({ value, href }: { value?: string; href?: string }) {
-  if (!value) return <em className="tbc">Details to follow</em>;
-  return href ? <a href={href}>{value}</a> : <>{value}</>;
-}
-
+/** The company details filled in so far; nothing at all while they're blank. */
 export function Company({ site, register = false }: { site: Site | null; register?: boolean }) {
   const email = site?.privacy_email;
+  const rows: [string, ReactNode][] = [
+    ["Owner", site?.legal_name],
+    ["Tax ID (NIF)", site?.tax_id],
+    ["Address", site?.legal_address],
+    ["Register", register && site?.registry_details],
+    ["Email", email && <a href={`mailto:${email}`}>{email}</a>],
+  ];
+  const filled = rows.filter(([, value]) => value);
+  if (!filled.length) return null;
   return (
     <div className="kv">
-      <div>
-        <span>Owner</span>
-        <span>
-          <Detail value={site?.legal_name} />
-        </span>
-      </div>
-      <div>
-        <span>Tax ID (NIF)</span>
-        <span>
-          <Detail value={site?.tax_id} />
-        </span>
-      </div>
-      <div>
-        <span>Address</span>
-        <span>
-          <Detail value={site?.legal_address} />
-        </span>
-      </div>
-      {register && (
-        <div>
-          <span>Register</span>
-          <span>
-            <Detail value={site?.registry_details} />
-          </span>
+      {filled.map(([label, value]) => (
+        <div key={label}>
+          <span>{label}</span>
+          <span>{value}</span>
         </div>
-      )}
-      <div>
-        <span>Email</span>
-        <span>
-          <Detail value={email} href={email ? `mailto:${email}` : undefined} />
-        </span>
-      </div>
-      <div>
-        <span>Contact form</span>
-        <span>
-          <Link href="/contact">fromthehouseofyoung.com/contact</Link>
-        </span>
-      </div>
+      ))}
     </div>
   );
 }

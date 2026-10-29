@@ -19,7 +19,7 @@ export default async function Page() {
 
         <h3>Who we are</h3>
         <p>
-          The company below is responsible for your data (the &ldquo;controller&rdquo;). For anything about your data, <ContactUs site={site} />.
+          House of Young is responsible for your data (the &ldquo;controller&rdquo;). For anything about your data, <ContactUs site={site} />.
         </p>
         <Company site={site} />
 
