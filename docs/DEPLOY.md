@@ -1,15 +1,16 @@
 # Deploying House of Young
 
 The backend (API, HOY Studio and Django admin) runs on Railway next to our
-existing services. Cloudflare handles DNS and media storage (R2), and Resend
-sends the email.
+existing services. The database is SME Analytica's Supabase project "House of
+Young" (`voctydqabimqsliyqhyk`, Paris eu-west-3), which is separate from Analytica DB.
+Cloudflare handles DNS and media storage (R2), and Resend sends the email.
 
 Placeholder domain used below: `houseofyoung.com`. Swap in the real one.
 
 | Piece | Service | Address |
 |---|---|---|
 | API, Studio, admin | Railway (Docker) | `api.houseofyoung.com` |
-| Database | Railway Postgres | internal |
+| Database | Supabase Postgres 17, schema `hoy` | session pooler, Paris (eu-west-3) |
 | Uploaded photos and videos | Cloudflare R2 | `media.houseofyoung.com` |
 | DNS, SSL, CDN | Cloudflare | — |
 | Booking and contact emails | Resend | `hello@houseofyoung.com` |
@@ -61,15 +62,35 @@ be handed over or removed cleanly.
 4. Resend → **API Keys → Create** → permission **Sending access**, domain
    `houseofyoung.com`. This key is the SMTP password.
 
-## 5. Railway: service and database
+## 5. Supabase: database
+
+The project is already set up. Django's tables live in a private `hoy` schema
+owned by the `hoy_app` login. The schema is not exposed through Supabase's Data
+API, so the public `anon` and `authenticated` keys can't read it, and nothing
+should be added to `public`.
+
+- Connect through the **session pooler** (port 5432, IPv4). The direct host is
+  IPv6 only, and the transaction pooler (6543) breaks Django's server-side
+  cursors and `conn_max_age`.
+- `hoy_app` has `search_path = hoy`, so the connection string needs no schema
+  option.
+- The password lives only with whoever set the database up. If it's lost, reset
+  it in Supabase → **SQL Editor** with
+  `alter role hoy_app with password '...'` and update `DATABASE_URL` in Railway.
+- Turn on **Settings → Infrastructure → Network restrictions** once Railway's
+  outbound IPs are known.
+
+## 6. Railway: service
 
 1. In our Railway project → **New → GitHub repo** → `project-young`.
 2. Service **Settings**:
    - Root directory: `backend`. Railway picks up `backend/railway.json`, which
      builds the Dockerfile and checks `/api/v1/health/`.
-   - Branch: `main`, once the work is merged.
-3. **New → Database → PostgreSQL** in the same project.
-4. Add the variables in step 6, then deploy.
+   - Branch: `main`.
+   - Region: **EU West (Amsterdam)**, near the database in Paris. Every page
+     runs several queries, so a service far from the database pays a round
+     trip on each one.
+3. Add the variables in step 7, then deploy.
 5. Service **Settings → Networking → Custom domain** → `api.houseofyoung.com`.
    In Cloudflare, add the CNAME that Railway shows, with **DNS only** (grey
    cloud) until Railway has issued the certificate. After that it can be
@@ -77,13 +98,13 @@ be handed over or removed cleanly.
 
 Each deploy runs the migrations and `ensure_admin`, then starts Gunicorn.
 
-## 6. Railway variables
+## 7. Railway variables
 
 | Variable | Value |
 |---|---|
 | `DJANGO_SECRET_KEY` | Long random string: `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
 | `DJANGO_ALLOWED_HOSTS` | `api.houseofyoung.com` (the Railway domain is added automatically) |
-| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (Railway reference) |
+| `DATABASE_URL` | `postgres://hoy_app.voctydqabimqsliyqhyk:<password>@aws-1-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require` |
 | `AWS_STORAGE_BUCKET_NAME` | `hoy-media` |
 | `AWS_ACCESS_KEY_ID` | R2 access key ID |
 | `AWS_SECRET_ACCESS_KEY` | R2 secret access key |
@@ -111,7 +132,7 @@ Optional:
 
 `DJANGO_DEBUG` must stay unset in production.
 
-## 7. Smoke test after the first deploy
+## 8. Smoke test after the first deploy
 
 1. `https://api.houseofyoung.com/api/v1/health/` returns `{"status": "ok"}`.
 2. Log in at `/studio/` with the first admin. Change the password, then delete
@@ -129,10 +150,11 @@ Optional:
 To load demo content on a staging service only, run
 `railway run python manage.py seed_demo`. Never run it on production.
 
-## 8. Routine jobs
+## 9. Routine jobs
 
-- **Backups:** Railway Postgres has daily backups on paid plans. Turn them on,
-  and do a test restore once before launch.
+- **Backups:** Supabase keeps 7 days of daily backups on the Pro plan
+  (**Database → Backups**). Do a test restore once before launch, into a scratch
+  project rather than over the live one.
 - **Data retention (GDPR / NDPA):** Railway cron service, monthly
   (`0 3 1 * *`), using the same image with this start command:
   `python manage.py purge_old_enquiries --months 24`.
