@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+db.sqlite3
+media/
+staticfiles/
+.ruff_cache/
+
+# Project-local process logs, credentials and test scratch.
+.local/

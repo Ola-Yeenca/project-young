@@ -1,0 +1,38 @@
+{% extends "studio/base.html" %}
+{% block title %}{% if product %}{{ product.name }}{% else %}Add product{% endif %}{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="bag" %}{% endblock %}
+{% block heading %}{% if product %}{{ product.name }}{% else %}Add product{% endif %}{% endblock %}
+{% block sub %}<a href="{% url 'studio:shop' %}">Shop</a> / {% if product %}Edit{% else %}New{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate class="editor">{% csrf_token %}
+  <div class="stack">
+    <section class="card card-b">
+      <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="bag" %}</span>Product</div>
+      <div class="fgrid">
+        {% include "studio/_field.html" with f=form.name %}
+        <div class="f"><label for="id_p-slug">Web address</label><input class="in" id="id_p-slug" name="p-slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_p-name" required>{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}</div>
+        {% include "studio/_field.html" with f=form.material %}{% include "studio/_field.html" with f=form.fit %}
+        {% include "studio/_field.html" with f=form.description wide=1 %}
+        {% include "studio/_field.html" with f=form.order %}{% include "studio/_field.html" with f=form.is_published %}
+      </div>
+    </section>
+    <section class="card card-b">
+      <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="ticket" %}</span>Price in each city</div>
+      <p class="muted" style="font-size:.84rem;margin:-6px 0 8px">Paste a Stripe Payment Link for euros or a Paystack page for naira. Leave a city out to hide the product there.</p>
+      {% include "studio/_formset.html" with fs=prices %}
+    </section>
+    <section class="card card-b">
+      <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="sliders" %}</span>Sizes and stock</div>
+      {% include "studio/_formset.html" with fs=variants %}
+    </section>
+  </div>
+  <aside class="preview">
+    <section class="card">
+      <div class="pv-art" style="aspect-ratio:1"><img id="p-img" alt="" {% if product.image %}src="{{ product.image.url }}"{% else %}hidden{% endif %}></div>
+      <div class="card-b"><div class="f"><label for="id_p-image">Product photo</label><input class="file" type="file" id="id_p-image" name="p-image" accept="image/*" data-preview="#p-img">{% for e in form.image.errors %}<span class="err">{{ e }}</span>{% endfor %}</div></div>
+    </section>
+    <div class="formbar"><span class="grow"></span><a class="btn ghost" href="{% url 'studio:shop' %}">Cancel</a><button class="btn pri">{% if product %}Save{% else %}Add product{% endif %}</button></div>
+  </aside>
+</form>
+{% endblock %}

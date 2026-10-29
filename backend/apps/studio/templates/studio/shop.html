@@ -1,0 +1,24 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}Shop{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="bag" %}{% endblock %}
+{% block heading %}Shop{% endblock %}
+{% block sub %}Merch, priced per city{% endblock %}
+{% block action %}<a class="btn pri" href="{% url 'studio:product_new' %}">{% include "studio/_i.html" with i="plus" %}<span>Add product</span></a>{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="bag" %}</span><h2>Products</h2><span class="tag">{{ products|length }}</span></div>
+  {% if products %}
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Product</th><th>Status</th><th>Prices</th><th>Sizes</th><th></th></tr></thead>
+    <tbody>{% for p in products %}<tr>
+      <td><a class="item" href="{% url 'studio:product_edit' p.pk %}">{% if p.image %}<img class="thumb" src="{{ p.image.url }}" alt="">{% else %}<span class="thumb ph">{% include "studio/_i.html" with i="bag" %}</span>{% endif %}<span style="min-width:0"><b>{{ p.name }}</b><small>{{ p.material|default:"—" }}{% if p.fit %} · {{ p.fit }}{% endif %}</small></span></a></td>
+      <td class="t-status">{% if p.is_published %}<span class="pill good">Live</span>{% else %}<span class="pill gold">Hidden</span>{% endif %}</td>
+      <td><div class="chips">{% for pr in p.prices.all %}<span class="pill nodot num" title="{% if pr.checkout_url %}Has checkout link{% else %}No checkout link yet{% endif %}">{{ pr.city.currency_symbol }}{{ pr.amount|floatformat:"0g" }}{% if not pr.checkout_url %} <span style="color:var(--warn)">•</span>{% endif %}</span>{% empty %}<span class="muted">No prices</span>{% endfor %}</div></td>
+      <td class="muted">{% for v in p.variants.all %}{{ v.label }}{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}</td>
+      <td><a class="btn sm" href="{% url 'studio:product_edit' p.pk %}">Edit</a></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="bag" %}<b>No merch yet</b><a class="btn pri" href="{% url 'studio:product_new' %}">Add the first product</a></div>{% endif %}
+</section>
+<p class="muted" style="font-size:.82rem">A gold dot means that city has no checkout link yet, so the Buy button won't show there.</p>
+{% endblock %}

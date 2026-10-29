@@ -1,0 +1,45 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}Community{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="user" %}{% endblock %}
+{% block heading %}Community{% endblock %}
+{% block sub %}{{ stats.members }} on the list · {{ stats.week }} joined this week · {{ stats.whatsapp }} want WhatsApp{% endblock %}
+{% block action %}{% if show != 'left' %}<a class="btn" href="{% keep format='csv' %}">{% include "studio/_i.html" with i="arrow" %}<span>Export CSV</span></a>{% endif %}{% endblock %}
+{% block filters_extra %}
+  <nav class="seg" aria-label="List">
+    <a href="{% keep show='' %}" class="{% if show != 'left' %}on{% endif %}">Subscribed</a>
+    <a href="{% keep show='left' %}" class="{% if show == 'left' %}on{% endif %}">Unsubscribed</a>
+  </nav>
+{% endblock %}
+{% block content %}
+<nav class="seg" aria-label="Interest" style="justify-self:start">
+  <a href="{% keep interest='' %}" class="{% if not interest %}on{% endif %}">Everyone</a>
+  {% for t in interests %}<a href="{% keep interest=t.key %}" class="{% if t.on %}on{% endif %}">{{ t.label }}</a>{% endfor %}
+</nav>
+
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="user" %}</span><h2>{% if show == 'left' %}Unsubscribed{% else %}Members{% endif %}</h2><span class="tag">{{ total }}</span></div>
+  <form class="search-in" method="get">{% include "studio/_i.html" with i="search" %}
+    <input name="q" value="{{ q }}" placeholder="Search name, email, phone, Instagram" aria-label="Search members">
+    <input type="hidden" name="interest" value="{{ interest }}"><input type="hidden" name="show" value="{{ show }}">
+  </form>
+  {% if rows %}
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Member</th><th>City</th><th>Prefers</th><th>Interested in</th><th>Instagram</th><th>Joined</th><th></th></tr></thead>
+    <tbody>{% for m in rows %}<tr>
+      <td><span class="item"><span class="av">{{ m.name|initials }}</span><span style="min-width:0"><b>{{ m.name }}</b><small><a href="mailto:{{ m.email }}">{{ m.email }}</a>{% if m.phone %} · <a href="tel:{{ m.phone }}">{{ m.phone }}</a>{% endif %}</small></span></span></td>
+      <td>{{ m.city.name|default:"Elsewhere" }}</td>
+      <td><span class="pill nodot">{{ m.get_channel_display }}</span></td>
+      <td><div class="chips">{% for i in m.interests %}<span class="pill nodot">{{ i }}</span>{% empty %}<span class="muted">—</span>{% endfor %}</div></td>
+      <td>{% if m.instagram %}<a href="https://instagram.com/{{ m.instagram }}" target="_blank" rel="noopener">@{{ m.instagram }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td class="muted"><time datetime="{{ m.created_at|date:'c' }}">{{ m.created_at|ago }}</time></td>
+      <td><form method="post" action="{% url 'studio:member_update' m.pk %}" class="toolbar" style="justify-content:flex-end">{% csrf_token %}
+        <input type="hidden" name="back" value="{{ request.get_full_path }}">
+        {% if not m.unsubscribed_at %}<button class="btn sm" name="action" value="unsubscribe" title="They asked to stop hearing from us">Unsubscribe</button>{% endif %}
+        {% if perms.community.delete_member %}<button class="btn sm" name="action" value="delete" title="Erase their details" onclick="return confirm('Delete {{ m.name|escapejs }} and all their details?')">{% include "studio/_i.html" with i="trash" %}</button>{% endif %}
+      </form></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="user" %}<b>{% if q %}No matches for “{{ q }}”{% elif show == 'left' %}Nobody has unsubscribed{% else %}No members yet{% endif %}</b><span>People join from the “Join the community” form on the homepage.</span></div>{% endif %}
+</section>
+<p class="muted" style="font-size:.82rem">Everyone here ticked the consent box. When someone asks to stop, press Unsubscribe; when they ask to be forgotten, delete them. The CSV leaves out unsubscribed people.</p>
+{% endblock %}

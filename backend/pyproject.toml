@@ -1,0 +1,17 @@
+[tool.ruff]
+line-length = 140
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "S", "BLE"]
+ignore = ["S101", "S311", "DJ001", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S106", "S108", "SIM115"]
+# Admin forms render through ModelAdmin.fieldsets, which already choose the fields.
+"*/admin.py" = ["DJ007"]
+"config/settings.py" = ["S105"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "api", "config", "tests"]

@@ -1,0 +1,15 @@
+New booking enquiry {{ e.reference }}
+
+Act:        {% if e.talent %}{{ e.talent.name }}{% else %}Not specified{% endif %}
+Client:     {{ e.client_name }}{% if e.company %} ({{ e.company }}){% endif %}
+Email:      {{ e.email|default:"—" }}
+Phone:      {{ e.phone|default:"—" }}
+Date:       {{ e.event_date|date:"l j F Y" }}
+Location:   {{ e.event_location }}
+Type:       {{ e.get_event_type_display }}
+Audience:   {{ e.get_expected_audience_display }}
+
+{{ e.message|default:"No extra details." }}
+
+Reply to this email to answer the client directly.
+Open it in the admin to change its status.

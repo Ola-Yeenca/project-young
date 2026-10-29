@@ -1,0 +1,49 @@
+{% extends "studio/base.html" %}{% load studio %}
+{% block title %}HOY Radio{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="play" %}{% endblock %}
+{% block heading %}HOY Radio{% endblock %}
+{% block sub %}The music on the homepage turntable{% endblock %}
+{% block content %}
+<section class="card card-b">
+  <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="play" %}</span>On air by genre</div>
+  <div class="chips">{% for g in genres %}<span class="pill {% if g.n %}good{% else %}nodot{% endif %} num">{{ g.label }} · {{ g.n }}</span>{% endfor %}</div>
+  <p class="muted" style="font-size:.84rem;margin-top:10px">Lagos plays Afrohouse, Afrobeats and Amapiano; Valencia plays Techno, House and Reggaeton. Each visitor gets a fresh shuffle. A genre with no tracks on air plays HOY’s own generated beat instead.</p>
+</section>
+
+<section class="card card-b">
+  <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="upload" %}</span>Add a track</div>
+  <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+    <div class="fgrid">
+      {% include "studio/_field.html" with f=form.title %}
+      {% include "studio/_field.html" with f=form.artist %}
+      {% include "studio/_field.html" with f=form.genre %}
+      {% include "studio/_field.html" with f=form.city %}
+      {% include "studio/_field.html" with f=form.file wide=1 %}
+      {% include "studio/_field.html" with f=form.rights wide=1 %}
+      {% include "studio/_field.html" with f=form.is_published wide=1 %}
+    </div>
+    <div class="toolbar" style="margin-top:12px"><span class="grow"></span><button class="btn pri" type="submit">{% include "studio/_i.html" with i="upload" %}Upload</button></div>
+  </form>
+  <p class="muted" style="font-size:.82rem;margin-top:8px">Only upload music HOY has permission to stream: the artist’s own tracks, or tracks they’ve cleared in writing. Commercial releases and DJ mixes of other people’s songs need a music licence.</p>
+</section>
+
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="play" %}</span><h2>Tracks</h2><span class="tag">{{ tracks|length }}</span></div>
+  {% if tracks %}
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Track</th><th>Genre</th><th>City</th><th>Permission</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for t in tracks %}<tr>
+      <td><span class="item"><span style="min-width:0"><b>{{ t.title }}</b><small>{{ t.artist }}</small></span></span><audio controls preload="none" src="{{ t.file.url }}" style="height:28px;margin-top:6px;max-width:260px"></audio></td>
+      <td><span class="pill nodot">{{ t.get_genre_display }}</span></td>
+      <td>{{ t.city.name|default:"Every city" }}</td>
+      <td class="muted" style="max-width:260px">{{ t.rights }}</td>
+      <td class="t-status">{% if t.is_published %}<span class="pill good">On air</span>{% else %}<span class="pill gold">Off air</span>{% endif %}</td>
+      <td><form method="post" action="{% url 'studio:track_update' t.pk %}" class="toolbar" style="justify-content:flex-end">{% csrf_token %}
+        <button class="btn sm" name="action" value="toggle">{% if t.is_published %}Take off air{% else %}Put on air{% endif %}</button>
+        {% if perms.radio.delete_track %}<button class="btn sm" name="action" value="delete" title="Delete" onclick="return confirm('Delete {{ t.title|escapejs }}?')">{% include "studio/_i.html" with i="trash" %}</button>{% endif %}
+      </form></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="play" %}<b>No tracks yet</b><span>The radio plays HOY’s generated beats until you upload some.</span></div>{% endif %}
+</section>
+{% endblock %}

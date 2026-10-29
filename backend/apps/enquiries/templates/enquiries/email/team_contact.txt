@@ -1,0 +1,11 @@
+New message {{ e.reference }}
+
+Reason:   {{ e.get_category_display }}
+From:     {{ e.name }}
+Email:    {{ e.email|default:"—" }}
+Phone:    {{ e.phone|default:"—" }}
+Subject:  {{ e.subject|default:"—" }}
+
+{{ e.message }}
+
+Reply to this email to answer directly.

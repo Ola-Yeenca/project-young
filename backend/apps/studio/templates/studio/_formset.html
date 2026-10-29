@@ -1,0 +1,8 @@
+{{ fs.management_form }}
+<div style="overflow-x:auto"><table class="formset">
+  <thead><tr>{% for f in fs.empty_form.visible_fields %}{% if f.name != 'DELETE' %}<th>{{ f.label }}</th>{% endif %}{% endfor %}<th>Remove</th></tr></thead>
+  <tbody>{% for form in fs %}<tr>{% for h in form.hidden_fields %}{{ h }}{% endfor %}
+    {% for f in form.visible_fields %}{% if f.name != 'DELETE' %}<td>{% if f.field.widget.input_type == 'checkbox' %}<label class="switch" style="padding:8px 10px">{{ f }}</label>{% else %}{{ f }}{% endif %}{% for e in f.errors %}<div class="err" style="color:var(--crit);font-size:.75rem">{{ e }}</div>{% endfor %}</td>{% endif %}{% endfor %}
+    <td class="del">{% if form.instance.pk %}{{ form.DELETE }}{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if fs.non_form_errors %}<p style="color:var(--crit)">{{ fs.non_form_errors|join:" " }}</p>{% endif %}

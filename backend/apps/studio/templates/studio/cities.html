@@ -1,0 +1,30 @@
+{% extends "studio/base.html" %}
+{% block title %}Cities{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="pin" %}{% endblock %}
+{% block heading %}Cities{% endblock %}
+{% block sub %}Where HOY operates. Each city has its own currency, time zone and ticket partner{% endblock %}
+{% block action %}{% if perms.core.add_city %}<a class="btn pri" href="{% url 'studio:city_new' %}">{% include "studio/_i.html" with i="plus" %}<span>Add city</span></a>{% endif %}{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<div class="board" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+  {% for r in rows %}{% with c=r.c %}
+  <a class="card city" href="{% url 'studio:city_edit' c.pk %}">
+    <div class="city-top">
+      <span class="mono">{{ c.country }} · {{ c.currency }}</span>
+      {% if c.is_active %}<span class="pill good">Live</span>{% else %}<span class="pill gold">Hidden</span>{% endif %}
+    </div>
+    <h3>{{ c.name }}</h3>
+    <span class="muted num" style="font-size:.86rem">{{ r.time }} local · {{ c.timezone }}</span>
+    <div class="city-stats">
+      <div><b class="num">{{ c.n_events }}</b><span>upcoming</span></div>
+      <div><b class="num">{{ c.n_talent }}</b><span>talent</span></div>
+      <div><b class="num">{{ c.n_venues }}</b><span>venues</span></div>
+    </div>
+    <div class="city-ready">{% if r.ready.done == r.ready.total %}<span class="ring done"></span>{% else %}<span class="ring" style="--p:{{ r.ready.pct }}"></span>{% endif %}<span>{% if r.ready.done == r.ready.total %}Ready to go{% else %}{{ r.ready.done }} of {{ r.ready.total }} ready{% endif %}</span><span class="grow"></span><span class="muted" style="font-size:.82rem">{{ c.ticket_provider|default:"No ticket partner" }}</span></div>
+  </a>
+  {% endwith %}{% endfor %}
+  {% if perms.core.add_city %}
+  <a class="new-card" href="{% url 'studio:city_new' %}" style="min-height:250px">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.84rem;max-width:26ch;text-align:center">Accra, London, Nairobi… It stays hidden until you're ready.</span></a>
+  {% endif %}
+</div>
+{% endblock %}

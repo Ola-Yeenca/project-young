@@ -1,0 +1,2 @@
+<div class="choice-field">{% include "studio/_field.html" with f=f %}
+{% if allowed %}<button type="button" class="btn sm choice-add" data-choice-kind="{{ kind }}" data-choice-target="{{ f.id_for_label }}" data-choice-url="{% url 'studio:choice_create' kind %}">{{ label }}</button>{% endif %}</div>
