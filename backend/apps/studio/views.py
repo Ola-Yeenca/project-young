@@ -79,6 +79,10 @@ class StudioLogout(LogoutView):
     next_page = "studio:login"
 
 
+def robots(request):
+    return HttpResponse("User-agent: *\nDisallow: /\n", content_type="text/plain")
+
+
 @studio_view()
 def set_scope(request, slug):
     if slug == "all":

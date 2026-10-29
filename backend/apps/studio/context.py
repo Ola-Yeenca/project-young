@@ -37,8 +37,10 @@ def setup_steps():
 
 
 def studio(request):
+    match = getattr(request, "resolver_match", None)
     if (
-        not request.path.startswith("/studio/")
+        not match
+        or match.app_name != "studio"
         or not getattr(request, "user", None)
         or not request.user.is_authenticated
         or not request.user.is_staff

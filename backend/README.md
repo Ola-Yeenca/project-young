@@ -52,6 +52,14 @@ Emails print to the terminal in debug mode.
 (slide-out menu) and phone (bottom tab bar, tables turn into cards), in light and
 dark mode.
 
+In production Studio has its own host, `https://studio.fromthehouseofyoung.com/`,
+named by `HOY_STUDIO_HOST`: Studio at its root (`/events/`, `/crowd/`, ...), the
+admin at `/admin/`, and no API. `/studio/...` and `/admin/...` on the API's host
+redirect there. Locally, with the variable unset, both stay at `/studio/` and
+`/admin/`, so Studio code builds every link with `{% url %}` or `reverse()` and
+never writes `/studio/` itself. `apps/studio/middleware.py` picks the URLs
+(`config/studio_urls.py` on the studio host); see `../docs/DEPLOY.md`.
+
 - **Overview**: new enquiries, events in the next 30 days, average tickets sold and
   bookings won, each against the previous period. An upcoming events table with
   sales progress and one-click publish. A "Needs attention" list (enquiries waiting
@@ -132,9 +140,9 @@ settings → booking or contact email) and sends the client a confirmation.
 
 ## Production
 
-Set the variables in `.env.example`: a secret key, allowed hosts, `DATABASE_URL`
-for Postgres, the S3-compatible bucket for uploads (Supabase Storage) and SMTP
-details. The `Dockerfile` runs migrations, creates the first admin from
+Set the variables in `.env.example`: a secret key, allowed hosts, Studio's host
+(`HOY_STUDIO_HOST`), `DATABASE_URL` for Postgres, the S3-compatible bucket for
+uploads (Supabase Storage) and SMTP details. The `Dockerfile` runs migrations, creates the first admin from
 `DJANGO_SUPERUSER_*` (once) and starts Gunicorn on `$PORT`. `railway.json` sets
 up the Railway build and health check. The step-by-step guide, including
 Supabase Storage, Porkbun DNS and Resend, is in [`docs/DEPLOY.md`](../docs/DEPLOY.md).

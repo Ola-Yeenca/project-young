@@ -6,9 +6,6 @@ from django.views.generic import TemplateView
 
 from apps.core.public import preview
 
-admin.site.site_header = "House of Young"
-admin.site.site_title = "HOY admin"
-
 urlpatterns = [
     path("", include("apps.ticketing.urls")),
     path("", TemplateView.as_view(template_name="home.html"), name="home"),

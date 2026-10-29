@@ -14,7 +14,8 @@ hosted at Porkbun. Resend will send the email.
 | Piece | Service | Address |
 |---|---|---|
 | Public website | Railway `web` (Railpack, Next.js) | `fromthehouseofyoung.com`, `www.fromthehouseofyoung.com` |
-| API, Studio, admin | Railway `api` (Docker) | `api.fromthehouseofyoung.com` |
+| API | Railway `api` (Docker) | `api.fromthehouseofyoung.com` |
+| Studio and Django admin | Railway `api` (the same service) | `studio.fromthehouseofyoung.com` (admin under `/admin/`) |
 | Database | Supabase Postgres 17, schema `hoy` | session pooler, Paris (eu-west-3) |
 | Uploaded photos, posters and audio | Supabase Storage, public bucket `hoy-media` | `voctydqabimqsliyqhyk.supabase.co/storage/v1/object/public/hoy-media/...` |
 | DNS | Porkbun | — |
@@ -70,7 +71,9 @@ Applications → Railway → Configure**.
   `[::]`, so it also answers on the private network (IPv6) as
   `api.railway.internal:8000`. Django allows that host by itself, from
   `RAILWAY_PRIVATE_DOMAIN`.
-- Custom domain `api.fromthehouseofyoung.com`, port 8000.
+- Custom domains `api.fromthehouseofyoung.com` and
+  `studio.fromthehouseofyoung.com`, both port 8000. Which one a request came
+  in on decides what answers (see `HOY_STUDIO_HOST` below).
 
 `web`:
 
@@ -96,7 +99,8 @@ far from the database pays a round trip on each one.
 | Variable | Value |
 |---|---|
 | `DJANGO_SECRET_KEY` | Long random string: `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
-| `DJANGO_ALLOWED_HOSTS` | `api.fromthehouseofyoung.com` (the Railway domain is added automatically) |
+| `DJANGO_ALLOWED_HOSTS` | `api.fromthehouseofyoung.com` (the Railway domain and `HOY_STUDIO_HOST` are added automatically) |
+| `HOY_STUDIO_HOST` | `studio.fromthehouseofyoung.com` (see below) |
 | `DATABASE_URL` | `postgres://hoy_app.voctydqabimqsliyqhyk:<password>@aws-1-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require` |
 | `AWS_STORAGE_BUCKET_NAME` | `hoy-media` |
 | `AWS_ACCESS_KEY_ID` | Supabase S3 access key ID |
@@ -134,6 +138,20 @@ Optional:
 
 `DJANGO_DEBUG` must stay unset in production.
 
+**Studio's host.** With `HOY_STUDIO_HOST` set, that host serves Studio at its
+root (`/content/`, `/events/`, `/crowd/`, ...) and the Django admin at
+`/admin/`, and nothing else: the API and the ticket pages answer 404 there.
+Every page on it carries `X-Robots-Tag: noindex, nofollow` and
+`Referrer-Policy: same-origin`, and `/robots.txt` disallows everything. On
+`api.fromthehouseofyoung.com` (and any other host), `/studio/...` and
+`/admin/...` redirect permanently to the same page on the studio host (301, or
+308 for a form post). The host is added to the allowed hosts and trusted
+origins by itself. Sign-in cookies stay on the host that set them, so the team
+signs in again once after the move. Set the variable only once the studio
+domain's DNS resolves and Railway shows its certificate, or the redirect sends
+the team to a host that doesn't answer yet. Unset (local work, tests), Studio
+stays at `/studio/` and the admin at `/admin/`.
+
 **Visitor addresses.** Sign-in lockouts, rate limits and gallery stats need the
 visitor's real address. Railway's edge throws away any `X-Forwarded-For` and
 `X-Real-IP` a visitor sends, and writes `X-Forwarded-For: <visitor>, <edge
@@ -156,10 +174,11 @@ In Porkbun → **Domain Management → `fromthehouseofyoung.com` → DNS**:
 
    | Type | Host | Answer |
    |---|---|---|
-   | `CNAME` | `api` | the `api` service's `*.up.railway.app` target |
+   | `CNAME` | `api` | the `api` service's `*.up.railway.app` target for `api` |
+   | `CNAME` | `studio` | the `api` service's `*.up.railway.app` target for `studio` |
    | `ALIAS` | (blank, the bare domain) | the `web` service's target for `fromthehouseofyoung.com` |
    | `CNAME` | `www` | the `web` service's target for `www` |
-   | `TXT` | `_railway-verify`, `_railway-verify.api`, `_railway-verify.www` | the `railway-verify=...` value Railway shows for each domain |
+   | `TXT` | `_railway-verify`, `_railway-verify.api`, `_railway-verify.studio`, `_railway-verify.www` | the `railway-verify=...` value Railway shows for each domain |
 
 3. Railway issues the certificates once the records resolve, usually within
    minutes. Check with `dig +short api.fromthehouseofyoung.com @curitiba.ns.porkbun.com`
@@ -184,9 +203,11 @@ In Porkbun → **Domain Management → `fromthehouseofyoung.com` → DNS**:
 2. `https://fromthehouseofyoung.com` and `https://www.fromthehouseofyoung.com`
    load, and `https://fromthehouseofyoung.com/api/v1/cities/` returns the
    cities through the website's rewrite.
-3. Log in at `https://api.fromthehouseofyoung.com/studio/` with the first
+3. Log in at `https://studio.fromthehouseofyoung.com/` with the first
    admin. Change the password, then delete `DJANGO_SUPERUSER_PASSWORD` from
-   Railway.
+   Railway. `https://api.fromthehouseofyoung.com/studio/content/` should
+   redirect to `https://studio.fromthehouseofyoung.com/content/`, and
+   `https://studio.fromthehouseofyoung.com/api/v1/health/` should be a 404.
 4. Studio → **Cities**: check that Lagos and Valencia exist, and add their
    venues.
 5. Upload an event poster, then open the image URL. It should be served from
