@@ -22,6 +22,17 @@ class SiteContentTests(HOYTestCase):
         self.assertEqual(data["community"], content.COMMUNITY)
         self.assertIs(data["business_enabled"], False)
 
+    def test_site_endpoint_serves_company_details_but_not_inboxes(self):
+        SiteSettings.objects.update_or_create(
+            pk=1, defaults=dict(legal_name="House of Young S.L.", privacy_email="privacy@hoy.example", contact_email="inbox@hoy.example")
+        )
+        data = self.api.get("/api/v1/site/").json()
+        self.assertEqual(data["legal_name"], "House of Young S.L.")
+        self.assertEqual(data["privacy_email"], "privacy@hoy.example")
+        self.assertEqual((data["tax_id"], data["legal_address"], data["registry_details"]), ("", "", ""))
+        self.assertNotIn("contact_email", data)
+        self.assertNotIn("booking_email", data)
+
     def test_contact_accepts_the_brief_categories(self):
         for category in ("general", "events", "talent", "business", "merchandise", "other"):
             cache.clear()

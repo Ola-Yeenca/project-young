@@ -267,6 +267,11 @@ class SiteSettingsForm(StyledMixin, forms.ModelForm):
             "tiktok_url",
             "youtube_url",
             "show_powered_by",
+            "legal_name",
+            "tax_id",
+            "legal_address",
+            "registry_details",
+            "privacy_email",
         )
         widgets = {
             "intro": forms.Textarea(attrs={"rows": 3}),

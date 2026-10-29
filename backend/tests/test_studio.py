@@ -285,12 +285,23 @@ class StudioActionTests(HOYTestCase):
     def test_site_settings_and_faqs_save(self):
         r = self.client.post(
             reverse("studio:content"),
-            {"action": "site", "s-tagline": "New tagline", "s-booking_email": "b@hoy.example", "s-show_powered_by": "on"},
+            {
+                "action": "site",
+                "s-tagline": "New tagline",
+                "s-booking_email": "b@hoy.example",
+                "s-show_powered_by": "on",
+                "s-legal_name": "House of Young S.L.",
+                "s-tax_id": "B00000000",
+                "s-privacy_email": "privacy@hoy.example",
+            },
         )
         self.assertEqual(r.status_code, 302)
         from apps.core.models import SiteSettings
 
-        self.assertEqual(SiteSettings.load().booking_email, "b@hoy.example")
+        site = SiteSettings.load()
+        self.assertEqual(site.booking_email, "b@hoy.example")
+        self.assertEqual((site.legal_name, site.tax_id, site.legal_address), ("House of Young S.L.", "B00000000", ""))
+        self.assertEqual(site.privacy_email, "privacy@hoy.example")
 
 
 class StudioCityTests(HOYTestCase):
