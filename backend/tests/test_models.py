@@ -26,6 +26,46 @@ class CityTests(HOYTestCase):
     def test_currency_symbol(self):
         self.assertEqual(f.city("Lagos").currency_symbol, "₦")
 
+    def deck_errors(self, upload):
+        c = City(name="Accra", slug="accra", country="Ghana", currency="GHS", timezone="Africa/Accra", deck_video=upload)
+        try:
+            c.full_clean()
+        except ValidationError as exc:
+            return exc.message_dict.get("deck_video", [])
+        return []
+
+    def test_deck_video_accepts_mp4_and_webm(self):
+        self.assertEqual(self.deck_errors(f.video_file("loop.mp4")), [])
+        self.assertEqual(self.deck_errors(f.video_file("loop.webm", f.WEBM)), [])
+
+    def test_deck_video_rejects_other_formats_and_disguised_files(self):
+        self.assertIn("File extension “mov” is not allowed", " ".join(self.deck_errors(f.video_file("loop.mov"))))
+        disguised = f.video_file("loop.mp4", b"<!doctype html><script>alert(1)</script>")
+        self.assertEqual(self.deck_errors(disguised), ["This file isn't a playable MP4 or WebM video. Export it again as MP4 (H.264)."])
+        self.assertTrue(self.deck_errors(f.video_file("loop.webm", f.MP4)))
+
+    def test_deck_video_size_limit(self):
+        big = f.video_file()
+        big.size = 25 * 1024 * 1024 + 1
+        self.assertIn("Keep the video under 25 MB", " ".join(self.deck_errors(big)))
+        at_limit = f.video_file()
+        at_limit.size = 25 * 1024 * 1024
+        self.assertEqual(self.deck_errors(at_limit), [])
+
+    def test_site_default_deck_video_follows_the_same_rules(self):
+        site = SiteSettings(deck_video=f.video_file("loop.mov"))
+        with self.assertRaises(ValidationError) as caught:
+            site.full_clean()
+        self.assertIn("deck_video", caught.exception.message_dict)
+        SiteSettings(deck_video=f.video_file("loop.webm", f.WEBM)).full_clean()
+
+    def test_deck_still_uses_the_managed_image_rules(self):
+        c = City(name="Accra", slug="accra", country="Ghana", currency="GHS", timezone="Africa/Accra")
+        c.deck_poster = SimpleUploadedFile("still.jpg", b"not an image", content_type="image/jpeg")
+        with self.assertRaises(ValidationError) as caught:
+            c.full_clean()
+        self.assertIn("deck_poster", caught.exception.message_dict)
+
 
 class EventRulesTests(HOYTestCase):
     def setUp(self):

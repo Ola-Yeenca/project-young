@@ -5,8 +5,9 @@
 {% block sub %}<a href="{% url 'studio:cities' %}">Cities</a> / {% if city %}Edit{% else %}New{% endif %}{% endblock %}
 {% block filters %}{% endblock %}
 {% block content %}
-<form method="post" novalidate id="city-form">{% csrf_token %}
+<form method="post" enctype="multipart/form-data" novalidate id="city-form">{% csrf_token %}
   {% if form.non_field_errors %}<div class="card card-b" style="color:var(--crit);margin-bottom:14px">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  {% with video=form.initial.deck_video still=form.initial.deck_poster %}
   <div class="editor">
     <div class="stack">
       <section class="card card-b">
@@ -31,6 +32,11 @@
         </div>
       </section>
       <section class="card card-b">
+        <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="image" %}</span>Homepage video</div>
+        <p class="muted" style="font-size:.84rem;margin:-6px 0 12px">Loops behind the record player on the homepage while this city is selected, under a dark wash so the text stays readable. Leave both empty to use the site's default from <a href="{% url 'studio:content' %}#deck">Site &amp; FAQs</a>.</p>
+        {% include "studio/_deck_fields.html" with video_f=form.deck_video still_f=form.deck_poster video_gone="The homepage shows the site's default video instead, or this city's still." still_gone="Visitors who turn off motion then see the site's default still, or the plain background." %}
+      </section>
+      <section class="card card-b">
         <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="home" %}</span>Venues</div>
         <p class="muted" style="font-size:.84rem;margin:-6px 0 8px">Events in this city pick from these. Leave a row empty to skip it.</p>
         {% include "studio/_formset.html" with fs=venues %}
@@ -38,7 +44,8 @@
     </div>
     <aside class="preview">
       <section class="card">
-        <div class="city-hero">
+        <div class="city-hero{% if video or still %} filmed{% endif %}" id="pv-deck">
+          {% include "studio/_deck_media.html" %}
           <span class="mono" id="pv-country">{{ city.country|default:"Country" }} · <span id="pv-currency">{{ city.currency|default:"—" }}</span></span>
           <b id="pv-name">{{ city.name|default:"City name" }}</b>
           <span class="num" id="pv-time">--:--</span><span class="muted" id="pv-tz" style="font-size:.8rem">{{ city.timezone|default:"Pick a time zone" }}</span>
@@ -52,6 +59,7 @@
       <div class="formbar"><span class="grow"></span><a class="btn ghost" href="{% url 'studio:cities' %}">Cancel</a><button class="btn pri">{% if city %}Save city{% else %}Add city{% endif %}</button></div>
     </aside>
   </div>
+  {% endwith %}
 </form>
 <datalist id="country-list">{% for name in presets %}<option value="{{ name }}">{% endfor %}</datalist>
 <datalist id="tz-list">{% for z in zones %}<option value="{{ z }}">{% endfor %}</datalist>

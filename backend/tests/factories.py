@@ -17,6 +17,14 @@ def image_file(name="photo.jpg", colour=(200, 160, 70)):
     return SimpleUploadedFile(name, buf.getvalue(), content_type="image/jpeg")
 
 
+MP4 = b"\x00\x00\x00\x18ftypmp42" + bytes(52)
+WEBM = b"\x1a\x45\xdf\xa3" + bytes(60)
+
+
+def video_file(name="loop.mp4", data=MP4):
+    return SimpleUploadedFile(name, data, content_type="video/webm" if name.endswith(".webm") else "video/mp4")
+
+
 def city(name="Valencia", **kw):
     defaults = dict(
         slug=name.lower(),

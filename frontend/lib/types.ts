@@ -10,6 +10,10 @@ export type City = {
   ticket_provider: string;
   whatsapp_number: string;
   instagram_url: string;
+  /** Loops behind the homepage record player. */
+  deck_video?: string | null;
+  /** The video's still: shown while it loads, for reduced motion, and on its own without a video. */
+  deck_poster?: string | null;
 };
 
 export type Ref = { name: string; slug: string };
@@ -126,6 +130,9 @@ export type Site = {
   legal_address: string;
   registry_details: string;
   privacy_email: string;
+  /** The homepage deck video and still for cities without their own. */
+  deck_video?: string | null;
+  deck_poster?: string | null;
 };
 
 /** Everything one city needs, loaded together so a city switch swaps it in one go. */

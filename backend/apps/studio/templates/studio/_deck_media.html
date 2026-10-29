@@ -1,0 +1,2 @@
+<img class="deck" id="pv-deck-poster" alt="" {% if still %}src="{{ still.url }}"{% else %}hidden{% endif %}>
+<video class="deck" id="pv-deck-video" muted loop playsinline autoplay preload="metadata" {% if still %}poster="{{ still.url }}"{% endif %} {% if video %}src="{{ video.url }}"{% else %}hidden{% endif %}></video>

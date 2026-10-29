@@ -49,7 +49,7 @@ function Clock() {
 }
 
 function CitySwitch() {
-  const { cities, slug, switchCity, wipe } = useSite();
+  const { cities, slug, prime, switchCity, wipe } = useSite();
   const seg = useRef<HTMLDivElement>(null);
   const knob = useRef<HTMLSpanElement>(null);
   // The button lights up straight away; the data swaps under the wipe.
@@ -71,7 +71,13 @@ function CitySwitch() {
     <div className="city" ref={seg}>
       <span className="knob" ref={knob}></span>
       {cities.map((c) => (
-        <button key={c.slug} className={c.slug === shown ? "on" : ""} onClick={() => switchCity(c.slug)}>
+        <button
+          key={c.slug}
+          className={c.slug === shown ? "on" : ""}
+          onPointerEnter={() => prime(c.slug)}
+          onFocus={() => prime(c.slug)}
+          onClick={() => switchCity(c.slug)}
+        >
           {c.name}
         </button>
       ))}
@@ -109,13 +115,12 @@ export function Header() {
 }
 
 export function Footer() {
-  const { global, cities } = useSite();
-  const names = cities.length ? cities.map((c) => c.name).join(" · ") : "Valencia · Lagos";
+  const { global } = useSite();
   return (
     <footer>
       <div className="wrap">
         <span>
-          © {new Date().getFullYear()} House of Young · {names} · {global.site?.tagline || MOTTO}
+          © {new Date().getFullYear()} House of Young · {global.site?.tagline || MOTTO}
         </span>
         <span>
           <Link href="/about">About</Link> · <Link href="/privacy">Privacy</Link> · <Link href="/legal">Legal notice</Link> · <Link href="/terms">Terms</Link>

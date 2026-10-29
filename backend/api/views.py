@@ -144,7 +144,7 @@ class FAQList(generics.ListAPIView):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def site(request):
-    return Response(s.SiteSettingsSerializer(SiteSettings.load()).data)
+    return Response(s.SiteSettingsSerializer(SiteSettings.load(), context={"request": request}).data)
 
 
 @api_view(["GET"])

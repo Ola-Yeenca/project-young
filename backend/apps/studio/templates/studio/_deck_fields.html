@@ -1,0 +1,24 @@
+{% comment %}Homepage video uploads. Needs video_f and still_f (bound fields), video and still (the stored files), and video_gone / still_gone (what removing each one does).{% endcomment %}
+<div class="fgrid">
+  <div class="f full {% if video_f.errors %}has-err{% endif %}">
+    <label for="{{ video_f.id_for_label }}">Video</label>
+    <label class="file-drop" for="{{ video_f.id_for_label }}">{% include "studio/_i.html" with i="upload" %}<b>{% if video %}Replace the video{% else %}Drop the video here or click to choose{% endif %}</b><span style="font-size:.8rem">MP4 or WebM · 10–20 second loop · 720p · under 8 MB, 25 MB at most</span>
+      <input id="{{ video_f.id_for_label }}" type="file" name="{{ video_f.html_name }}" accept=".mp4,.webm,video/mp4,video/webm" data-preview="#pv-deck-video" data-deck="video"></label>
+    {% for e in video_f.errors %}<span class="err">{{ e }}</span>{% endfor %}
+    {% if video %}<label class="switch" for="{{ video_f.html_name }}-clear" style="margin-top:10px"><span><b>Remove the video</b><small>{{ video_gone }}</small></span><input id="{{ video_f.html_name }}-clear" type="checkbox" name="{{ video_f.html_name }}-clear" data-deck-clear="video"></label>{% endif %}
+  </div>
+  <div class="f full {% if still_f.errors %}has-err{% endif %}">
+    <label for="{{ still_f.id_for_label }}">Still</label>
+    <label class="file-drop" for="{{ still_f.id_for_label }}">{% include "studio/_i.html" with i="upload" %}<b>{% if still %}Replace the still{% else %}Drop a still here or click to choose{% endif %}</b><span style="font-size:.8rem">A frame from the video · 1280×720 · JPEG, PNG or WebP</span>
+      <input id="{{ still_f.id_for_label }}" type="file" name="{{ still_f.html_name }}" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-preview="#pv-deck-poster" data-deck="poster"></label>
+    {% for e in still_f.errors %}<span class="err">{{ e }}</span>{% endfor %}
+    {% if still %}<label class="switch" for="{{ still_f.html_name }}-clear" style="margin-top:10px"><span><b>Remove the still</b><small>{{ still_gone }}</small></span><input id="{{ still_f.html_name }}-clear" type="checkbox" name="{{ still_f.html_name }}-clear" data-deck-clear="poster"></label>{% endif %}
+  </div>
+</div>
+<ul class="muted deck-tips">
+  <li>Cut a 10–20 second clip whose last frame flows back into the first, so the loop doesn't jump.</li>
+  <li>Export it at 1280×720, 30 fps, as MP4 (H.264) with the sound removed. It always plays muted; around 8 MB loads fast on phones.</li>
+  <li>Dark, slow footage works best: the record player, prices and buttons sit on top of it. Leave out strobes and white flashes.</li>
+  <li>Only use footage HOY shot or has permission to use, and avoid close-ups of guests who haven't agreed to be filmed.</li>
+  <li>Add a still from the same clip. It shows while the video loads, and instead of it for visitors who turn off motion or save data.</li>
+</ul>
