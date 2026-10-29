@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from axes.models import AccessAttempt
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -46,22 +47,28 @@ class StudioLockoutTests(HOYTestCase):
     def setUp(self):
         User.objects.create_user("ada", password="a-long-password-1", is_staff=True)
 
-    def sign_in(self, password, ip="81.2.3.4", forwarded="81.2.3.4"):
+    def sign_in(self, password, forwarded="81.2.3.4", real_ip=None):
         data = {"username": "ada", "password": password, "next": "/studio/events/"}
-        return self.client.post(reverse("studio:login"), data, HTTP_X_REAL_IP=ip, HTTP_X_FORWARDED_FOR=forwarded)
+        headers = {"HTTP_X_FORWARDED_FOR": forwarded}
+        if real_ip:
+            headers["HTTP_X_REAL_IP"] = real_ip
+        return self.client.post(reverse("studio:login"), data, **headers)
 
     def test_five_wrong_passwords_pause_that_username_on_that_address(self):
+        # Made-up addresses in X-Real-IP or in front of Railway's hop don't start a fresh count.
         for n in range(4):
-            self.assertContains(self.sign_in("wrong-password", forwarded=f"8.8.8.{n}, 81.2.3.4"), "Wrong username or password")
-        locked = self.sign_in("wrong-password", forwarded="8.8.8.9, 81.2.3.4")
+            wrong = self.sign_in("wrong-password", forwarded=f"8.8.8.{n}, 81.2.3.4", real_ip=f"8.8.8.{n}")
+            self.assertContains(wrong, "Wrong username or password")
+        locked = self.sign_in("wrong-password", forwarded="8.8.8.9, 81.2.3.4", real_ip="8.8.8.9")
         self.assertContains(locked, "paused for 15 minutes", status_code=429)
         self.assertContains(locked, 'value="/studio/events/"', status_code=429)
+        self.assertEqual(set(AccessAttempt.objects.values_list("ip_address", flat=True)), {"81.2.3.4"})
 
         right_password = self.sign_in("a-long-password-1")
         self.assertContains(right_password, "paused for 15 minutes", status_code=429)
         self.assertNotIn("_auth_user_id", self.client.session)
 
-        elsewhere = self.sign_in("a-long-password-1", ip="81.2.3.5", forwarded="81.2.3.5")
+        elsewhere = self.sign_in("a-long-password-1", forwarded="81.2.3.5")
         self.assertRedirects(elsewhere, "/studio/events/", fetch_redirect_response=False)
 
 

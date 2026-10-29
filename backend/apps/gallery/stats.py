@@ -13,6 +13,8 @@ from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.utils import timezone
 
+from apps.core.net import client_ip
+
 from .models import AlbumItem, PhotoHit
 
 DEVICE = re.compile(r"^[0-9a-f]{64}$")
@@ -21,11 +23,6 @@ DEVICE = re.compile(r"^[0-9a-f]{64}$")
 def _key(*parts: str) -> str:
     msg = "\x1f".join(parts).encode()
     return hmac.new(settings.SECRET_KEY.encode(), msg, hashlib.sha256).hexdigest()[:16]
-
-
-def client_ip(request) -> str:
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    return forwarded.split(",")[0].strip() or request.META.get("REMOTE_ADDR", "")
 
 
 def record(item: AlbumItem, kind: str, request, device: str = "") -> bool:
