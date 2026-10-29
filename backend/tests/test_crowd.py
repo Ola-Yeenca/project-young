@@ -214,7 +214,8 @@ class CrowdStudioTests(HOYTestCase):
         self.assertNotContains(self.client.get(reverse("studio:crowd")), password)
         self.assertEqual(self.client.post(reverse("studio:dj_create"), {"name": "Again", "username": "KEMI"}).status_code, 400)
         self.client.logout()
-        self.assertTrue(self.client.login(username="kemi", password=password))
+        r = self.client.post(reverse("studio:login"), {"username": "kemi", "password": password}, follow=True)
+        self.assertEqual(r.redirect_chain[-1][0], reverse("studio:crowd"))
 
     def test_team_switches_dj_logins_off_and_on_but_not_team_members(self):
         self.client.force_login(self.team)
@@ -226,8 +227,8 @@ class CrowdStudioTests(HOYTestCase):
         self.dj.refresh_from_db()
         self.assertTrue(self.dj.is_active)
         r = self.client.post(url, {"action": "password"})
-        self.assertTrue(self.client.login(username="dj-tolu", password=r.context["new_login"]["password"]))
-        self.client.force_login(self.team)
+        self.dj.refresh_from_db()
+        self.assertTrue(self.dj.check_password(r.context["new_login"]["password"]))
         self.assertEqual(self.client.post(reverse("studio:dj_update", args=[self.team.pk]), {"action": "toggle"}).status_code, 404)
 
     def test_board_groups_requests_and_artists_and_hides_unsuitable_songs(self):
