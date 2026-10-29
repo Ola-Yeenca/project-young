@@ -221,7 +221,7 @@ class AlbumItemForm(StyledMixin, forms.ModelForm):
 class ProductForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Product
-        fields = ("name", "slug", "image", "description", "material", "fit", "is_published", "order")
+        fields = ("name", "slug", "image", "back_image", "description", "material", "fit", "is_published", "order")
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
 

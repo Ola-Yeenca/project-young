@@ -217,16 +217,20 @@ class AlbumDetailSerializer(AlbumListSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    back_image = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
     variants = serializers.SerializerMethodField()
     prices = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ("name", "slug", "description", "material", "fit", "image", "images", "variants", "prices")
+        fields = ("name", "slug", "description", "material", "fit", "image", "back_image", "images", "variants", "prices")
 
     def get_image(self, obj):
         return file_url(self.context.get("request"), obj.image)
+
+    def get_back_image(self, obj):
+        return file_url(self.context.get("request"), obj.back_image)
 
     def get_images(self, obj):
         request = self.context.get("request")

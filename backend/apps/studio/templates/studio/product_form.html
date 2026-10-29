@@ -30,7 +30,11 @@
   <aside class="preview">
     <section class="card">
       <div class="pv-art" style="aspect-ratio:1"><img id="p-img" alt="" {% if product.image %}src="{{ product.image.url }}"{% else %}hidden{% endif %}></div>
-      <div class="card-b"><div class="f"><label for="id_p-image">Product photo</label><input class="file" type="file" id="id_p-image" name="p-image" accept="image/*" data-preview="#p-img">{% for e in form.image.errors %}<span class="err">{{ e }}</span>{% endfor %}</div></div>
+      <div class="card-b"><div class="f"><label for="id_p-image">Product photo</label><input class="file" type="file" id="id_p-image" name="p-image" accept="image/*" data-preview="#p-img">{% for e in form.image.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">The front. It also hangs on the 3D rack in the shop.</span></div></div>
+    </section>
+    <section class="card">
+      <div class="pv-art" style="aspect-ratio:1"><img id="p-back" alt="" {% if product.back_image %}src="{{ product.back_image.url }}"{% else %}hidden{% endif %}></div>
+      <div class="card-b"><div class="f"><label for="id_p-back_image">Back photo <span class="muted">(optional)</span></label><input class="file" type="file" id="id_p-back_image" name="p-back_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-preview="#p-back">{% for e in form.back_image.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">Shown when the garment turns round on the rack. A cut-out PNG or a plain background looks best.</span>{% if product.back_image %}<div class="checks"><label><input type="checkbox" name="p-back_image-clear">Remove back photo</label></div>{% endif %}</div></div>
     </section>
     <div class="formbar"><span class="grow"></span><a class="btn ghost" href="{% url 'studio:shop' %}">Cancel</a><button class="btn pri">{% if product %}Save{% else %}Add product{% endif %}</button></div>
   </aside>

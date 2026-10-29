@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.core.image_validation import validate_managed_image
 from apps.core.models import City, TimeStampedModel
 
 
@@ -18,7 +19,13 @@ class Product(TimeStampedModel):
     description = models.TextField(blank=True)
     material = models.CharField(max_length=120, blank=True, help_text="e.g. 240 gsm cotton")
     fit = models.CharField(max_length=60, blank=True, help_text="e.g. Boxy, Relaxed, One size")
-    image = models.ImageField(upload_to="shop/")
+    image = models.ImageField(upload_to="shop/", help_text="Front of the garment. Also used on the 3D rack.")
+    back_image = models.ImageField(
+        upload_to="shop/",
+        blank=True,
+        validators=[validate_managed_image],
+        help_text="Optional. Shown when a garment on the 3D rack turns round. A cut-out PNG or a plain background works best.",
+    )
     is_published = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 
