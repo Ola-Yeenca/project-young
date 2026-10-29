@@ -270,6 +270,11 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             "tiktok_url",
             "youtube_url",
             "show_powered_by",
+            "legal_name",
+            "tax_id",
+            "legal_address",
+            "registry_details",
+            "privacy_email",
         )
 
 

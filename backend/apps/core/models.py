@@ -211,6 +211,18 @@ class SiteSettings(models.Model):
     tiktok_url = models.URLField(blank=True)
     youtube_url = models.URLField(blank=True)
     show_powered_by = models.BooleanField(default=True, help_text="Show “Powered by SME Analytica” in the footer.")
+    legal_name = models.CharField(
+        max_length=200, blank=True, help_text="The company or person that runs the site. Shown on the Legal notice and Privacy pages."
+    )
+    tax_id = models.CharField("tax ID", max_length=40, blank=True, help_text="NIF or CIF in Spain, or the company's tax number.")
+    legal_address = models.CharField("registered address", max_length=255, blank=True)
+    registry_details = models.CharField(
+        max_length=255, blank=True, help_text="Commercial register entry, for example Registro Mercantil de Valencia, tomo, folio and hoja."
+    )
+    privacy_email = models.EmailField(
+        blank=True,
+        help_text="Published on the Privacy and Legal notice pages for privacy and legal requests. Until it's set, they point to the contact form.",
+    )
 
     class Meta:
         verbose_name = "site settings"

@@ -3,6 +3,7 @@ import re
 from datetime import timedelta
 from zoneinfo import ZoneInfo, available_timezones
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
@@ -63,6 +64,15 @@ class StudioLogin(LoginView):
 
     def get_default_redirect_url(self):
         return reverse("studio:overview")
+
+
+def locked_out(request, response=None, credentials=None):
+    """What Studio and admin sign-in show once django-axes pauses a username for this address."""
+    back = request.POST.get("next") or request.GET.get("next", "")
+    if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        back = ""
+    context = {"locked_out": True, "cooloff_minutes": int(settings.AXES_COOLOFF_TIME.total_seconds() // 60), "next": back}
+    return render(request, "studio/login.html", context, status=settings.AXES_HTTP_RESPONSE_CODE)
 
 
 class StudioLogout(LogoutView):

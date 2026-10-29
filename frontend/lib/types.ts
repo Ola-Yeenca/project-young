@@ -120,6 +120,12 @@ export type Site = {
   tiktok_url: string;
   youtube_url: string;
   show_powered_by: boolean;
+  /** Company details for the legal pages; blank until entered in Studio. */
+  legal_name: string;
+  tax_id: string;
+  legal_address: string;
+  registry_details: string;
+  privacy_email: string;
 };
 
 /** Everything one city needs, loaded together so a city switch swaps it in one go. */

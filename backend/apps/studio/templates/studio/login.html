@@ -18,7 +18,8 @@
   <section class="formside">
     <form method="post">{% csrf_token %}
       <div><span class="mono">Team sign in</span><h2 style="margin-top:6px">Welcome back</h2></div>
-      {% if form.non_field_errors %}<div class="pill crit" style="height:auto;padding:8px 12px;white-space:normal">Wrong username or password. Check both and try again.</div>{% endif %}
+      {% if locked_out %}<div class="pill crit" role="alert" style="height:auto;padding:8px 12px;white-space:normal">Too many wrong passwords, so sign-in for this username is paused for {{ cooloff_minutes }} minutes on this connection. Wait, then try again. Forgotten it? Ask an admin to reset your password.</div>
+      {% elif form.non_field_errors %}<div class="pill crit" style="height:auto;padding:8px 12px;white-space:normal">Wrong username or password. Check both and try again.</div>{% endif %}
       <div class="f"><label for="id_username">Username</label><input class="in" id="id_username" name="username" autocomplete="username" autofocus required></div>
       <div class="f"><label for="id_password">Password</label><input class="in" id="id_password" name="password" type="password" autocomplete="current-password" required></div>
       <input type="hidden" name="next" value="{{ next }}">
