@@ -1,0 +1,86 @@
+{% extends "studio/base.html" %}{% load static studio tz %}
+{% block title %}Crowd{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="music" %}{% endblock %}
+{% block heading %}Crowd{% endblock %}
+{% block sub %}What people want to hear · last 90 days: {{ total }} answer{{ total|pluralize }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'studio/crowd.css' %}">
+<div class="split crowd">
+  <div class="col">
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="calendar" %}</span><h2>Tonight and coming up</h2><span class="tag">{{ upcoming|length }}</span></div>
+      {% if upcoming %}
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Event</th><th>Doors</th><th class="num">Answers</th><th></th></tr></thead>
+        <tbody>{% for r in upcoming %}<tr>
+          <td><a class="item" href="{% url 'studio:crowd_event' r.e.pk %}"><span style="min-width:0"><b>{{ r.e.title }}</b><small>{{ r.e.venue.name }} · {{ r.e.city }}</small></span></a></td>
+          <td>{% if r.live %}<span class="pill good">Live now</span>{% else %}{{ r.e.starts_at|timezone:r.e.city.timezone|date:"D j M, H:i" }}{% endif %}</td>
+          <td class="num">{{ r.e.answers }}</td>
+          <td><a class="btn sm" href="{% url 'studio:crowd_event' r.e.pk %}">Open board</a></td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="empty">{% include "studio/_i.html" with i="calendar" %}<b>No upcoming events</b><span>Published events appear here, each with a live board and a QR code for the venue.</span></div>{% endif %}
+    </section>
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="clock" %}</span><h2>Past nights</h2><span class="tag">{{ past|length }}</span></div>
+      {% if past %}
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Event</th><th>Date</th><th class="num">Answers</th><th></th></tr></thead>
+        <tbody>{% for r in past %}<tr>
+          <td><a class="item" href="{% url 'studio:crowd_event' r.e.pk %}"><span style="min-width:0"><b>{{ r.e.title }}</b><small>{{ r.e.venue.name }} · {{ r.e.city }}</small></span></a></td>
+          <td>{{ r.e.starts_at|timezone:r.e.city.timezone|date:"D j M Y" }}</td>
+          <td class="num">{{ r.e.answers }}</td>
+          <td><a class="btn sm ghost" href="{% url 'studio:crowd_event' r.e.pk %}">See answers</a></td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="empty">{% include "studio/_i.html" with i="clock" %}<b>No past nights yet</b><span>Nights from the last 90 days stay here with their answers.</span></div>{% endif %}
+    </section>
+  </div>
+  <div class="col">
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="music" %}</span><h2>Top genres</h2><span class="muted">share of answers</span></div>
+      <div class="card-b">{% if genres %}<div class="hbars">{% for g in genres %}<div class="hbar"><span>{{ g.name }}</span><span class="t"><i style="width:{{ g.pct }}%"></i></span><b>{{ g.percent }}%</b></div>{% endfor %}</div>
+      {% else %}<p class="muted">No genre picks yet.</p>{% endif %}</div>
+    </section>
+    <section class="card">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="mic" %}</span><h2>Favourite artists</h2></div>
+      <div class="card-b">{% if artists %}<div class="hbars">{% for a in artists %}<div class="hbar"><span title="{{ a.name }}">{{ a.name }}</span><span class="t"><i style="width:{{ a.pct }}%"></i></span><b>{{ a.value }}</b></div>{% endfor %}</div>
+      {% else %}<p class="muted">No artists named yet.</p>{% endif %}</div>
+    </section>
+    {% if can_manage %}
+    <section class="card" id="djs">
+      <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="user" %}</span><h2>DJ logins</h2><span class="tag">{{ djs|length }}</span></div>
+      {% if new_login %}
+      <div class="card-b cred-new" role="status">
+        <b>Login for {{ new_login.user.get_full_name|default:new_login.user.get_username }}</b>
+        <p>Give these to the DJ now. The password is shown only this once; if it gets lost, make a new one below.</p>
+        <dl class="cred">
+          <div><dt>Studio</dt><dd>{{ new_login.login_url }}</dd></div>
+          <div><dt>Username</dt><dd>{{ new_login.user.get_username }}</dd></div>
+          <div><dt>Password</dt><dd>{{ new_login.password }}</dd></div>
+        </dl>
+      </div>
+      {% endif %}
+      <div class="card-b">
+        <form method="post" action="{% url 'studio:dj_create' %}#djs" class="dj-form">{% csrf_token %}
+          <p class="muted">A DJ login opens Crowd and nothing else in Studio. The password is shown once.</p>
+          {% include "studio/_field.html" with f=dj_form.name %}
+          {% include "studio/_field.html" with f=dj_form.username %}
+          <div><button class="btn pri" type="submit">{% include "studio/_i.html" with i="plus" %}<span>Create DJ login</span></button></div>
+        </form>
+      </div>
+      {% for u in djs %}
+      <div class="dj {% if not u.is_active %}off{% endif %}">
+        <span class="av">{{ u|initials }}</span>
+        <span class="who"><b>{{ u.get_full_name|default:u.get_username }}</b><small>{{ u.get_username }} · {% if not u.is_active %}switched off{% elif u.last_login %}last in {{ u.last_login|ago }}{% else %}not logged in yet{% endif %}</small></span>
+        <form method="post" action="{% url 'studio:dj_update' u.pk %}#djs">{% csrf_token %}
+          <button class="btn sm" name="action" value="password">New password</button>
+          <button class="btn sm {% if u.is_active %}danger{% else %}ok{% endif %}" name="action" value="toggle">{% if u.is_active %}Switch off{% else %}Switch on{% endif %}</button>
+        </form>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

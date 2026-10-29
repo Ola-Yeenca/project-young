@@ -6,6 +6,8 @@ from rest_framework import serializers
 
 from apps.community.models import INTERESTS, Member
 from apps.core.models import FAQ, City, MusicStyle, SiteSettings, Venue
+from apps.crowd import taste
+from apps.crowd.models import TasteAnswer
 from apps.enquiries.models import BookingEnquiry, ContactEnquiry
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem
@@ -410,3 +412,44 @@ class CommunityJoinSerializer(serializers.Serializer):
             email__iexact=validated_data["email"], defaults=fields, create_defaults={"email": validated_data["email"], **fields}
         )
         return member
+
+
+# ---------- crowd taste ----------
+
+
+class TasteAnswerSerializer(serializers.Serializer):
+    """One guest's answer. Needs `options` (allowed genre slugs) in the context."""
+
+    token = serializers.RegexField(
+        r"^[A-Za-z0-9_-]{16,64}$", help_text="Random id the browser keeps for its answers.", error_messages={"invalid": "Invalid token."}
+    )
+    source = serializers.ChoiceField(choices=TasteAnswer.Source.choices)
+    genres = serializers.ListField(
+        child=serializers.CharField(max_length=120),
+        required=False,
+        max_length=taste.MAX_GENRES,
+        error_messages={"max_length": f"Pick up to {taste.MAX_GENRES} genres."},
+    )
+    artist = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    song = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    website = serializers.CharField(required=False, allow_blank=True, write_only=True, help_text="Leave empty. Spam trap.")
+
+    def validate_genres(self, value):
+        allowed = self.context["options"]
+        picked = list(dict.fromkeys(value))
+        if any(slug not in allowed for slug in picked):
+            raise serializers.ValidationError("Pick genres from the list.")
+        return picked
+
+    def validate_artist(self, value):
+        return " ".join(value.split())
+
+    def validate_song(self, value):
+        return " ".join(value.split())
+
+    def validate(self, attrs):
+        if attrs.get("website"):
+            raise serializers.ValidationError("Submission rejected.")
+        if not (attrs.get("genres") or attrs.get("artist") or attrs.get("song")):
+            raise serializers.ValidationError("Pick a genre, or tell us an artist or a song.")
+        return attrs

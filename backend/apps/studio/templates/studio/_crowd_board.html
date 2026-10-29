@@ -1,0 +1,30 @@
+{% load tz %}{% timezone event.city.timezone %}
+<div class="crowd-stats">
+  <div><span>Answers</span><b>{{ total }}</b></div>
+  <div><span>After buying tickets</span><b>{{ from_tickets }}</b></div>
+  <div><span>QR at the venue</span><b>{{ from_qr }}</b></div>
+</div>
+<p class="crowd-state">{% if live %}<span class="pill good">Live now</span>{% elif open %}<span class="pill info">Taking answers</span>{% else %}<span class="pill">Closed</span>{% endif %} <span class="muted">Updated {{ updated|time:"H:i:s" }}</span></p>
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="music" %}</span><h2>Genres</h2><span class="muted">share of answers</span></div>
+  <div class="card-b">{% if genres %}<div class="hbars">{% for g in genres %}<div class="hbar"><span>{{ g.name }}</span><span class="t"><i style="width:{{ g.pct }}%"></i></span><b>{{ g.percent }}%</b></div>{% endfor %}</div>
+  {% else %}<p class="muted">No genre picks yet.</p>{% endif %}</div>
+</section>
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="play" %}</span><h2>Song requests</h2><span class="tag">{{ songs|length }}</span><span class="grow"></span>{% if hidden %}<span class="muted">{{ hidden }} hidden</span>{% endif %}</div>
+  {% if songs %}
+  <ol class="songs">{% for s in songs %}
+    <li>
+      <span class="t"><b>{{ s.song }}</b><small>{{ s.at|time:"H:i" }}</small></span>
+      {% if s.count > 1 %}<span class="pill gold">×{{ s.count }}</span>{% endif %}
+      {% if perms.crowd.change_tasteanswer %}<form method="post" action="{% url 'studio:crowd_hide' event.pk %}">{% csrf_token %}<input type="hidden" name="song" value="{{ s.key }}"><button class="btn ghost sm" type="submit" title="Hide from the board">Hide</button></form>{% endif %}
+    </li>{% endfor %}
+  </ol>
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="play" %}<b>No song requests yet</b><span>They appear here as people answer, newest first.</span></div>{% endif %}
+</section>
+<section class="card">
+  <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="mic" %}</span><h2>Favourite artists</h2></div>
+  <div class="card-b">{% if artists %}<div class="hbars">{% for a in artists %}<div class="hbar"><span title="{{ a.name }}">{{ a.name }}</span><span class="t"><i style="width:{{ a.pct }}%"></i></span><b>{{ a.value }}</b></div>{% endfor %}</div>
+  {% else %}<p class="muted">No artists named yet.</p>{% endif %}</div>
+</section>
+{% endtimezone %}

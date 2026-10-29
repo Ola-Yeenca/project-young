@@ -6,9 +6,11 @@ import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { get } from "@/lib/api";
 import { kindLabel, money, priceOf, purchaseUrl, seedOf, soldOf } from "@/lib/format";
+import { asksAfterBuying } from "@/lib/taste";
 import type { EventItem } from "@/lib/types";
 import { Img } from "../ui";
 import { useSite } from "../site";
+import { TasteStep } from "../taste/TasteStep";
 import { Close, SheetError } from "./parts";
 
 const STYLES: Record<string, string> = { amapiano: "Amapiano", afrobeats: "Afrobeats", highlife: "Highlife", mixed: "Mixed" };
@@ -16,7 +18,7 @@ const styleLabel = (s: string) => STYLES[s] ?? (s ? s.charAt(0).toUpperCase() + 
 
 type Found = { e: EventItem; past: boolean };
 
-export function EventSheet({ slug }: { slug: string }) {
+export function EventSheet({ slug, taste = false }: { slug: string; taste?: boolean }) {
   const { bundles, openSheet } = useSite();
 
   // Any loaded city first (upcoming, featured, then past); otherwise ask the API.
@@ -48,11 +50,13 @@ export function EventSheet({ slug }: { slug: string }) {
   const found = known ?? (fetched && fetched !== "error" ? fetched : null);
   if (!found) return <SheetError seed={seedOf(slug)} loading={fetched !== "error"} what="This event is not available." />;
 
-  return <EventCard e={found.e} past={found.past} openTalent={(s) => openSheet("talent", s)} />;
+  return <EventCard e={found.e} past={found.past} taste={taste} openTalent={(s) => openSheet("talent", s)} />;
 }
 
-function EventCard({ e, past, openTalent }: { e: EventItem; past: boolean; openTalent: (slug: string) => void }) {
+function EventCard({ e, past, taste, openTalent }: { e: EventItem; past: boolean; taste: boolean; openTalent: (slug: string) => void }) {
   const { bundles } = useSite();
+  const [asking, setAsking] = useState(taste);
+  if (asking) return <TasteStep e={e} done={() => setAsking(false)} />;
   const checkout = purchaseUrl(e);
   const simulation = e.ticketing_mode === "simulation";
   const sold = soldOf(e) >= 100;
@@ -84,7 +88,15 @@ function EventCard({ e, past, openTalent }: { e: EventItem; past: boolean; openT
         ) : (
           <>
             {!e.is_cancelled && checkout && (
-              <a className="btn ink" style={i(0)} href={checkout} target={simulation ? undefined : "_blank"} rel="noopener">
+              <a
+                className="btn ink"
+                style={i(0)}
+                href={checkout}
+                target={simulation ? undefined : "_blank"}
+                rel="noopener"
+                // Switch after the click, so the link is still in the page when the browser follows it.
+                onClick={() => asksAfterBuying(e) && setTimeout(() => setAsking(true))}
+              >
                 {simulation ? "Get tickets · Nocheva" : sold ? "Join the waitlist" : price === null ? "Buy tickets" : `Buy tickets · ${money(e.currency_symbol, price)}`} <span className="ar">→</span>
               </a>
             )}

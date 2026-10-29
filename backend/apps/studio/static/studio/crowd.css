@@ -1,0 +1,47 @@
+/* Studio Crowd: the live DJ board, the venue QR code and DJ logins. Same tokens as studio.css. */
+.crowd .hbar{grid-template-columns:minmax(90px,150px) minmax(0,1fr) 46px}
+.crowd.split>.col:last-child{order:0}
+.crowd-board.settled .hbar .t i{animation:none}
+.crowd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;border-radius:calc(var(--r) + 4px);background:var(--card)}
+.crowd-stats div{display:grid;gap:8px;padding:12px 16px 14px;border-radius:var(--r);background:var(--sunk)}
+.crowd-stats span{font-size:.84rem;color:var(--mute)}
+.crowd-stats b{font-size:2.25rem;font-weight:400;letter-spacing:-.035em;line-height:1;font-variant-numeric:tabular-nums}
+.crowd-state{display:flex;align-items:center;gap:10px;font-size:.84rem}
+.songs{list-style:none;margin:0;padding:6px;display:grid;gap:4px}
+.songs li{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-radius:12px;background:var(--sunk)}
+.songs .t{flex:1;min-width:0}
+.songs b{display:block;font-weight:500;font-size:1rem;overflow-wrap:anywhere}
+.songs small{color:var(--mute);font-size:.78rem;font-variant-numeric:tabular-nums}
+.crowd-qr{display:grid;gap:12px;padding:18px;justify-items:center;text-align:center}
+.crowd-qr h2{font-size:1rem;font-weight:500}
+.crowd-qr svg.qr{width:100%;max-width:260px;height:auto;border-radius:12px}
+.crowd-qr .url{font-family:var(--mono);font-size:.72rem;color:var(--mute);overflow-wrap:anywhere}
+.cred-new{display:grid;gap:6px;background:var(--gold-wash);border-bottom:1px solid var(--line)}
+.cred-new p{color:var(--ink-2);font-size:.88rem}
+.cred{display:grid;gap:6px;margin:8px 0 0}
+.cred-new .cred div{background:var(--card)}
+.cred div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;align-items:baseline;padding:10px 14px;border-radius:12px;background:var(--sunk)}
+.cred dt{font-size:.84rem;color:var(--mute)}
+.cred dd{margin:0;font-family:var(--mono);font-size:1.05rem;overflow-wrap:anywhere;user-select:all}
+.dj-form{display:grid;gap:12px}
+.dj{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dj .who{flex:1;min-width:140px}
+.dj b{display:block;font-weight:500}
+.dj small{color:var(--mute);font-size:.8rem}
+.dj form{display:flex;gap:6px;margin-left:auto}
+.dj.off .who,.dj.off .av{opacity:.5}
+@media (max-width:760px){.crowd-stats b{font-size:1.7rem}}
+
+/* print-ready QR page */
+.qr-print{margin:0;background:#fff;color:#111;font:16px/1.4 "Inter",system-ui,sans-serif}
+.qr-sheet{min-height:100vh;display:grid;align-content:center;justify-items:center;gap:16px;padding:40px 24px;text-align:center}
+.qr-sheet p{margin:0}
+.qr-sheet .kick{font-family:"Geist Mono",Menlo,monospace;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:#8a6a22}
+.qr-sheet h1{margin:0;font-size:clamp(2.4rem,7vw,4.2rem);font-weight:800;letter-spacing:-.045em;line-height:.95;text-transform:uppercase}
+.qr-sheet .code{width:min(78vw,420px)}
+.qr-sheet svg.qr{display:block;width:100%;height:auto}
+.qr-sheet .lead{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-size:1.6rem}
+.qr-sheet .ev{color:#474747}
+.qr-sheet .url{font-family:"Geist Mono",Menlo,monospace;font-size:.85rem;color:#6f6f6f}
+.qr-sheet .print{height:44px;padding:0 22px;border:0;border-radius:11px;background:#111;color:#fff;font:inherit;font-weight:500;cursor:pointer}
+@media print{.qr-sheet{min-height:auto;padding:0}.qr-sheet .print{display:none}@page{margin:14mm}}

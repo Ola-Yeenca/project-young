@@ -12,6 +12,7 @@ router.register("products", views.ProductViewSet, basename="product")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("events/<slug:slug>/taste/", views.EventTaste.as_view(), name="event-taste"),
     path("faqs/", views.FAQList.as_view(), name="faq-list"),
     path("radio/", views.TrackList.as_view(), name="radio"),
     path("site/", views.site, name="site"),

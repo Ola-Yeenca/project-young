@@ -69,6 +69,12 @@ dark mode.
   zone), manage its venues and see a launch-readiness checklist. A new city stays
   hidden from the public site until it's switched on, but the team can prepare it in
   Studio straight away. Team members can edit cities but not add them.
+- **Crowd**: what guests want to hear, from the step after Buy tickets and the QR
+  page at the venue. Top genres and artists over 90 days, a live board per event
+  (genre shares, artists, song requests with repeats counted, hide for unsuitable
+  requests, refreshes every 20 seconds) and a print-ready QR code pointing at
+  `HOY_SITE_URL/tonight/<slug>`. The team creates **DJ logins** here; a DJ sees
+  Crowd and nothing else, and each password is shown once.
 - The city switch at the top filters everything to one city or all of them.
 - Every change made in Studio is recorded in the same history as the admin.
 
@@ -89,8 +95,8 @@ as users, permissions and cities.
 | Update FAQs and company copy | Site & cities → FAQs and Site settings |
 
 Give team members staff access and put them in the **HOY team** group. It can
-manage all content and enquiries but not user accounts. The group's permissions
-are refreshed on every `migrate`.
+manage all content and enquiries but not user accounts. The **DJs** group can only
+read crowd answers. Both groups' permissions are refreshed on every `migrate`.
 
 ## API
 
@@ -107,6 +113,16 @@ cities is returned.
 | `GET /api/v1/faqs/`, `/api/v1/site/`, `/api/v1/health/` | |
 | `POST /api/v1/enquiries/booking/` | talent booking form |
 | `POST /api/v1/enquiries/contact/` | contact form |
+| `GET`/`POST /api/v1/events/<slug>/taste/` | crowd music answers |
+
+`/events/<slug>/taste/` answers with the genre choices, each genre's share of the
+answers and the total; free text is never public. A `POST` takes
+`{token, source: "ticket"|"qr", genres: [≤3 music style slugs], artist, song}`. The
+browser's random `token` is stored only as a keyed hash, and sending again with
+the same token and source replaces the answer. Answers are open for published
+events until 12 hours after doors (or the end time, if later), and rate limited
+per IP under `HOY_CROWD_RATE` (default 1000 an hour, since a venue shares one
+Wi-Fi address).
 
 The enquiry endpoints need `privacy_accepted: true` and an email or a phone
 number. They are rate limited per IP (`HOY_ENQUIRY_RATE`, default 10 an hour)

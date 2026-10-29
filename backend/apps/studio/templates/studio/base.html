@@ -18,24 +18,25 @@
       <span><b>House of Young</b><small>{% if scope_city %}{{ scope_city.name }}{% else %}Valencia · Lagos{% endif %}</small></span>
       <button class="btn ghost icon-btn sm close" type="button" data-nav-close aria-label="Close menu">{% include "studio/_i.html" with i="x" %}</button>
     </div>
-    <form class="side-search" action="{% url 'studio:search' %}" role="search">{% include "studio/_i.html" with i="search" %}<input id="global-search" name="q" value="{{ q|default:'' }}" placeholder="Search" autocomplete="off" aria-label="Search events, talent and enquiries"><kbd>/</kbd></form>
+    {% if not dj_only %}<form class="side-search" action="{% url 'studio:search' %}" role="search">{% include "studio/_i.html" with i="search" %}<input id="global-search" name="q" value="{{ q|default:'' }}" placeholder="Search" autocomplete="off" aria-label="Search events, talent and enquiries"><kbd>/</kbd></form>{% endif %}
 
     <span class="grp">Today</span>
-    <a class="nl {% if nav == 'overview' %}on{% endif %}" href="{% url 'studio:overview' %}">{% include "studio/_i.html" with i="home" %}Overview</a>
-    <a class="nl {% if nav == 'enquiries' %}on{% endif %}" href="{% url 'studio:enquiries' %}">{% include "studio/_i.html" with i="inbox" %}Enquiries{% if new_enquiries %}<span class="count hot">{{ new_enquiries }}</span>{% endif %}</a>
-    <a class="nl {% if nav == 'community' %}on{% endif %}" href="{% url 'studio:community' %}">{% include "studio/_i.html" with i="user" %}Community</a>
-    <span class="grp">Programme</span>
-    <a class="nl {% if nav == 'events' %}on{% endif %}" href="{% url 'studio:events' %}">{% include "studio/_i.html" with i="calendar" %}Events{% if upcoming_count %}<span class="count">{{ upcoming_count }}</span>{% endif %}</a>
-    <a class="nl {% if nav == 'talent' %}on{% endif %}" href="{% url 'studio:talent' %}">{% include "studio/_i.html" with i="mic" %}Talent</a>
-    <a class="nl {% if nav == 'gallery' %}on{% endif %}" href="{% url 'studio:gallery' %}">{% include "studio/_i.html" with i="image" %}Gallery</a>
-    <a class="nl {% if nav == 'radio' %}on{% endif %}" href="{% url 'studio:radio' %}">{% include "studio/_i.html" with i="play" %}HOY Radio</a>
-    <span class="grp">Business</span>
-    <a class="nl {% if nav == 'shop' %}on{% endif %}" href="{% url 'studio:shop' %}">{% include "studio/_i.html" with i="bag" %}Shop</a>
-    <span class="grp">Settings</span>
-    <a class="nl {% if nav == 'cities' %}on{% endif %}" href="{% url 'studio:cities' %}">{% include "studio/_i.html" with i="pin" %}Cities<span class="count">{{ scope_cities|length }}</span></a>
-    <a class="nl {% if nav == 'content' %}on{% endif %}" href="{% url 'studio:content' %}">{% include "studio/_i.html" with i="sliders" %}Site &amp; FAQs</a>
+    {% if not dj_only %}<a class="nl {% if nav == 'overview' %}on{% endif %}" href="{% url 'studio:overview' %}">{% include "studio/_i.html" with i="home" %}Overview</a>{% endif %}
+    {% if perms.crowd.view_tasteanswer %}<a class="nl {% if nav == 'crowd' %}on{% endif %}" href="{% url 'studio:crowd' %}">{% include "studio/_i.html" with i="music" %}Crowd</a>{% endif %}
+    {% if perms.enquiries.view_bookingenquiry %}<a class="nl {% if nav == 'enquiries' %}on{% endif %}" href="{% url 'studio:enquiries' %}">{% include "studio/_i.html" with i="inbox" %}Enquiries{% if new_enquiries %}<span class="count hot">{{ new_enquiries }}</span>{% endif %}</a>{% endif %}
+    {% if perms.community.view_member %}<a class="nl {% if nav == 'community' %}on{% endif %}" href="{% url 'studio:community' %}">{% include "studio/_i.html" with i="user" %}Community</a>{% endif %}
+    {% if perms.events.view_event or perms.talent.view_talent or perms.gallery.view_album or perms.radio.view_track %}<span class="grp">Programme</span>{% endif %}
+    {% if perms.events.view_event %}<a class="nl {% if nav == 'events' %}on{% endif %}" href="{% url 'studio:events' %}">{% include "studio/_i.html" with i="calendar" %}Events{% if upcoming_count %}<span class="count">{{ upcoming_count }}</span>{% endif %}</a>{% endif %}
+    {% if perms.talent.view_talent %}<a class="nl {% if nav == 'talent' %}on{% endif %}" href="{% url 'studio:talent' %}">{% include "studio/_i.html" with i="mic" %}Talent</a>{% endif %}
+    {% if perms.gallery.view_album %}<a class="nl {% if nav == 'gallery' %}on{% endif %}" href="{% url 'studio:gallery' %}">{% include "studio/_i.html" with i="image" %}Gallery</a>{% endif %}
+    {% if perms.radio.view_track %}<a class="nl {% if nav == 'radio' %}on{% endif %}" href="{% url 'studio:radio' %}">{% include "studio/_i.html" with i="play" %}HOY Radio</a>{% endif %}
+    {% if perms.shop.view_product %}<span class="grp">Business</span>
+    <a class="nl {% if nav == 'shop' %}on{% endif %}" href="{% url 'studio:shop' %}">{% include "studio/_i.html" with i="bag" %}Shop</a>{% endif %}
+    {% if perms.core.view_city or perms.core.change_faq %}<span class="grp">Settings</span>{% endif %}
+    {% if perms.core.view_city %}<a class="nl {% if nav == 'cities' %}on{% endif %}" href="{% url 'studio:cities' %}">{% include "studio/_i.html" with i="pin" %}Cities<span class="count">{{ scope_cities|length }}</span></a>{% endif %}
+    {% if perms.core.change_faq %}<a class="nl {% if nav == 'content' %}on{% endif %}" href="{% url 'studio:content' %}">{% include "studio/_i.html" with i="sliders" %}Site &amp; FAQs</a>{% endif %}
 
-    {% if setup.next %}
+    {% if setup.next and not dj_only %}
     <div class="setup">
       <div class="sky"><span class="disc"></span></div>
       <div class="b">
@@ -47,11 +48,11 @@
     {% endif %}
 
     <div class="bottom" {% if not setup.next %}style="margin-top:auto"{% endif %}>
-      <a class="nl" href="{% url 'admin:index' %}">{% include "studio/_i.html" with i="gear" %}Advanced admin</a>
+      {% if not dj_only %}<a class="nl" href="{% url 'admin:index' %}">{% include "studio/_i.html" with i="gear" %}Advanced admin</a>{% endif %}
       <button class="nl" type="button" data-theme-toggle style="border:0;background:none;width:100%;text-align:left">{% include "studio/_i.html" with i="moon" %}Light / dark</button>
       <div class="me">
         <span class="av">{{ request.user|initials }}</span>
-        <span><b>{{ request.user.get_full_name|default:request.user.get_username }}</b><small>{% if request.user.is_superuser %}Admin{% else %}HOY team{% endif %}</small></span>
+        <span><b>{{ request.user.get_full_name|default:request.user.get_username }}</b><small>{% if request.user.is_superuser %}Admin{% elif dj_only %}DJ{% else %}HOY team{% endif %}</small></span>
         <form method="post" action="{% url 'studio:logout' %}">{% csrf_token %}<button type="submit" title="Sign out" aria-label="Sign out">{% include "studio/_i.html" with i="logout" %}</button></form>
       </div>
     </div>
@@ -64,7 +65,7 @@
       <div class="ttl">{% block icon %}{% endblock %}<h1>{% block heading %}{% endblock %}</h1><span class="sub">{% block sub %}{{ today|date:"l, F j" }}{% endblock %}</span></div>
       <div class="grow"></div>
       <div class="acts">{% block action %}{% endblock %}
-        <a class="bell" href="{% url 'studio:enquiries' %}?status=new" aria-label="New enquiries">{% include "studio/_i.html" with i="inbox" %}{% if new_enquiries %}<span class="dot"></span>{% endif %}</a>
+        {% if perms.enquiries.view_bookingenquiry %}<a class="bell" href="{% url 'studio:enquiries' %}?status=new" aria-label="New enquiries">{% include "studio/_i.html" with i="inbox" %}{% if new_enquiries %}<span class="dot"></span>{% endif %}</a>{% endif %}
       </div>
     </header>
     <main class="page">
@@ -86,11 +87,12 @@
 </div>
 
 <nav class="tabbar" aria-label="Sections">
-  <a href="{% url 'studio:overview' %}" class="{% if nav == 'overview' %}on{% endif %}">{% include "studio/_i.html" with i="home" %}Overview</a>
-  <a href="{% url 'studio:enquiries' %}" class="{% if nav == 'enquiries' %}on{% endif %}">{% include "studio/_i.html" with i="inbox" %}Inbox{% if new_enquiries %}<span class="badge">{{ new_enquiries }}</span>{% endif %}</a>
-  <a href="{% url 'studio:events' %}" class="{% if nav == 'events' %}on{% endif %}">{% include "studio/_i.html" with i="calendar" %}Events</a>
-  <a href="{% url 'studio:talent' %}" class="{% if nav == 'talent' %}on{% endif %}">{% include "studio/_i.html" with i="mic" %}Talent</a>
-  <a href="#" data-nav-open class="{% if nav in 'gallery shop content cities' %}on{% endif %}"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg>More</a>
+  {% if dj_only %}<a href="{% url 'studio:crowd' %}" class="{% if nav == 'crowd' %}on{% endif %}">{% include "studio/_i.html" with i="music" %}Crowd</a>{% else %}
+  <a href="{% url 'studio:overview' %}" class="{% if nav == 'overview' %}on{% endif %}">{% include "studio/_i.html" with i="home" %}Overview</a>{% endif %}
+  {% if perms.enquiries.view_bookingenquiry %}<a href="{% url 'studio:enquiries' %}" class="{% if nav == 'enquiries' %}on{% endif %}">{% include "studio/_i.html" with i="inbox" %}Inbox{% if new_enquiries %}<span class="badge">{{ new_enquiries }}</span>{% endif %}</a>{% endif %}
+  {% if perms.events.view_event %}<a href="{% url 'studio:events' %}" class="{% if nav == 'events' %}on{% endif %}">{% include "studio/_i.html" with i="calendar" %}Events</a>{% endif %}
+  {% if perms.talent.view_talent %}<a href="{% url 'studio:talent' %}" class="{% if nav == 'talent' %}on{% endif %}">{% include "studio/_i.html" with i="mic" %}Talent</a>{% endif %}
+  <a href="#" data-nav-open class="{% if nav in 'gallery shop content cities crowd' and not dj_only %}on{% endif %}"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg>More</a>
 </nav>
 
 {% if messages %}<div class="toasts" role="status">{% for m in messages %}<div class="toast {{ m.tags }}">{% if m.tags == 'error' %}{% include "studio/_i.html" with i="x" %}{% else %}{% include "studio/_i.html" with i="check" %}{% endif %}<span>{{ m }}</span><button type="button" aria-label="Dismiss">✕</button></div>{% endfor %}</div>{% endif %}

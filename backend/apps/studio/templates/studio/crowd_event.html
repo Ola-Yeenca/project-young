@@ -1,0 +1,29 @@
+{% extends "studio/base.html" %}{% load static tz %}
+{% block title %}{{ event.title }} · Crowd{% endblock %}
+{% block icon %}{% include "studio/_i.html" with i="music" %}{% endblock %}
+{% block heading %}{{ event.title }}{% endblock %}
+{% block sub %}{{ event.venue.name }} · {{ event.city }} · {{ event.starts_at|timezone:event.city.timezone|date:"D j M, H:i" }}{% endblock %}
+{% block action %}<a class="btn" href="{% url 'studio:crowd_qr' event.pk %}" target="_blank" rel="noopener">{% include "studio/_i.html" with i="arrow-ur" %}<span>Print QR</span></a>{% endblock %}
+{% block filters %}
+<div class="filters">
+  <a class="btn ghost sm" href="{% url 'studio:crowd' %}">← All nights</a>
+  <span class="grow"></span>
+  <span class="updated">Updates every 20 seconds</span>
+</div>
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'studio/crowd.css' %}">
+<div class="split crowd">
+  <div class="col crowd-board" id="crowd-board" data-src="{% url 'studio:crowd_event' event.pk %}?partial=1">{% include "studio/_crowd_board.html" %}</div>
+  <div class="col">
+    <section class="card crowd-qr">
+      <h2>Scan to answer</h2>
+      {{ qr }}
+      <p class="muted">Show this on the screens or print it for the tables. It opens the questions and the room's live genre bars.</p>
+      <a class="url" href="{{ tonight_url }}" target="_blank" rel="noopener">{{ tonight_url }}</a>
+      <a class="btn" href="{% url 'studio:crowd_qr' event.pk %}" target="_blank" rel="noopener">Print-ready page</a>
+    </section>
+  </div>
+</div>
+<script src="{% static 'studio/crowd.js' %}" defer></script>
+{% endblock %}
