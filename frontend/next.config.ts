@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8017/api/v1").replace(/\/$/, "");
+// Where the rewrites below forward visitors' requests. On Railway it's the api's private address:
+// through its public domain, Railway's edge would replace the visitor's address with ours, and
+// rate limits and gallery stats would count every visitor as one.
+const PROXY = (process.env.API_PROXY_URL || API).replace(/\/$/, "");
 
-const API_ORIGIN = new URL(API).origin;
+const PROXY_ORIGIN = new URL(PROXY).origin;
 
 const nextConfig: NextConfig = {
   // A second build (e.g. for Lighthouse) can go to its own folder without disturbing a running one.
@@ -15,13 +19,13 @@ const nextConfig: NextConfig = {
   // so the forms and city switches need no CORS.
   async rewrites() {
     return [
-      { source: "/api/v1/:path*/", destination: `${API}/:path*/` },
-      { source: "/api/v1/:path*", destination: `${API}/:path*` },
+      { source: "/api/v1/:path*/", destination: `${PROXY}/:path*/` },
+      { source: "/api/v1/:path*", destination: `${PROXY}/:path*` },
       // Same-origin media for canvas reads (see mediaSrc in lib/api.ts).
-      { source: "/media/:path*", destination: `${API_ORIGIN}/media/:path*` },
-      { source: "/tickets/:slug/", destination: `${API_ORIGIN}/tickets/:slug/` },
-      { source: "/tickets/:slug", destination: `${API_ORIGIN}/tickets/:slug/` },
-      { source: "/static/ticketing/:path*", destination: `${API_ORIGIN}/static/ticketing/:path*` },
+      { source: "/media/:path*", destination: `${PROXY_ORIGIN}/media/:path*` },
+      { source: "/tickets/:slug/", destination: `${PROXY_ORIGIN}/tickets/:slug/` },
+      { source: "/tickets/:slug", destination: `${PROXY_ORIGIN}/tickets/:slug/` },
+      { source: "/static/ticketing/:path*", destination: `${PROXY_ORIGIN}/static/ticketing/:path*` },
     ];
   },
 };

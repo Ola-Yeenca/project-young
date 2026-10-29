@@ -50,6 +50,11 @@ for _host in ALLOWED_HOSTS:
         _origin = f"https://{_host}"
         if _origin not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(_origin)
+# The website forwards visitors' API calls to this service's private name on Railway's network
+# (API_PROXY_URL in frontend/next.config.ts). It's never a browser origin.
+RAILWAY_PRIVATE_DOMAIN = env("RAILWAY_PRIVATE_DOMAIN")
+if RAILWAY_PRIVATE_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_PRIVATE_DOMAIN)
 
 INSTALLED_APPS = [
     "jazzmin",
@@ -123,10 +128,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = ["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]
 
-# How many proxies in front of the app append to X-Forwarded-For: one on Railway (its edge).
-# Sign-in lockouts, rate limits and gallery stats all read the visitor's address from that hop
-# (see apps.core.net); 0 ignores the header and uses the connection's address.
-HOY_TRUSTED_PROXIES = max(0, int(env("HOY_TRUSTED_PROXIES", "1")))
+# How many entries at the right of X-Forwarded-For our own proxies wrote. Railway's edge replaces
+# the header with "<visitor>, <edge node>", so 2. Sign-in lockouts, rate limits and gallery stats
+# all read the visitor's address from there (see apps.core.net); 0 ignores the header and uses the
+# connection's address.
+HOY_TRUSTED_PROXIES = max(0, int(env("HOY_TRUSTED_PROXIES", "2")))
 
 # Studio and admin sign-in: five wrong passwords lock that username from that address for 15 minutes.
 AXES_FAILURE_LIMIT = 5

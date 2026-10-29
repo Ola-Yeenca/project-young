@@ -66,7 +66,10 @@ Applications → Railway → Configure**.
 
 - Root directory `backend`. Railway picks up `backend/railway.json`, which
   builds the Dockerfile and checks `/api/v1/health/`.
-- Each deploy runs the migrations and `ensure_admin`, then starts Gunicorn.
+- Each deploy runs the migrations and `ensure_admin`, then starts Gunicorn on
+  `[::]`, so it also answers on the private network (IPv6) as
+  `api.railway.internal:8000`. Django allows that host by itself, from
+  `RAILWAY_PRIVATE_DOMAIN`.
 - Custom domain `api.fromthehouseofyoung.com`, port 8000.
 
 `web`:
@@ -74,10 +77,15 @@ Applications → Railway → Configure**.
 - Root directory `frontend`. Railway picks up `frontend/railway.json`, which
   builds with Railpack (`npm run build`), starts with `npm run start` and checks
   `/`.
-- `NEXT_PUBLIC_API_URL` = `https://api.fromthehouseofyoung.com/api/v1`. It is
-  read at build time: the browser's `/api/v1/*`, `/media/*` and `/tickets/*`
-  requests are forwarded to the API by rewrites fixed during `next build`, so
-  changing it needs a redeploy, not just a restart.
+- `NEXT_PUBLIC_API_URL` = `https://api.fromthehouseofyoung.com/api/v1`, used
+  by the server to render pages.
+- `API_PROXY_URL` = `http://api.railway.internal:8000/api/v1`. The browser's
+  `/api/v1/*`, `/media/*` and `/tickets/*` requests are forwarded there, over
+  Railway's private network. Sent to the api's public domain instead, Railway's
+  edge would replace the visitor's address with the web service's, and every
+  visitor would share one rate limit.
+- Both are read at build time (the rewrites are fixed during `next build`), so
+  changing either needs a redeploy, not just a restart.
 - Custom domains `fromthehouseofyoung.com` and `www.fromthehouseofyoung.com`.
 
 Keep both services in EU West. Every page runs several queries, so a service
@@ -96,7 +104,7 @@ far from the database pays a round trip on each one.
 | `AWS_S3_ENDPOINT_URL` | `https://voctydqabimqsliyqhyk.storage.supabase.co/storage/v1/s3` |
 | `AWS_S3_REGION_NAME` | `eu-west-3` |
 | `AWS_S3_CUSTOM_DOMAIN` | `voctydqabimqsliyqhyk.supabase.co/storage/v1/object/public/hoy-media` |
-| `HOY_TRUSTED_PROXIES` | `1`: Railway's edge is the one proxy in front of Gunicorn (see below) |
+| `HOY_TRUSTED_PROXIES` | `2` (the default): Railway's edge writes two entries (see below) |
 | `HOY_TEAM_EMAIL` | Inbox that receives booking and contact enquiries |
 | `DJANGO_SUPERUSER_USERNAME` | First admin's username |
 | `DJANGO_SUPERUSER_EMAIL` | First admin's email |
@@ -127,13 +135,15 @@ Optional:
 `DJANGO_DEBUG` must stay unset in production.
 
 **Visitor addresses.** Sign-in lockouts, rate limits and gallery stats need the
-visitor's real address. Railway's edge appends the address it received each
-request from to `X-Forwarded-For`; anything to the left of that was sent by the
-visitor and can say anything. `HOY_TRUSTED_PROXIES` is how many entries from
-the right to count back, so `1` reads the hop Railway added. If another proxy
-is ever put in front (a CDN, say), raise it by one for each, and check with a
-request that sends a made-up `X-Forwarded-For` that Studio's lockout still
-records the real address.
+visitor's real address. Railway's edge throws away any `X-Forwarded-For` and
+`X-Real-IP` a visitor sends, and writes `X-Forwarded-For: <visitor>, <edge
+node>` (checked on the live api on 29 October 2026). `HOY_TRUSTED_PROXIES` is
+how many entries from the right were written by our own proxies, so `2` reads
+the visitor. The website's calls keep these headers because they reach the api
+over the private network (`API_PROXY_URL` above). If another proxy is ever put
+in front (a CDN, say), check what it writes. Then send a request with a made-up
+`X-Forwarded-For` and confirm in the api's access log that the visitor's real
+address is what gets counted.
 
 ## 5. Porkbun: DNS
 
