@@ -2,6 +2,9 @@ from django.contrib import admin
 
 from .models import FAQ, City, MusicStyle, SiteSettings, Venue
 
+admin.site.site_header = "House of Young"
+admin.site.site_title = "HOY admin"
+
 
 class VenueInline(admin.TabularInline):
     model = Venue

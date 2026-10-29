@@ -44,6 +44,11 @@ CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 RAILWAY_PUBLIC_DOMAIN = env("RAILWAY_PUBLIC_DOMAIN")
 if RAILWAY_PUBLIC_DOMAIN:
     ALLOWED_HOSTS += [RAILWAY_PUBLIC_DOMAIN, "healthcheck.railway.app"]
+# Studio and the admin's own host in production, e.g. studio.fromthehouseofyoung.com (see
+# apps.studio.middleware). Unset, they stay at /studio/ and /admin/ on the API's host.
+HOY_STUDIO_HOST = env("HOY_STUDIO_HOST", "").strip().lower()
+if HOY_STUDIO_HOST and HOY_STUDIO_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(HOY_STUDIO_HOST)
 # Every real domain we serve is also a trusted origin for Studio's forms.
 for _host in ALLOWED_HOSTS:
     if "." in _host and not _host.startswith(".") and _host not in {"127.0.0.1", "healthcheck.railway.app"}:
@@ -82,6 +87,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "apps.studio.middleware.StudioHostMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
