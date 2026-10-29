@@ -47,7 +47,7 @@ class StudioLockoutTests(HOYTestCase):
     def setUp(self):
         User.objects.create_user("ada", password="a-long-password-1", is_staff=True)
 
-    def sign_in(self, password, forwarded="81.2.3.4", real_ip=None):
+    def sign_in(self, password, forwarded="81.2.3.4, 203.0.113.7", real_ip=None):
         data = {"username": "ada", "password": password, "next": "/studio/events/"}
         headers = {"HTTP_X_FORWARDED_FOR": forwarded}
         if real_ip:
@@ -55,11 +55,11 @@ class StudioLockoutTests(HOYTestCase):
         return self.client.post(reverse("studio:login"), data, **headers)
 
     def test_five_wrong_passwords_pause_that_username_on_that_address(self):
-        # Made-up addresses in X-Real-IP or in front of Railway's hop don't start a fresh count.
+        # Made-up addresses in X-Real-IP or in front of what Railway wrote don't start a fresh count.
         for n in range(4):
-            wrong = self.sign_in("wrong-password", forwarded=f"8.8.8.{n}, 81.2.3.4", real_ip=f"8.8.8.{n}")
+            wrong = self.sign_in("wrong-password", forwarded=f"8.8.8.{n}, 81.2.3.4, 203.0.113.7", real_ip=f"8.8.8.{n}")
             self.assertContains(wrong, "Wrong username or password")
-        locked = self.sign_in("wrong-password", forwarded="8.8.8.9, 81.2.3.4", real_ip="8.8.8.9")
+        locked = self.sign_in("wrong-password", forwarded="8.8.8.9, 81.2.3.4, 203.0.113.7", real_ip="8.8.8.9")
         self.assertContains(locked, "paused for 15 minutes", status_code=429)
         self.assertContains(locked, 'value="/studio/events/"', status_code=429)
         self.assertEqual(set(AccessAttempt.objects.values_list("ip_address", flat=True)), {"81.2.3.4"})
@@ -68,7 +68,7 @@ class StudioLockoutTests(HOYTestCase):
         self.assertContains(right_password, "paused for 15 minutes", status_code=429)
         self.assertNotIn("_auth_user_id", self.client.session)
 
-        elsewhere = self.sign_in("a-long-password-1", forwarded="81.2.3.5")
+        elsewhere = self.sign_in("a-long-password-1", forwarded="81.2.3.5, 203.0.113.7")
         self.assertRedirects(elsewhere, "/studio/events/", fetch_redirect_response=False)
 
 

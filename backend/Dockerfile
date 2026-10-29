@@ -19,4 +19,5 @@ RUN useradd --create-home hoy && chown -R hoy /app
 USER hoy
 
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_admin && gunicorn config.wsgi --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-3} --access-logfile -"]
+# [::] takes IPv4 and IPv6: the website reaches the API over Railway's private network, which is IPv6.
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py ensure_admin && gunicorn config.wsgi --bind [::]:${PORT} --workers ${WEB_CONCURRENCY:-3} --access-logfile -"]

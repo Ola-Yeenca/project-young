@@ -1,9 +1,9 @@
-"""The visitor's address, as our own proxy saw it.
+"""The visitor's address, as our own proxies saw it.
 
-Each proxy in front of the app (on Railway, its edge) appends the address it received the request
-from to X-Forwarded-For. Everything to the left of those entries came from the visitor and can say
-anything, so only the entry HOY_TRUSTED_PROXIES places from the right is trusted. DRF's throttles
-make the same choice through NUM_PROXIES.
+Railway's edge throws away any X-Forwarded-For a visitor sends and writes "<visitor>, <edge node>".
+A proxy that appends instead leaves the visitor's own entries on the left, where they can say
+anything. Either way only the entry HOY_TRUSTED_PROXIES places from the right is trusted. DRF's
+throttles make the same choice through NUM_PROXIES.
 """
 
 import ipaddress
