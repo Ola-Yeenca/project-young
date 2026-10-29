@@ -107,7 +107,7 @@ export function TasteForm({
         </button>
       </div>
       <span className="note">
-        Anonymous: no name, no email. The DJs see the genres, artists and songs; the room sees genre shares only. <Link href="/privacy">Privacy</Link>
+        Anonymous: no name, no email. The DJs see the genres, artists and songs; the room sees genre shares only. <Link href="/privacy#music">Privacy</Link>
       </span>
     </form>
   );
