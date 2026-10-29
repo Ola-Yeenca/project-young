@@ -101,6 +101,8 @@ export type Product = {
   material: string;
   fit: string;
   image: string | null;
+  /** Optional back view, shown when a garment on the 3D rack turns round. */
+  back_image: string | null;
   images: { url: string; alt: string }[];
   variants: { label: string; in_stock: boolean }[];
   prices: { city: string; amount: string; currency: string; currency_symbol: string; checkout_url: string }[];

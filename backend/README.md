@@ -84,7 +84,7 @@ as users, permissions and cities.
 | Add and manage talent profiles | Talent, with photos and video links inline |
 | Feature talent on the homepage | Talent list: tick Featured, set the order |
 | Upload and organise photos and videos | Gallery → Albums, with "Add photos" for bulk upload |
-| Add and edit merchandise | Shop → Products, with sizes and a price per city |
+| Add and edit merchandise | Shop → Products, with sizes and a price per city. The product photo (and an optional back photo) hangs on the 3D rack at `/shop`; cut-out PNGs or plain backgrounds look best |
 | Manage incoming enquiries | Enquiries: status, owner and internal notes |
 | Update FAQs and company copy | Site & cities → FAQs and Site settings |
 
