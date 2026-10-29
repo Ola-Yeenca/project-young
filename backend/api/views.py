@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.core.models import FAQ, City, SiteSettings
-from apps.core.visitors import visitor_key
+from apps.core.visitors import client_ip, visitor_key
 from apps.crowd import taste
 from apps.enquiries.notifications import notify
 from apps.events.models import Event
@@ -229,6 +229,11 @@ class PhotoDownload(generics.GenericAPIView):
         return response
 
 
+class CrowdThrottle(ScopedRateThrottle):
+    def get_ident(self, request):
+        return client_ip(request)
+
+
 class EventTaste(generics.GenericAPIView):
     """What the crowd wants to hear. GET: genre choices and shares (never free text).
     POST {token, source: ticket|qr, genres: [slug ≤3], artist, song}: one anonymous answer per browser and source.
@@ -239,7 +244,7 @@ class EventTaste(generics.GenericAPIView):
 
     def get_throttles(self):
         # The room page polls GET; only answers are rate limited.
-        return [ScopedRateThrottle()] if self.request.method == "POST" else []
+        return [CrowdThrottle()] if self.request.method == "POST" else []
 
     def get(self, request, slug):
         return Response(taste.summary(get_object_or_404(Event.objects.published(), slug=slug)))

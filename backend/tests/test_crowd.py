@@ -3,7 +3,7 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
@@ -135,6 +135,17 @@ class TasteApiTests(HOYTestCase):
             for _ in range(3):
                 self.assertEqual(self.api.get(self.url()).status_code, 200)
 
+    def test_crowd_limit_ignores_the_client_written_part_of_forwarded_for(self):
+        statuses = []
+        with (
+            override_settings(REST_FRAMEWORK={**settings.REST_FRAMEWORK, "NUM_PROXIES": 1}),
+            mock.patch.object(ScopedRateThrottle, "THROTTLE_RATES", {"crowd": "1/min"}),
+        ):
+            for n, forwarded in enumerate(["6.6.6.6, 203.0.113.9", "7.7.7.7, 203.0.113.9", "6.6.6.6, 198.51.100.4"]):
+                self.api.credentials(HTTP_X_FORWARDED_FOR=forwarded)
+                statuses.append(self.answer(token=f"{n}" * 20).status_code)
+        self.assertEqual(statuses, [201, 429, 201])
+
 
 class CrowdStudioTests(HOYTestCase):
     @classmethod
@@ -230,6 +241,27 @@ class CrowdStudioTests(HOYTestCase):
         self.dj.refresh_from_db()
         self.assertTrue(self.dj.check_password(r.context["new_login"]["password"]))
         self.assertEqual(self.client.post(reverse("studio:dj_update", args=[self.team.pk]), {"action": "toggle"}).status_code, 404)
+
+    def test_dj_management_only_reaches_logins_that_are_nothing_but_djs(self):
+        dj_group = Group.objects.get(name=DJ_GROUP)
+        mixed = User.objects.create_user("mixed", password="a-long-password-1", is_staff=True)
+        mixed.groups.add(dj_group, Group.objects.create(name="Door staff"))
+        direct = User.objects.create_user("direct", password="a-long-password-1", is_staff=True)
+        direct.groups.add(dj_group)
+        direct.user_permissions.add(Permission.objects.get(codename="view_bookingenquiry"))
+        boss = User.objects.create_superuser("boss", "boss@hoy.example", "a-long-password-1")
+        boss.groups.add(dj_group)
+        self.client.force_login(self.team)
+        self.assertEqual([u.username for u in self.client.get(reverse("studio:crowd")).context["djs"]], ["dj-tolu"])
+        for user in (mixed, direct, boss, self.team):
+            for action in ("password", "toggle"):
+                r = self.client.post(reverse("studio:dj_update", args=[user.pk]), {"action": action})
+                self.assertEqual(r.status_code, 404, (user.username, action))
+            user.refresh_from_db()
+            self.assertTrue(user.is_active)
+            self.assertTrue(user.check_password("a-long-password-1"))
+        self.assertEqual(self.client.post(reverse("studio:dj_create"), {"name": "Ada", "username": "ADA"}).status_code, 400)
+        self.assertEqual(list(self.team.groups.values_list("name", flat=True)), [TEAM_GROUP])
 
     def test_board_groups_requests_and_artists_and_hides_unsuitable_songs(self):
         self.add("v1", artist="burna boy", song="Last Last")

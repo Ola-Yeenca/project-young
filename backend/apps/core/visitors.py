@@ -8,6 +8,7 @@ import hashlib
 import hmac
 
 from django.conf import settings
+from rest_framework.throttling import BaseThrottle
 
 
 def visitor_key(*parts: str) -> str:
@@ -16,5 +17,9 @@ def visitor_key(*parts: str) -> str:
 
 
 def client_ip(request) -> str:
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    return forwarded.split(",")[0].strip() or request.META.get("REMOTE_ADDR", "")
+    """The visitor's address as the API's rate limits see it.
+
+    The app's only reader of proxy headers. X-Forwarded-For is trusted as far as DRF's NUM_PROXIES
+    allows, never by taking its client-written left-most entry.
+    """
+    return BaseThrottle().get_ident(request)

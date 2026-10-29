@@ -8,6 +8,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
@@ -18,7 +19,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
 from apps.core.models import MusicStyle
-from apps.core.roles import DJ_GROUP, TEAM_GROUP, sync_dj_group
+from apps.core.roles import DJ_GROUP, sync_dj_group
 from apps.crowd import taste
 from apps.crowd.models import TasteAnswer
 from apps.events.models import Event
@@ -57,10 +58,14 @@ def _shown_once(request, user, password):
 
 
 def dj_users():
-    """Logins that are only DJs, never team members or admins."""
+    """Logins Studio may manage as DJs: not admins, no permissions of their own and no group but DJs.
+
+    Anything wider could be taken over by resetting its password here.
+    """
     return (
         User.objects.filter(groups__name=DJ_GROUP, is_superuser=False)
-        .exclude(groups__name=TEAM_GROUP)
+        .exclude(groups__in=Group.objects.exclude(name=DJ_GROUP))
+        .exclude(user_permissions__isnull=False)
         .distinct()
         .order_by("-is_active", "first_name", "username")
     )
