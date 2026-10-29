@@ -41,6 +41,8 @@ jobs:
       - name: Production settings check
         env:
           DJANGO_ALLOWED_HOSTS: houseofyoung.example
+          # Not a secret: check --deploy only rejects keys that look generated or are under 50 characters.
+          DJANGO_SECRET_KEY: ci-deploy-check-only-not-a-secret-0123456789-abcdefghijklmnop
         run: python manage.py check --deploy --fail-level WARNING
       - name: Tests
         run: python manage.py test --verbosity 2
