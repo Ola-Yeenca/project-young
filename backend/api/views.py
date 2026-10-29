@@ -9,7 +9,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.core.models import FAQ, City, SiteSettings
-from apps.core.visitors import client_ip, visitor_key
+from apps.core.net import client_ip
+from apps.core.visitors import visitor_key
 from apps.crowd import taste
 from apps.enquiries.notifications import notify
 from apps.events.models import Event

@@ -127,7 +127,7 @@ class TasteApiTests(HOYTestCase):
     def test_answers_are_rate_limited_under_their_own_generous_scope(self):
         self.assertEqual(EventTaste.throttle_scope, "crowd")
         self.assertIn("crowd", settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"])
-        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["crowd"], "1000/hour")
+        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["crowd"], "3000/hour")
         with mock.patch.object(ScopedRateThrottle, "THROTTLE_RATES", {"crowd": "2/min"}):
             self.assertEqual(self.answer(token="1" * 20).status_code, 201)
             self.assertEqual(self.answer(token="2" * 20).status_code, 201)
@@ -135,13 +135,12 @@ class TasteApiTests(HOYTestCase):
             for _ in range(3):
                 self.assertEqual(self.api.get(self.url()).status_code, 200)
 
-    def test_crowd_limit_ignores_the_client_written_part_of_forwarded_for(self):
+    @override_settings(HOY_TRUSTED_PROXIES=2)
+    def test_crowd_limit_is_per_visitor_behind_the_edge_whatever_the_visitor_prepends(self):
+        edge = "203.0.113.7"
         statuses = []
-        with (
-            override_settings(REST_FRAMEWORK={**settings.REST_FRAMEWORK, "NUM_PROXIES": 1}),
-            mock.patch.object(ScopedRateThrottle, "THROTTLE_RATES", {"crowd": "1/min"}),
-        ):
-            for n, forwarded in enumerate(["6.6.6.6, 203.0.113.9", "7.7.7.7, 203.0.113.9", "6.6.6.6, 198.51.100.4"]):
+        with mock.patch.object(ScopedRateThrottle, "THROTTLE_RATES", {"crowd": "1/min"}):
+            for n, forwarded in enumerate([f"81.2.3.4, {edge}", f"6.6.6.6, 81.2.3.4, {edge}", f"81.2.3.5, {edge}"]):
                 self.api.credentials(HTTP_X_FORWARDED_FOR=forwarded)
                 statuses.append(self.answer(token=f"{n}" * 20).status_code)
         self.assertEqual(statuses, [201, 429, 201])

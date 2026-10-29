@@ -121,8 +121,8 @@ answers and the total; free text is never public. A `POST` takes
 browser's random `token` is stored only as a keyed hash, and sending again with
 the same token and source replaces the answer. Answers are open for published
 events until 12 hours after doors (or the end time, if later), and rate limited
-per IP under `HOY_CROWD_RATE` (default 1000 an hour, since a venue shares one
-Wi-Fi address).
+per visitor IP (read through `apps.core.net`) under `HOY_CROWD_RATE` (default
+3000 an hour, since a whole venue can answer at once from one Wi-Fi address).
 
 The enquiry endpoints need `privacy_accepted: true` and an email or a phone
 number. They are rate limited per IP (`HOY_ENQUIRY_RATE`, default 10 an hour)

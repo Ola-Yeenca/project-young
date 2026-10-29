@@ -222,8 +222,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "enquiries": env("HOY_ENQUIRY_RATE", "10/hour"),
         "photos": env("HOY_PHOTO_RATE", "240/hour"),
-        # Per visitor address, and a whole venue can share one Wi-Fi address.
-        "crowd": env("HOY_CROWD_RATE", "1000/hour"),
+        # Per visitor address, and a whole venue can answer at once from one Wi-Fi or carrier address.
+        "crowd": env("HOY_CROWD_RATE", "3000/hour"),
     },
     "NUM_PROXIES": HOY_TRUSTED_PROXIES,
     "UNAUTHENTICATED_USER": None,
