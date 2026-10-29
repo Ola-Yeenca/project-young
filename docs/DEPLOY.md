@@ -139,8 +139,9 @@ records the real address.
 
 In Porkbun → **Domain Management → `fromthehouseofyoung.com` → DNS**:
 
-1. Delete Porkbun's parking records (the `ALIAS` and wildcard `CNAME` to
-   `pixie.porkbun.com`). Keep any `MX` or `TXT` records for email.
+1. Delete Porkbun's parking records (the `ALIAS` on the bare domain and the
+   wildcard `CNAME`, both pointing at `uixie.porkbun.com`). Keep any `MX` or
+   `TXT` records for email.
 2. Add the records Railway shows under each service's **Settings → Networking**:
 
    | Type | Host | Answer |
@@ -148,7 +149,7 @@ In Porkbun → **Domain Management → `fromthehouseofyoung.com` → DNS**:
    | `CNAME` | `api` | the `api` service's `*.up.railway.app` target |
    | `ALIAS` | (blank, the bare domain) | the `web` service's target for `fromthehouseofyoung.com` |
    | `CNAME` | `www` | the `web` service's target for `www` |
-   | `TXT` | `_railway-verify...` | one verification value per domain |
+   | `TXT` | `_railway-verify`, `_railway-verify.api`, `_railway-verify.www` | the `railway-verify=...` value Railway shows for each domain |
 
 3. Railway issues the certificates once the records resolve, usually within
    minutes. Check with `dig +short api.fromthehouseofyoung.com @curitiba.ns.porkbun.com`
