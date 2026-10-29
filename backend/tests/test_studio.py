@@ -5,6 +5,7 @@ from axes.models import AccessAttempt
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
@@ -13,6 +14,7 @@ from apps.core.roles import TEAM_GROUP
 from apps.enquiries.models import BookingEnquiry
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem
+from apps.shop.models import Product
 
 from . import factories as f
 from .base import HOYTestCase
@@ -288,6 +290,62 @@ class StudioActionTests(HOYTestCase):
         event.refresh_from_db()
         self.assertFalse(event.poster)
         self.assertTrue(event.poster.storage.exists(replacement_path))
+
+    def test_product_upload_with_back_photo_reaches_the_api(self):
+        data = {
+            "p-name": "Rack Tee",
+            "p-slug": "rack-tee",
+            "p-material": "240 gsm cotton",
+            "p-fit": "Boxy",
+            "p-order": 0,
+            "p-is_published": "on",
+            "p-image": f.image_file("front.png"),
+            "p-back_image": f.image_file("back.jpg"),
+            "price-TOTAL_FORMS": 1,
+            "price-INITIAL_FORMS": 0,
+            "price-0-city": self.los.pk,
+            "price-0-amount": "25000",
+            "price-0-checkout_url": "https://paystack.example/rack-tee",
+            "price-0-is_available": "on",
+            "var-TOTAL_FORMS": 0,
+            "var-INITIAL_FORMS": 0,
+        }
+        response = self.client.post(reverse("studio:product_new"), data)
+        self.assertEqual(response.status_code, 302, response.content[:3000])
+        product = Product.objects.get(slug="rack-tee")
+        self.assertIn("back", product.back_image.name)
+
+        item = self.client.get("/api/v1/products/?city=lagos").json()["results"][0]
+        self.assertTrue(item["image"].endswith(product.image.url))
+        self.assertTrue(item["back_image"].endswith(product.back_image.url))
+
+        html = self.client.get(reverse("studio:product_edit", args=[product.pk])).content.decode()
+        self.assertIn('name="p-back_image-clear"', html)
+        clear = {k: v for k, v in data.items() if k not in ("p-image", "p-back_image")}
+        clear.update(
+            {"p-back_image-clear": "on", "price-INITIAL_FORMS": 1, "price-0-id": product.prices.get().pk, "price-0-product": product.pk}
+        )
+        response = self.client.post(reverse("studio:product_edit", args=[product.pk]), clear)
+        self.assertEqual(response.status_code, 302, response.content[:3000])
+        product.refresh_from_db()
+        self.assertFalse(product.back_image)
+        self.assertTrue(product.image)
+
+    def test_product_back_photo_must_be_a_real_image(self):
+        data = {
+            "p-name": "Bad Tee",
+            "p-slug": "bad-tee",
+            "p-order": 0,
+            "p-image": f.image_file("front.jpg"),
+            "p-back_image": SimpleUploadedFile("back.gif", b"GIF89a" + b"\x00" * 64, content_type="image/gif"),
+            "price-TOTAL_FORMS": 0,
+            "price-INITIAL_FORMS": 0,
+            "var-TOTAL_FORMS": 0,
+            "var-INITIAL_FORMS": 0,
+        }
+        response = self.client.post(reverse("studio:product_new"), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Product.objects.filter(slug="bad-tee").exists())
 
     def test_site_settings_and_faqs_save(self):
         r = self.client.post(

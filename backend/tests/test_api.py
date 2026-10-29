@@ -135,6 +135,7 @@ class ReadAPITests(HOYTestCase):
         ProductPrice.objects.create(product=p, city=self.los, amount=Decimal("25000"))
         prices = self.api.get("/api/v1/products/?city=lagos").json()["results"][0]["prices"]
         self.assertEqual(prices, [{"city": "lagos", "amount": "25000.00", "currency": "NGN", "currency_symbol": "₦", "checkout_url": ""}])
+        self.assertIsNone(self.api.get("/api/v1/products/?city=lagos").json()["results"][0]["back_image"])
 
     def test_api_is_read_only(self):
         self.assertEqual(self.api.post("/api/v1/events/", {"title": "x"}, format="json").status_code, 405)

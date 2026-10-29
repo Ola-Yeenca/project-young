@@ -11,7 +11,8 @@ import { Lineup } from "../home/Sections";
 import { countUp, Frames, IdxHead, interleave, NoDates, Row, type Rank } from "../home/sections/shared";
 import { ContactForm } from "../forms/ContactForm";
 import { ContactPortal, EventsPortal, GalleryPortal, ShopPortal, TalentPortal } from "./Portal";
-import { kindLabel, pad, seedOf, shipLine } from "@/lib/format";
+import { Rack } from "../shop/Rack";
+import { kindLabel, pad, RM, seedOf, shipLine } from "@/lib/format";
 import type { City, Product } from "@/lib/types";
 
 type CSS = React.CSSProperties;
@@ -243,24 +244,47 @@ function ProductFocus({ p, i, n, city, step, go }: { p: Product; i: number; n: n
 function Shop() {
   const { bundle, city } = useSite();
   const [prod, setProd] = useState(0);
+  // Whether the rack has the focused product turned to the front.
+  const [open, setOpen] = useState(false);
   const products = bundle?.products ?? [];
   const n = products.length;
   const p = products[Math.min(prod, n - 1)];
-  // Prototype renderShop() rebuilds everything on a product change, so the swap/pop animations replay.
+  const details = (i: number) => {
+    setProd(i);
+    requestAnimationFrame(() => document.getElementById("shop")?.scrollIntoView({ behavior: RM() ? "auto" : "smooth", block: "start" }));
+  };
   return (
-    <div className="wrap blk" id="shop" key={prod}>
-      <div className="sh" data-rv="">
-        <h2>
-          The <span className="it">merch</span>
-        </h2>
-        <span className="r">{city ? shipLine(city) : ""}</span>
+    <>
+      <div className="wrap blk rack-blk">
+        <div className="sh" data-rv="">
+          <h2>
+            The <span className="it">merch</span>
+          </h2>
+          <span className="r">{city ? shipLine(city) : ""}</span>
+        </div>
+        {p && city ? (
+          <Rack
+            products={products}
+            city={city}
+            index={prod}
+            open={open}
+            onOpen={(i) => {
+              setOpen(i !== null);
+              if (i !== null) setProd(i);
+            }}
+            onDetails={details}
+          />
+        ) : bundle ? (
+          <p className="mono">Merch drops soon</p>
+        ) : null}
       </div>
-      {p && city ? (
-        <ProductFocus p={p} i={prod} n={n} city={city} step={(d) => setProd((prod + d + n) % n)} go={setProd} />
-      ) : bundle ? (
-        <p className="mono">Merch drops soon</p>
-      ) : null}
-    </div>
+      {/* Prototype renderShop() rebuilds everything on a product change, so the swap/pop animations replay. */}
+      {p && city && (
+        <div className="wrap blk shop-focus" id="shop" key={prod}>
+          <ProductFocus p={p} i={prod} n={n} city={city} step={(d) => setProd((prod + d + n) % n)} go={setProd} />
+        </div>
+      )}
+    </>
   );
 }
 

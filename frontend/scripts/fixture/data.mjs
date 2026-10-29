@@ -139,7 +139,7 @@ export function build(base) {
       const url = img(p.seed, 700, 700);
       out.products.push({
         name: p.n, slug: `${kebab(p.n)}-${key}`, description: p.cap, material: p.mat, fit: p.fit,
-        image: url, images: [{ url, alt: p.n }], variants: p.s.map((label) => ({ label, in_stock: true })),
+        image: url, back_image: null, images: [{ url, alt: p.n }], variants: p.s.map((label) => ({ label, in_stock: true })),
         prices: [{ city: key, amount: String(p.p), currency: city.currency, currency_symbol: city.currency_symbol, checkout_url: "https://example.com/checkout" }],
       });
     }

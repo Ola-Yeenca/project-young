@@ -299,6 +299,40 @@ nav.top a:hover::after,nav.top a.on::after{transform:scaleX(1);transform-origin:
 .sizes button{min-width:40px;height:36px;padding:0 8px;border:1px solid var(--line-2);border-radius:10px;font-size:.8rem;color:var(--mute);transition:all .2s}
 .sizes button.on{border-color:var(--ink);color:var(--bg);background:var(--ink)}
 
+/* the 3D merch rack (components/shop) */
+.rack-blk{padding-bottom:0}
+.shop-focus{padding-top:48px}
+@container app (min-width:760px){.shop-focus{padding-top:72px}}
+.rack{display:grid;gap:12px}
+.rack-stage{position:relative;height:clamp(400px,62svh,520px);border-radius:24px;overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(120% 80% at 50% 0%,var(--card) 0%,var(--bg-2) 70%);touch-action:pan-y;outline-offset:4px}
+@container app (min-width:760px){.rack-stage{height:clamp(480px,72vh,720px)}}
+.rack-host,.rack-canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+.rack-stage[data-ready="0"] .rack-canvas{opacity:0}
+.rack-canvas{transition:opacity .8s var(--ease);-webkit-tap-highlight-color:transparent}
+.rack-wait{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;animation:rackwait 1.4s ease-in-out infinite alternate}
+@keyframes rackwait{from{opacity:.35}}
+.rack-hint{position:absolute;left:18px;top:16px;pointer-events:none;max-width:calc(100% - 36px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rack-card{position:absolute;left:12px;right:12px;bottom:12px;display:grid;gap:6px;justify-items:start;padding:16px 18px;border-radius:18px;
+  background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);animation:rackcard .5s var(--ease) both;
+  scroll-margin:90px 0 96px}
+@container app (min-width:760px){.rack-card{left:auto;right:20px;bottom:20px;width:340px}}
+@keyframes rackcard{from{opacity:0;transform:translateY(12px)}}
+.rack-card h3{font-size:1.15rem}
+.rack-price{font-weight:500}
+.rack-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+@container app (max-width:759px){.rack-card{padding:12px 14px;gap:2px}.rack-card .mono{display:none}.rack-acts .btn.sm{padding:0 12px}}
+@container app (min-width:760px){.rack-card h3{font-size:1.35rem}.rack-price{font-size:1.05rem}}
+.rack-bar{display:flex;justify-content:flex-end}
+.rack-bar button{padding:6px 2px;transition:color .2s}
+.rack-bar button:hover{color:var(--ink)}
+.rack-grid{list-style:none;margin:0;padding:0;display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))}
+.rack-grid li{display:grid;gap:10px;justify-items:start;align-content:start}
+.rack-tile{display:grid;gap:6px;justify-items:start;text-align:left;width:100%}
+.rack-tile img,.rack-tile canvas{width:100%;height:auto;aspect-ratio:1;object-fit:contain;border-radius:18px;background:var(--bg-2);transition:transform .6s var(--ease)}
+.rack-tile:hover img,.rack-tile:hover canvas{transform:scale(1.02)}
+.rack-name{font-weight:500}
+
 /* contact */
 .big{font-size:clamp(2.3rem,7cqw,5.8rem);letter-spacing:-.05em;line-height:.98;font-weight:500;max-width:16ch}
 .big .it{color:var(--gold-deep)}
