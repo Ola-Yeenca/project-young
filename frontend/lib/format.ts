@@ -86,3 +86,9 @@ export const shipLine = (c: City) => `${c.currency} · ships from ${c.name}`;
 export const isHttp = (u: string | null | undefined) => !!u && /^https?:\/\//i.test(u);
 
 export const RM = () => typeof window !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Save-Data is on or the connection is 2G/3G: no background video or prefetched prints. */
+export const lowData = () => {
+  const c = typeof navigator === "undefined" ? undefined : (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  return !!c && (!!c.saveData || /2g|3g/.test(c.effectiveType ?? ""));
+};

@@ -8,6 +8,7 @@ from apps.core import content
 from apps.core.models import FAQ, SiteSettings
 from apps.enquiries.models import ContactEnquiry
 
+from . import factories as f
 from .base import HOYTestCase
 
 
@@ -32,6 +33,17 @@ class SiteContentTests(HOYTestCase):
         self.assertEqual((data["tax_id"], data["legal_address"], data["registry_details"]), ("", "", ""))
         self.assertNotIn("contact_email", data)
         self.assertNotIn("booking_email", data)
+
+    def test_site_endpoint_exposes_the_default_deck_video_and_still(self):
+        empty = self.api.get("/api/v1/site/").json()
+        self.assertEqual((empty["deck_video"], empty["deck_poster"]), (None, None))
+        site = SiteSettings.load()
+        site.deck_video = f.video_file("hoy-loop.mp4")
+        site.deck_poster = f.image_file("hoy-still.jpg")
+        site.save()
+        data = self.api.get("/api/v1/site/").json()
+        self.assertTrue(data["deck_video"].startswith("http://testserver/media/site/video/hoy-loop"))
+        self.assertTrue(data["deck_poster"].startswith("http://testserver/media/site/stills/hoy-still"))
 
     def test_contact_accepts_the_brief_categories(self):
         for category in ("general", "events", "talent", "business", "merchandise", "other"):

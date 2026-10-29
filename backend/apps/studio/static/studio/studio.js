@@ -71,7 +71,7 @@
   $$("input[type=file][data-preview]").forEach((input) => input.addEventListener("change", () => {
     const f = input.files[0]; if (!f) return; const url = URL.createObjectURL(f);
     $$(input.dataset.preview).forEach((img) => { img.src = url; img.hidden = false; });
-    if (input.id === "id_poster") { const clear = $("#poster-clear"); if (clear) clear.checked = false; }
+    const clear = document.getElementById(input.name + "-clear"); if (clear) clear.checked = false;
   }));
 
   // Slug follows the name/title until edited by hand.
@@ -174,6 +174,22 @@
     clock();
   };
   form.addEventListener("input", paint); form.addEventListener("change", paint); paint(); setInterval(clock, 20000);
+})();
+
+// Homepage video fields (a city's, or the site default): the video over its still, behind the preview card.
+(function () {
+  const deck = document.getElementById("pv-deck");
+  if (!deck) return;
+  const video = document.getElementById("pv-deck-video"), still = document.getElementById("pv-deck-poster");
+  const film = () => deck.classList.toggle("filmed", !video.hidden || !still.hidden);
+  document.querySelectorAll("input[data-deck]").forEach((input) => input.addEventListener("change", () => {
+    if (input.dataset.deck === "poster" && still.src) video.poster = still.src;
+    film();
+  }));
+  document.querySelectorAll("input[data-deck-clear]").forEach((box) => box.addEventListener("change", () => {
+    (box.dataset.deckClear === "video" ? video : still).hidden = box.checked;
+    film();
+  }));
 })();
 
 // Add catalogue choices without replacing the parent form or its file inputs.

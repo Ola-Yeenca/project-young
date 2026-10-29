@@ -4,26 +4,57 @@
 // band and the "From the floor" strip.
 
 import Link from "next/link";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSite } from "../site";
 import { Peek, peekOf } from "../ui";
 import { RowsSkeleton } from "../skeleton";
 import { Frames, IdxHead, interleave, NoDates, Row } from "./sections/shared";
-import { distanceKm, fmtT, hoursApart, RM, seedOf } from "@/lib/format";
+import { COORDS, distanceKm, fmtT, hoursApart, RM, seedOf } from "@/lib/format";
+import { GLOBE, GRID, LAND, LAND_RIM, onGlobe } from "@/lib/globe";
 import type { City } from "@/lib/types";
 
 type CSS = React.CSSProperties;
 
-/* ---------------- marquee: speeds up and flips with scroll ---------------- */
+/* ---------------- marquee: the next nights, speeding up and flipping with scroll ---------------- */
 
 // Module-level like the prototype's M, so the position survives a city switch.
 const M = { x: 0, dir: -1, sv: 0, lastY: 0 };
 
+/** Wraps x into (-p, 0], where the copies line up exactly with the first set. */
+const wrap = (x: number, p: number) => -(((-x % p) + p) % p);
+
 export function Marquee() {
-  const { bundle, city } = useSite();
+  const { bundle, city, openSheet } = useSite();
+  const box = useRef<HTMLDivElement>(null);
   const tr = useRef<HTMLDivElement>(null);
+  const period = useRef(0);
+  const hold = useRef(false);
+  // Enough copies to cover twice the marquee's width; measured after the first paint-free layout.
+  const [copies, setCopies] = useState(2);
+  const nights = (bundle?.events ?? []).filter((e) => !e.is_cancelled).slice(0, 4);
+
+  useLayoutEffect(() => {
+    const b = box.current,
+      t = tr.current;
+    if (!b || !t) return;
+    const measure = () => {
+      const [first, second] = t.children;
+      if (!first || !second) return;
+      const p = second.getBoundingClientRect().left - first.getBoundingClientRect().left;
+      if (p <= 0) return;
+      period.current = p;
+      const need = Math.max(2, Math.ceil((2 * b.clientWidth) / p) + 1);
+      setCopies((c) => (c === need ? c : need));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(b);
+    ro.observe(t.firstElementChild!);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
+    if (RM()) return;
     M.lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
@@ -31,27 +62,18 @@ export function Marquee() {
       M.lastY = y;
       if (Math.abs(M.sv) > 1) M.dir = M.sv > 0 ? -1 : 1;
     };
-    const rm = RM();
     let raf = 0,
       last = 0;
     const frame = (now: number) => {
       const dt = Math.min(50, now - (last || now));
       last = now;
       const t = tr.current;
-      if (t && t.offsetParent) {
-        if (rm) t.style.transform = "none";
-        else {
-          const speed = (0.045 + Math.min(1.4, Math.abs(M.sv) * 0.02)) * dt;
-          M.sv *= 0.9;
-          M.x += M.dir * speed;
-          const w = t.scrollWidth / 2;
-          if (w) {
-            if (M.x < -w) M.x += w;
-            if (M.x > 0) M.x -= w;
-          }
-          t.style.transform = `translateX(${M.x}px)`;
-        }
+      if (t && t.offsetParent && !hold.current) {
+        M.x += M.dir * (0.045 + Math.min(1.4, Math.abs(M.sv) * 0.02)) * dt;
+        if (period.current) M.x = wrap(M.x, period.current);
+        t.style.transform = `translateX(${M.x}px)`;
       }
+      M.sv *= 0.9;
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -62,25 +84,66 @@ export function Marquee() {
     };
   }, []);
 
-  const one = (n: number) => (
-    <Fragment key={n}>
-      {(bundle?.events ?? []).map((e) => (
-        <Fragment key={e.slug}>
-          <span className="f">{e.title}</span>
-          <span className="s">✦</span>
-          <span>{e.local.date.slice(4)}</span>
-          <span className="s">✦</span>
-        </Fragment>
-      ))}
-      <span className="f">{city?.name}</span>
-      <span className="s">✦</span>
-    </Fragment>
-  );
+  /* Keyboard focus stops the strip with the focused night in view (the box itself never scrolls). */
+  const onFocus = (ev: React.FocusEvent) => {
+    hold.current = true;
+    const b = box.current,
+      t = tr.current,
+      a = ev.target as HTMLElement;
+    if (!b || !t || RM()) return;
+    requestAnimationFrame(() => {
+      b.scrollLeft = 0;
+      const r = a.getBoundingClientRect(),
+        br = b.getBoundingClientRect();
+      if (r.left < br.left || r.right > br.right) M.x = Math.min(0, M.x + br.left + 20 - r.left);
+      t.style.transform = `translateX(${M.x}px)`;
+    });
+  };
+  const release = () => (hold.current = false);
+
+  const set = (n: number) => {
+    const copy = n > 0;
+    if (!nights.length)
+      return (
+        <ul className={`set${copy ? " copy" : ""}`} key={n} aria-hidden="true">
+          <li>
+            <span className="f">{city?.name}</span>
+            <span className="s">✦</span>
+          </li>
+        </ul>
+      );
+    return (
+      <ul className={`set evs${copy ? " copy" : ""}`} key={n} aria-hidden={copy || undefined} aria-label={copy ? undefined : `Next in ${city?.name ?? "the city"}`}>
+        {nights.map((e) => (
+          <li key={e.slug}>
+            <a
+              className="ev"
+              href={`/events/${e.slug}`}
+              tabIndex={copy ? -1 : undefined}
+              onClick={(ev) => {
+                if (ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
+                ev.preventDefault();
+                openSheet("event", e.slug);
+              }}
+            >
+              <span className="o">{e.local.date}</span>
+              <span className="o">—</span>
+              <span className="f">{e.lineup[0]?.name || e.title}</span>
+              <span className="o">· {e.venue.name}</span>
+              {e.sold_out && <small>Sold out</small>}
+            </a>
+            <span className="s" aria-hidden="true">
+              ✦
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
   return (
-    <div className="mq" id="mq" aria-hidden="true">
+    <div className="mq" id="mq" ref={box} onPointerEnter={() => (hold.current = true)} onPointerLeave={release} onFocus={onFocus} onBlur={release}>
       <div className="tr" ref={tr}>
-        {one(0)}
-        {one(1)}
+        {Array.from({ length: copies }, (_, n) => set(n))}
       </div>
     </div>
   );
@@ -130,8 +193,50 @@ function CityCard({ c, on, now }: { c: City; on: boolean; now: number | null }) 
   );
 }
 
-const P = "M20 20 Q 95 25 100 100",
-  Pr = "M100 100 Q 95 25 20 20";
+type Pt = { x: number; y: number };
+const f1 = (n: number) => Math.round(n * 10) / 10;
+/** A shallow arc from p to q, bowed to the west (over the Atlantic for Valencia–Lagos). */
+const arc = (p: Pt, q: Pt) => {
+  const s = q.y >= p.y ? 1 : -1;
+  return `M${p.x} ${p.y} Q ${f1((p.x + q.x) / 2 - s * (q.y - p.y) * 0.45)} ${f1((p.y + q.y) / 2 + s * (q.x - p.x) * 0.45)} ${q.x} ${q.y}`;
+};
+const at = (slug: string) => (COORDS[slug] ? onGlobe(COORDS[slug]) : null);
+
+/** The two cities on a dotted globe, the route between them, and a dot travelling to the current one. */
+function Route({ a, b, slug, mounted }: { a: City; b: City; slug: string; mounted: boolean }) {
+  const pa = at(a.slug) ?? { x: 20, y: 20 },
+    pb = at(b.slug) ?? { x: 100, y: 100 };
+  const there = slug === a.slug ? arc(pb, pa) : arc(pa, pb);
+  return (
+    <svg viewBox="0 0 120 120" role="img" aria-label={`${a.name} and ${b.name} on a globe`}>
+      <circle className="g-disc" cx={GLOBE.cx} cy={GLOBE.cy} r={GLOBE.edge} />
+      <path className="g-grid" d={GRID} />
+      <path className="g-land" d={LAND} />
+      <path className="g-land rim" d={LAND_RIM} />
+      <path className="g-route" d={arc(pa, pb)} />
+      {[
+        { c: a, p: pa },
+        { c: b, p: pb },
+      ].map(({ c, p }) => {
+        const on = c.slug === slug;
+        return (
+          <g key={c.slug} className={on ? "on" : ""}>
+            {on && <circle className="g-halo" cx={p.x} cy={p.y} r="6.5" />}
+            <circle cx={p.x} cy={p.y} r="3" fill={on ? "var(--gold)" : "var(--ink-2)"} />
+            <text x={p.x + 6.5} y={p.y + 2.2}>
+              {c.name.toUpperCase()}
+            </text>
+          </g>
+        );
+      })}
+      {mounted && !RM() && (
+        <circle r="1.8" fill="var(--gold)">
+          <animateMotion dur="3.6s" repeatCount="indefinite" path={there} keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".6 0 .4 1" />
+        </circle>
+      )}
+    </svg>
+  );
+}
 
 export function Cities() {
   const { cities, slug } = useSite();
@@ -149,16 +254,7 @@ export function Cities() {
       {b && (
         <>
           <div className="link">
-            <svg viewBox="0 0 120 120">
-              <path d={P} fill="none" stroke="var(--line-2)" strokeDasharray="3 4" />
-              <circle cx="20" cy="20" r="5" fill={slug === a.slug ? "var(--gold)" : "var(--ink-2)"} />
-              <circle cx="100" cy="100" r="5" fill={slug === b.slug ? "var(--gold)" : "var(--ink-2)"} />
-              {mounted && !RM() && (
-                <circle r="3.2" fill="var(--gold)">
-                  <animateMotion dur="3.6s" repeatCount="indefinite" path={slug === a.slug ? Pr : P} keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".6 0 .4 1" />
-                </circle>
-              )}
-            </svg>
+            <Route a={a} b={b} slug={slug} mounted={mounted} />
             <span className="mono" id="dist">
               {diff !== null && (
                 <>

@@ -26,6 +26,8 @@ def file_url(request, field):
 
 class CitySerializer(serializers.ModelSerializer):
     currency_symbol = serializers.CharField(read_only=True)
+    deck_video = serializers.SerializerMethodField()
+    deck_poster = serializers.SerializerMethodField()
 
     class Meta:
         model = City
@@ -39,7 +41,15 @@ class CitySerializer(serializers.ModelSerializer):
             "ticket_provider",
             "whatsapp_number",
             "instagram_url",
+            "deck_video",
+            "deck_poster",
         )
+
+    def get_deck_video(self, obj):
+        return file_url(self.context.get("request"), obj.deck_video)
+
+    def get_deck_poster(self, obj):
+        return file_url(self.context.get("request"), obj.deck_poster)
 
 
 class CityRefSerializer(serializers.ModelSerializer):
@@ -259,6 +269,9 @@ class FAQSerializer(serializers.ModelSerializer):
 
 
 class SiteSettingsSerializer(serializers.ModelSerializer):
+    deck_video = serializers.SerializerMethodField()
+    deck_poster = serializers.SerializerMethodField()
+
     class Meta:
         model = SiteSettings
         fields = (
@@ -277,7 +290,15 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             "legal_address",
             "registry_details",
             "privacy_email",
+            "deck_video",
+            "deck_poster",
         )
+
+    def get_deck_video(self, obj):
+        return file_url(self.context.get("request"), obj.deck_video)
+
+    def get_deck_poster(self, obj):
+        return file_url(self.context.get("request"), obj.deck_poster)
 
 
 # ---------- enquiries ----------

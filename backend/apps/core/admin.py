@@ -49,6 +49,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         ("Where enquiries go", {"fields": ("contact_email", "booking_email")}),
         ("Social", {"fields": ("instagram_url", "tiktok_url", "youtube_url")}),
         ("Footer", {"fields": ("show_powered_by",)}),
+        ("Homepage video", {"fields": ("deck_video", "deck_poster")}),
         ("Company details", {"fields": ("legal_name", "tax_id", "legal_address", "registry_details", "privacy_email")}),
     )
 

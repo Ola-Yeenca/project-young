@@ -272,6 +272,8 @@ class SiteSettingsForm(StyledMixin, forms.ModelForm):
             "legal_address",
             "registry_details",
             "privacy_email",
+            "deck_video",
+            "deck_poster",
         )
         widgets = {
             "intro": forms.Textarea(attrs={"rows": 3}),
@@ -326,6 +328,8 @@ class CityForm(StyledMixin, forms.ModelForm):
             "ticket_provider",
             "whatsapp_number",
             "instagram_url",
+            "deck_video",
+            "deck_poster",
             "is_active",
             "order",
         )

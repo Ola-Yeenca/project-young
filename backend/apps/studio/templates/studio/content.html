@@ -18,7 +18,7 @@
   {% if perms.core.add_city %}<a class="new-card" style="min-height:150px" href="{% url 'studio:city_new' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.8rem">Accra, London… one form</span></a>{% endif %}
 </div>
 
-<form class="card" method="post">{% csrf_token %}<input type="hidden" name="action" value="site">
+<form class="card" method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden" name="action" value="site">
   <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="sliders" %}</span><h2>Site settings</h2></div>
   <div class="card-b fgrid">
     {% include "studio/_field.html" with f=site_form.tagline wide=1 %}
@@ -30,6 +30,13 @@
     {% include "studio/_field.html" with f=site_form.booking_email %}{% include "studio/_field.html" with f=site_form.contact_email %}
     {% include "studio/_field.html" with f=site_form.instagram_url hide_help=1 %}{% include "studio/_field.html" with f=site_form.tiktok_url hide_help=1 %}
     {% include "studio/_field.html" with f=site_form.youtube_url hide_help=1 %}{% include "studio/_field.html" with f=site_form.show_powered_by %}
+    <div class="sect-h full" id="deck" style="margin:10px 0 0"><span class="sq soft-blue">{% include "studio/_i.html" with i="image" %}</span>Homepage video<span class="muted" style="font-weight:400;font-size:.86rem">Loops behind the record player in every city that has no video of its own. A city's own video replaces it.</span></div>
+    {% with video=site_form.initial.deck_video still=site_form.initial.deck_poster %}
+    <div class="full deck-site">
+      <div>{% include "studio/_deck_fields.html" with video_f=site_form.deck_video still_f=site_form.deck_poster video_gone="Cities without their own video show their still, or the plain background." still_gone="Cities without their own still then show the plain background to visitors who turn off motion." %}</div>
+      <div class="city-hero{% if video or still %} filmed{% endif %}" id="pv-deck">{% include "studio/_deck_media.html" %}<span class="mono">Every city</span><b>House of Young</b><span class="muted" style="font-size:.8rem">The default homepage video</span></div>
+    </div>
+    {% endwith %}
     <div class="sect-h full" id="company" style="margin:10px 0 0"><span class="sq soft-gold">{% include "studio/_i.html" with i="draft" %}</span>Company details<span class="muted" style="font-weight:400;font-size:.86rem">For the Legal notice and Privacy pages. Anything left blank shows as “details to follow”.</span></div>
     {% include "studio/_field.html" with f=site_form.legal_name %}{% include "studio/_field.html" with f=site_form.tax_id %}
     {% include "studio/_field.html" with f=site_form.legal_address %}{% include "studio/_field.html" with f=site_form.registry_details %}

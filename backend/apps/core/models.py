@@ -2,10 +2,12 @@ import unicodedata
 from zoneinfo import available_timezones
 
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.text import slugify
 
 from . import content
+from .image_validation import validate_managed_image
 
 
 class TimeStampedModel(models.Model):
@@ -98,6 +100,36 @@ def validate_timezone(value):
         raise ValidationError(f"“{value}” is not a known time zone. Use a name like Europe/Madrid or Africa/Lagos.")
 
 
+DECK_VIDEO_MAX_MB = 25
+DECK_VIDEO_SPEC = (
+    "MP4 or WebM: a 10–20 second loop at 720p, under about 8 MB (25 MB at most), with no sound, "
+    "of footage HOY owns or has permission to use."
+)
+DECK_POSTER_SPEC = (
+    "A frame from the video at 1280×720. Shown while the video loads, to visitors who turn off motion or save data, "
+    "and on its own when there's no video. JPEG, PNG or WebP, maximum 10 MiB."
+)
+# MP4 files carry "ftyp" at byte 4; WebM files open with the EBML magic number.
+VIDEO_SIGNATURES = {"mp4": lambda head: head[4:8] == b"ftyp", "webm": lambda head: head[:4] == b"\x1a\x45\xdf\xa3"}
+
+
+def validate_deck_video(value):
+    """Accept an MP4 or WebM of at most 25 MB whose first bytes match its extension."""
+
+    if getattr(value, "_committed", False):
+        return  # already stored and checked; reading it back would download the whole video
+    if value.size > DECK_VIDEO_MAX_MB * 1024 * 1024:
+        raise ValidationError(
+            f"Keep the video under {DECK_VIDEO_MAX_MB} MB. Aim for about 8 MB: 10–20 seconds at 720p, no sound.", code="video_too_large"
+        )
+    check = VIDEO_SIGNATURES.get(value.name.rsplit(".", 1)[-1].lower())
+    value.seek(0)
+    head = value.read(12)
+    value.seek(0)
+    if check and not check(head):
+        raise ValidationError("This file isn't a playable MP4 or WebM video. Export it again as MP4 (H.264).", code="invalid_video")
+
+
 class City(TimeStampedModel):
     """A market HOY operates in. Adding a new city is one row here."""
 
@@ -111,6 +143,17 @@ class City(TimeStampedModel):
     )
     whatsapp_number = models.CharField(max_length=32, blank=True, help_text="Shown on the site for this city, in international format.")
     instagram_url = models.URLField(blank=True)
+    deck_video = models.FileField(
+        "homepage video",
+        upload_to="cities/video/",
+        blank=True,
+        validators=[FileExtensionValidator(["mp4", "webm"]), validate_deck_video],
+        help_text="Loops behind the record player on the homepage while this city is selected, instead of the site's default. "
+        + DECK_VIDEO_SPEC,
+    )
+    deck_poster = models.ImageField(
+        "homepage still", upload_to="cities/stills/", blank=True, validators=[validate_managed_image], help_text=DECK_POSTER_SPEC
+    )
     is_active = models.BooleanField(default=True, help_text="Untick to hide the city and everything in it from the site.")
     order = models.PositiveSmallIntegerField(default=0)
 
@@ -222,6 +265,16 @@ class SiteSettings(models.Model):
     privacy_email = models.EmailField(
         blank=True,
         help_text="Published on the Privacy and Legal notice pages for privacy and legal requests. Until it's set, they point to the contact form.",
+    )
+    deck_video = models.FileField(
+        "homepage video",
+        upload_to="site/video/",
+        blank=True,
+        validators=[FileExtensionValidator(["mp4", "webm"]), validate_deck_video],
+        help_text="Loops behind the record player on the homepage in every city without a video of its own. " + DECK_VIDEO_SPEC,
+    )
+    deck_poster = models.ImageField(
+        "homepage still", upload_to="site/stills/", blank=True, validators=[validate_managed_image], help_text=DECK_POSTER_SPEC
     )
 
     class Meta:

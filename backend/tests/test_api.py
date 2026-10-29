@@ -36,6 +36,16 @@ class ReadAPITests(HOYTestCase):
         f.city("Accra", is_active=False, country="Ghana", currency="GHS", timezone="Africa/Accra")
         self.assertEqual([c["slug"] for c in self.api.get("/api/v1/cities/").json()], ["lagos", "valencia"])
 
+    def test_cities_expose_deck_video_and_still_as_absolute_urls(self):
+        self.los.deck_video = f.video_file("lagos-loop.mp4")
+        self.los.deck_poster = f.image_file("lagos-still.jpg")
+        self.los.save()
+        data = {c["slug"]: c for c in self.api.get("/api/v1/cities/").json()}
+        self.assertTrue(data["lagos"]["deck_video"].startswith("http://testserver/media/cities/video/lagos-loop"))
+        self.assertTrue(data["lagos"]["deck_poster"].startswith("http://testserver/media/cities/stills/lagos-still"))
+        self.assertIsNone(data["valencia"]["deck_video"])
+        self.assertIsNone(data["valencia"]["deck_poster"])
+
     def test_events_filter_by_city_and_local_time(self):
         start = timezone.now().replace(microsecond=0) + timedelta(days=5)
         f.event(self.los, title="HOY Live", starts_at=start, price_from=Decimal("10000"))

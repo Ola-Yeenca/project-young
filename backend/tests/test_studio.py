@@ -310,6 +310,30 @@ class StudioActionTests(HOYTestCase):
         self.assertEqual((site.legal_name, site.tax_id, site.legal_address), ("House of Young S.L.", "B00000000", ""))
         self.assertEqual(site.privacy_email, "privacy@hoy.example")
 
+    def test_site_settings_save_the_default_homepage_video(self):
+        data = {"action": "site", "s-tagline": "The Vision Is Ours.", "s-show_powered_by": "on"}
+        r = self.client.post(
+            reverse("studio:content"),
+            {**data, "s-deck_video": f.video_file("hoy-loop.mp4"), "s-deck_poster": f.image_file("hoy-still.jpg")},
+        )
+        self.assertEqual(r.status_code, 302)
+        from apps.core.models import SiteSettings
+
+        site = SiteSettings.load()
+        self.assertTrue(site.deck_video.name.startswith("site/video/hoy-loop"))
+        self.assertTrue(site.deck_poster.name.startswith("site/stills/hoy-still"))
+        html = self.client.get(reverse("studio:content")).content.decode()
+        self.assertIn('enctype="multipart/form-data"', html)
+        self.assertIn(f'src="{site.deck_video.url}"', html)
+        self.assertIn('name="s-deck_video-clear"', html)
+
+        r = self.client.post(reverse("studio:content"), {**data, "s-deck_video": f.video_file("hoy-loop.mov")})
+        self.assertContains(r, "File extension “mov” is not allowed")
+        self.client.post(reverse("studio:content"), {**data, "s-deck_video-clear": "on"})
+        site.refresh_from_db()
+        self.assertFalse(site.deck_video)
+        self.assertTrue(site.deck_poster)
+
 
 class StudioCityTests(HOYTestCase):
     def setUp(self):
@@ -380,6 +404,43 @@ class StudioCityTests(HOYTestCase):
         self.assertFalse(City.objects.filter(slug="accra").exists())
         vlc = f.city("Valencia")
         self.assertEqual(self.client.get(reverse("studio:city_edit", args=[vlc.pk])).status_code, 200)
+
+    def deck_post(self, city, **kw):
+        data = self.city_data(name=city.name, country="Spain", currency="EUR", timezone="Europe/Madrid", **{"v-TOTAL_FORMS": 0})
+        return self.client.post(reverse("studio:city_edit", args=[city.pk]), {**data, **kw})
+
+    def test_city_form_saves_previews_and_clears_the_homepage_video(self):
+        vlc = f.city("Valencia")
+        url = reverse("studio:city_edit", args=[vlc.pk])
+        r = self.deck_post(vlc, deck_video=f.video_file("vlc-loop.mp4"), deck_poster=f.image_file("vlc-still.jpg"))
+        self.assertRedirects(r, url, fetch_redirect_response=False)
+        vlc.refresh_from_db()
+        self.assertTrue(vlc.deck_video.name.startswith("cities/video/vlc-loop"))
+        self.assertTrue(vlc.deck_poster.name.startswith("cities/stills/vlc-still"))
+        html = self.client.get(url).content.decode()
+        self.assertIn('enctype="multipart/form-data"', html)
+        self.assertIn(f'src="{vlc.deck_video.url}"', html)
+        self.assertIn(f'poster="{vlc.deck_poster.url}"', html)
+        self.assertIn("Remove the video", html)
+
+        self.deck_post(vlc)
+        vlc.refresh_from_db()
+        self.assertTrue(vlc.deck_video and vlc.deck_poster)
+        self.deck_post(vlc, **{"deck_video-clear": "on"})
+        vlc.refresh_from_db()
+        self.assertFalse(vlc.deck_video)
+        self.assertTrue(vlc.deck_poster)
+
+    def test_city_form_rejects_a_video_in_another_format(self):
+        vlc = f.city("Valencia")
+        r = self.deck_post(vlc, deck_video=f.video_file("vlc-loop.mov"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "File extension “mov” is not allowed")
+        # The rejected upload isn't presented as the city's current video.
+        self.assertContains(r, "Drop the video here")
+        self.assertNotContains(r, "Remove the video")
+        vlc.refresh_from_db()
+        self.assertFalse(vlc.deck_video)
 
     def test_cities_page_and_readiness(self):
         call_command("seed_demo", verbosity=0)

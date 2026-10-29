@@ -13,6 +13,7 @@ import { asksAfterBuying } from "@/lib/taste";
 import type { EventItem } from "@/lib/types";
 import { useSite } from "../site";
 import { Words } from "../ui";
+import { DeckVideo } from "./DeckVideo";
 
 /* Module state, like the prototype's globals: survives leaving Home and coming back. */
 const T = { ang: 0, v: 360 / 12000, target: 360 / 12000, drag: false, last: 0, lastA: 0, lastT: 0 };
@@ -351,9 +352,12 @@ export function Hero() {
   const pv = n ? records[(cur - 1 + n) % n] : undefined,
     nx = n ? records[(cur + 1) % n] : undefined;
   const sold = e ? soldOf(e) : 0;
+  const deckVideo = city?.deck_video || global.site?.deck_video,
+    deckPoster = city?.deck_poster || global.site?.deck_poster;
 
   return (
-    <div className="hero grain">
+    <div className={`hero grain${deckVideo || deckPoster ? " has-film" : ""}`}>
+      <DeckVideo video={deckVideo} poster={deckPoster} />
       <div className="wall" ref={wallRef} aria-hidden="true"></div>
       <div className="glow" ref={glowRef}></div>
       {pv && nx && (

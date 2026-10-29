@@ -901,7 +901,8 @@ def track_update(request, pk):
 @studio_view("core.change_faq")
 def content(request):
     site = SiteSettings.load()
-    site_form = SiteSettingsForm(request.POST if request.POST.get("action") == "site" else None, instance=site, prefix="s")
+    posted = request.POST.get("action") == "site"
+    site_form = SiteSettingsForm(request.POST if posted else None, request.FILES if posted else None, instance=site, prefix="s")
     faqs = FAQFormSet(request.POST if request.POST.get("action") == "faqs" else None, prefix="f")
     if request.method == "POST":
         if request.POST.get("action") == "site" and site_form.is_valid():
@@ -959,7 +960,12 @@ def city_edit(request, pk=None):
     if city is None and not request.user.has_perm("core.add_city"):
         messages.error(request, "Only admins can add a new city.")
         return redirect("studio:cities")
-    form = CityForm(request.POST or None, instance=city, initial={} if city else {"is_active": False, "order": City.objects.count() + 1})
+    form = CityForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=city,
+        initial={} if city else {"is_active": False, "order": City.objects.count() + 1},
+    )
     venues = VenueFormSet(request.POST or None, instance=city or City(), prefix="v")
     if request.method == "POST":
         if form.is_valid() and venues.is_valid():

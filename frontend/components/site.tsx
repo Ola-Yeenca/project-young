@@ -7,8 +7,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { usePathname, useRouter } from "next/navigation";
 import { loadCity } from "@/lib/api";
 import { grooves as groovesOf, subscribe, A, type Groove } from "@/lib/audio";
-import { fmtT } from "@/lib/format";
 import type { City, CityBundle, EventItem, Global, Track } from "@/lib/types";
+import { COVER, FADE, Shuffle, warmPrints, warmPrintsSoon } from "./shuffle";
 
 /** One random seed per page load: HOY Radio's running order and variations for this visit. */
 let visitSeed = 0;
@@ -38,6 +38,8 @@ type Ctx = {
   playing: boolean;
   /** The uploaded track HOY Radio is playing, or null for the generated groove. */
   onAir: Track | null;
+  /** A city button was hovered or focused: load its data and a few prints for the switch. */
+  prime: (to: string) => void;
   switchCity: (to: string) => void;
   wipe: { to: City; phase: "in" | "out" } | null;
   sheet: SheetState;
@@ -96,11 +98,18 @@ export function SiteProvider({
     return p;
   }, []);
 
+  const prime = useCallback(
+    (to: string) => {
+      if (to !== slug) fetchCity(to).then(warmPrints, () => {});
+    },
+    [slug, fetchCity],
+  );
+
   useEffect(() => {
     if (initial) cache.current.set(initial.city, Promise.resolve(initial));
     if (slug && !bundles[slug]) fetchCity(slug);
-    // Warm the other cities after first paint so a switch never waits.
-    const t = setTimeout(() => cities.forEach((c) => c.slug !== slug && fetchCity(c.slug)), 2500);
+    // Warm the other cities (and a few prints per city) after first paint so a switch never waits.
+    const t = setTimeout(() => cities.forEach((c) => fetchCity(c.slug).then(warmPrintsSoon, () => {})), 2500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -137,14 +146,14 @@ export function SiteProvider({
         setSlug(to);
         setCurState(0);
       };
-      if (reduced() || !Element.prototype.animate) {
+      if (!Element.prototype.animate) {
         ready.finally(apply);
         return;
       }
       switching.current = true;
       setWipe({ to: target, phase: "in" });
-      // Prototype: data swaps at 900ms under the wipe; if the data is late, the wipe holds.
-      const at = new Promise((r) => setTimeout(r, 900));
+      // Data swaps once the cover is up; if the data is late, the cover holds.
+      const at = new Promise((r) => setTimeout(r, reduced() ? FADE : COVER));
       Promise.all([at, ready.catch(() => null)]).then(() => {
         apply();
         setWipe({ to: target, phase: "out" });
@@ -234,6 +243,7 @@ export function SiteProvider({
     setCur,
     playing,
     onAir,
+    prime,
     switchCity,
     wipe,
     sheet,
@@ -247,36 +257,8 @@ export function SiteProvider({
   return (
     <SiteCtx.Provider value={value}>
       {children}
-      <WipeDone wipe={wipe} done={wipeDone} />
+      <Shuffle wipe={wipe} bundles={bundles} done={wipeDone} />
     </SiteCtx.Provider>
-  );
-}
-
-/** The gold wipe. Same keyframes, durations and easings as the prototype's switchCity(). */
-function WipeDone({ wipe, done }: { wipe: Ctx["wipe"]; done: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const phase = wipe?.phase;
-  useEffect(() => {
-    const w = ref.current;
-    if (!w || !phase) return;
-    if (phase === "in") {
-      w.animate([{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }], { duration: 520, easing: "cubic-bezier(.7,0,.2,1)", fill: "forwards" });
-      (w.firstElementChild as HTMLElement).animate([{ transform: "translateX(-10%)", opacity: 0 }, { transform: "none", opacity: 1 }], {
-        duration: 700,
-        easing: "cubic-bezier(.2,.8,.2,1)",
-        fill: "forwards",
-      });
-    } else {
-      w.animate([{ clipPath: "inset(0 0 0 0)" }, { clipPath: "inset(0 0 0 100%)" }], { duration: 560, easing: "cubic-bezier(.7,0,.2,1)", fill: "forwards" }).finished.then(done);
-    }
-  }, [phase, done]);
-  return (
-    <div className={`wipe${wipe ? " on" : ""}`} ref={ref} aria-hidden="true">
-      <div>
-        <b>{wipe?.to.name}</b>
-        <span>{wipe ? `${fmtT(wipe.to.timezone, false)} local · tickets via ${wipe.to.ticket_provider}` : ""}</span>
-      </div>
-    </div>
   );
 }
 
