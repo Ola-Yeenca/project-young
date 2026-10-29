@@ -84,8 +84,9 @@ export default async function Page() {
         <h3 id="services">Services we use</h3>
         <p>
           Railway hosts the website and its server in its EU region. Supabase stores the database and uploaded photos and media in Paris, in the EU. Resend delivers
-          the site&rsquo;s emails, such as enquiry notifications and confirmations. They handle data only on our behalf. Where any of them may access data from
-          outside the EU, the transfer is covered by the European Commission&rsquo;s standard contractual clauses.
+          the site&rsquo;s emails, such as enquiry notifications and confirmations. Sentry receives the server&rsquo;s error reports, only when error monitoring
+          is switched on; it receives no IP addresses or cookies. They handle data only on our behalf. Where any of them may access data from outside the EU, the
+          transfer is covered by the European Commission&rsquo;s standard contractual clauses.
         </p>
 
         <h3 id="tickets">Ticket sellers</h3>

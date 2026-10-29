@@ -123,6 +123,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = ["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]
 
+# How many proxies in front of the app append to X-Forwarded-For: one on Railway (its edge).
+# Sign-in lockouts, rate limits and gallery stats all read the visitor's address from that hop
+# (see apps.core.net); 0 ignores the header and uses the connection's address.
+HOY_TRUSTED_PROXIES = max(0, int(env("HOY_TRUSTED_PROXIES", "1")))
+
 # Studio and admin sign-in: five wrong passwords lock that username from that address for 15 minutes.
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=15)
@@ -130,9 +135,7 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
 AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
 AXES_LOCKOUT_CALLABLE = "apps.studio.views.locked_out"
-# Railway's edge sets X-Real-IP to the visitor's address; a visitor can prepend their own X-Forwarded-For entries.
-AXES_IPWARE_META_PRECEDENCE_ORDER = ("HTTP_X_REAL_IP", "HTTP_X_FORWARDED_FOR", "REMOTE_ADDR")
-AXES_IPWARE_PROXY_ORDER = "left-most"
+AXES_CLIENT_IP_CALLABLE = "apps.core.net.client_ip"
 
 LANGUAGE_CODE = "en-gb"
 # The HOY team works from Valencia. Event times are entered in each event's own
@@ -148,7 +151,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = env("DJANGO_MEDIA_URL", "/media/")
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Uploaded media goes to S3-compatible object storage (Cloudflare R2 or AWS S3)
+# Uploaded media goes to S3-compatible object storage (Supabase Storage in production)
 # when a bucket is configured; otherwise it stays on local disk for development.
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
 if AWS_STORAGE_BUCKET_NAME:
@@ -210,6 +213,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
     "DEFAULT_THROTTLE_RATES": {"enquiries": env("HOY_ENQUIRY_RATE", "10/hour"), "photos": env("HOY_PHOTO_RATE", "240/hour")},
+    "NUM_PROXIES": HOY_TRUSTED_PROXIES,
     "UNAUTHENTICATED_USER": None,
 }
 

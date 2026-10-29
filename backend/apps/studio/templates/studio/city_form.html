@@ -13,7 +13,7 @@
         <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="pin" %}</span>The city</div>
         <div class="fgrid">
           {% include "studio/_field.html" with f=form.name %}
-          <div class="f {% if form.slug.errors %}has-err{% endif %}"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_name">{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">houseofyoung.com/<b id="slug-pv">{{ form.slug.value|default:'…' }}</b></span></div>
+          <div class="f {% if form.slug.errors %}has-err{% endif %}"><label for="id_slug">Web address</label><input class="in" id="id_slug" name="slug" value="{{ form.slug.value|default:'' }}" data-slug-from="#id_name">{% for e in form.slug.errors %}<span class="err">{{ e }}</span>{% endfor %}<span class="help">fromthehouseofyoung.com/<b id="slug-pv">{{ form.slug.value|default:'…' }}</b></span></div>
           {% include "studio/_field.html" with f=form.country %}
           {% include "studio/_field.html" with f=form.currency %}
           {% include "studio/_field.html" with f=form.timezone %}
