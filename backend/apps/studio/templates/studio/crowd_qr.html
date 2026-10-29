@@ -1,0 +1,21 @@
+{% load static tz %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QR code · {{ event.title }} · HOY Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;800&family=Geist+Mono:wght@400&family=Instrument+Serif:ital@1&display=swap">
+<link rel="stylesheet" href="{% static 'studio/crowd.css' %}">
+</head>
+<body class="qr-print">
+<main class="qr-sheet">
+  <p class="kick">House of Young · {{ event.city.name }}</p>
+  <h1>Help the DJs<br>set the night</h1>
+  <div class="code">{{ qr }}</div>
+  <p class="lead">Scan, pick your genres, ask for one song.</p>
+  <p class="ev"><b>{{ event.title }}</b> · {{ event.venue.name }} · {{ event.starts_at|timezone:event.city.timezone|date:"l j F" }}</p>
+  <p class="url">{{ tonight_url }}</p>
+  <button type="button" class="print" onclick="print()">Print</button>
+</main>
+</body>
+</html>

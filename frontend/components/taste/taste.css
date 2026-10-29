@@ -1,0 +1,58 @@
+/* Crowd taste: the after-tickets step in the event sheet and the /tonight page behind the venue
+   QR code. Same tokens, chips and form fields as globals.css. */
+.taste{display:grid;gap:16px;padding:16px 20px 40px}
+.taste>*{animation:fadeup .6s var(--ease) both}
+.taste>*:nth-child(2){animation-delay:.06s}.taste>*:nth-child(3){animation-delay:.12s}.taste>*:nth-child(4){animation-delay:.18s}.taste>*:nth-child(5){animation-delay:.24s}
+.taste-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.taste-top .mono{color:var(--gold-deep)}
+.taste .x{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;transition:transform .4s var(--ease),border-color .2s}
+.taste .x:hover{transform:rotate(90deg);border-color:var(--ink)}
+.taste h2{font-size:2.5rem;letter-spacing:-.045em}
+.taste h2 .it,.tn-card h2 .it{color:var(--gold-deep)}
+.taste h2:focus,.room h2:focus{outline:none}
+.taste-ev{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.taste-why,.tn-why{color:var(--ink-2)}
+.taste .sent p{color:var(--ink-2)}
+
+.taste-form{gap:22px}
+.taste-form .pick legend{display:flex;gap:8px;align-items:baseline}
+.taste-n{color:var(--gold-deep);font-variant-numeric:tabular-nums}
+.taste-form .chips{gap:8px}
+.taste-form .chips button{padding:9px 15px;font-size:.88rem}
+.taste-form .chips button:disabled{opacity:.35;cursor:not-allowed}
+.taste-form .chips button:disabled:hover{border-color:var(--line-2);color:var(--mute)}
+.taste-acts{display:flex;flex-wrap:wrap;gap:10px}
+.taste-sk{display:inline-block;width:92px;height:37px;border-radius:999px}
+.taste-line{display:block;height:22px;width:70%}
+.taste-line.short{width:45%}
+
+/* /tonight */
+.tn{display:grid;gap:26px;max-width:620px;padding-block:28px 64px}
+.tn-head{display:grid;gap:10px}
+.tn-kick{display:inline-flex;align-items:center;gap:8px;color:var(--gold-deep)}
+.tn-kick i,.room .mono i{width:6px;height:6px;border-radius:50%;background:var(--live);animation:live 2s ease-in-out infinite}
+.tn-title{font-size:clamp(2.6rem,12cqw,4.8rem);font-weight:900;letter-spacing:-.055em;line-height:.9;text-transform:uppercase;overflow-wrap:anywhere}
+.tn-meta{color:var(--mute)}
+.tn-card{display:grid;gap:16px;padding:22px 20px 24px;border:1px solid var(--line);border-radius:18px;background:var(--card);animation:fadeup .6s var(--ease) both}
+.tn-card h2,.room h2{font-size:2rem;letter-spacing:-.04em}
+.room{display:grid;gap:20px;padding:24px 20px;border-radius:18px;background:var(--night);color:var(--night-fg);animation:fadeup .6s var(--ease) both}
+.room-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px 16px;flex-wrap:wrap}
+.room h2 .it{color:var(--gold)}
+.room .mono{display:inline-flex;align-items:center;gap:7px;color:var(--night-mute);font-variant-numeric:tabular-nums}
+.room-bars{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.room-bars li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;align-items:baseline}
+.room-bars .n{font-size:1.15rem;font-weight:500;letter-spacing:-.01em}
+.room-bars b{font-family:var(--mono);font-weight:400;font-size:.95rem;font-variant-numeric:tabular-nums}
+.room-bars .t{grid-column:1/-1;height:6px;border-radius:6px;background:var(--night-line);overflow:hidden}
+.room-bars .t i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:width 1s var(--snap)}
+.room .note{color:var(--night-mute)}
+.room .btn{border-color:var(--night-line);color:var(--night-fg)}
+.room .btn::before{background:var(--night-fg)}
+.room .btn:hover{color:var(--night);border-color:var(--night-fg)}
+
+@media(prefers-reduced-motion:reduce){
+  .taste>*,.tn-card,.room{animation:none}
+  .room-bars .t i{transition:none}
+  .tn-kick i,.room .mono i{animation:none}
+  .taste .x{transition:none}
+}

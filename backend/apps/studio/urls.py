@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import crowd, views
 
 app_name = "studio"
 
@@ -14,6 +14,12 @@ urlpatterns = [
     path("enquiries/<str:key>/update/", views.enquiry_update, name="enquiry_update"),
     path("community/", views.community, name="community"),
     path("community/<int:pk>/update/", views.member_update, name="member_update"),
+    path("crowd/", crowd.overview, name="crowd"),
+    path("crowd/djs/", crowd.dj_create, name="dj_create"),
+    path("crowd/djs/<int:pk>/", crowd.dj_update, name="dj_update"),
+    path("crowd/<int:pk>/", crowd.board, name="crowd_event"),
+    path("crowd/<int:pk>/hide/", crowd.hide_song, name="crowd_hide"),
+    path("crowd/<int:pk>/qr/", crowd.qr, name="crowd_qr"),
     path("events/", views.events, name="events"),
     path("events/new/", views.event_edit, name="event_new"),
     path("events/<int:pk>/", views.event_edit, name="event_edit"),

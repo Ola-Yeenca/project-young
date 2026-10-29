@@ -46,7 +46,9 @@ def studio(request):
         return {}
     city = current_city(request)
     filt = {"city": city} if city else {}
-    new = BookingEnquiry.objects.filter(status="new", **filt).count() + ContactEnquiry.objects.filter(status="new", **filt).count()
+    new = 0
+    if request.user.has_perm("enquiries.view_bookingenquiry"):
+        new = BookingEnquiry.objects.filter(status="new", **filt).count() + ContactEnquiry.objects.filter(status="new", **filt).count()
     upcoming = Event.objects.upcoming().filter(**filt).count()
     cities = list(City.objects.order_by("order", "name"))
     now = timezone.now()
@@ -55,6 +57,7 @@ def studio(request):
     done = sum(s["done"] for s in steps)
     next_step = next((s for s in steps if not s["done"]), None)
     return {
+        "dj_only": request.user.has_perm("crowd.view_tasteanswer") and not request.user.has_perm("events.view_event"),
         "scope_city": city,
         "scope_cities": cities,
         "new_enquiries": new,

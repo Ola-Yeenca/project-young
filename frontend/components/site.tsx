@@ -16,7 +16,8 @@ const getVisit = () => (visitSeed ||= 1 + Math.floor(Math.random() * 2 ** 31));
 const noSub = () => () => {};
 const useVisit = () => useSyncExternalStore(noSub, getVisit, () => 0);
 
-export type SheetState = { type: "event" | "talent"; slug: string; pushed: boolean; base: string } | null;
+/** `taste`: open an event sheet on the crowd taste step (after a Buy tickets click). */
+export type SheetState = { type: "event" | "talent"; slug: string; pushed: boolean; base: string; taste?: boolean } | null;
 
 type Ctx = {
   global: Global;
@@ -40,7 +41,7 @@ type Ctx = {
   switchCity: (to: string) => void;
   wipe: { to: City; phase: "in" | "out" } | null;
   sheet: SheetState;
-  openSheet: (type: "event" | "talent", slug: string) => void;
+  openSheet: (type: "event" | "talent", slug: string, opts?: { taste?: boolean }) => void;
   /** Direct load of /events/:slug or /talent/:slug: the page underneath is the list. */
   adoptSheet: (type: "event" | "talent", slug: string) => void;
   closeSheet: () => void;
@@ -158,17 +159,17 @@ export function SiteProvider({
   }, []);
 
   const openSheet = useCallback(
-    (type: "event" | "talent", s: string) => {
+    (type: "event" | "talent", s: string, opts?: { taste?: boolean }) => {
       const url = `/${type === "event" ? "events" : "talent"}/${s}`;
       // From inside a sheet (e.g. a line-up name in an event sheet), swap the sheet in place so
       // closing goes straight back to the page underneath.
       if (sheet) {
         window.history.replaceState(null, "", url);
-        setSheet({ ...sheet, type, slug: s });
+        setSheet({ ...sheet, type, slug: s, taste: opts?.taste });
         return;
       }
       window.history.pushState(null, "", url);
-      setSheet({ type, slug: s, pushed: true, base: pathname });
+      setSheet({ type, slug: s, pushed: true, base: pathname, taste: opts?.taste });
     },
     [pathname, sheet],
   );

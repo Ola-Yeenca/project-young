@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "apps.radio",
     "apps.studio",
     "apps.ticketing",
+    "apps.crowd",
 ]
 
 MIDDLEWARE = [
@@ -218,10 +219,18 @@ REST_FRAMEWORK = {
     + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
-    "DEFAULT_THROTTLE_RATES": {"enquiries": env("HOY_ENQUIRY_RATE", "10/hour"), "photos": env("HOY_PHOTO_RATE", "240/hour")},
+    "DEFAULT_THROTTLE_RATES": {
+        "enquiries": env("HOY_ENQUIRY_RATE", "10/hour"),
+        "photos": env("HOY_PHOTO_RATE", "240/hour"),
+        # Per visitor address, and a whole venue can answer at once from one Wi-Fi or carrier address.
+        "crowd": env("HOY_CROWD_RATE", "3000/hour"),
+    },
     "NUM_PROXIES": HOY_TRUSTED_PROXIES,
     "UNAUTHENTICATED_USER": None,
 }
+
+# The public site, for links Studio prints (the crowd QR code).
+HOY_SITE_URL = env("HOY_SITE_URL", "http://localhost:3007").rstrip("/")
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

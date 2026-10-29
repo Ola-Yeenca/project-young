@@ -67,7 +67,7 @@ export function SheetHost() {
     <div className={`sheet${open ? " open" : ""}`}>
       <div className="dim" onClick={closeSheet} />
       <div className="card" ref={card} role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-        {sheet?.type === "event" && <EventSheet key={key} slug={sheet.slug} />}
+        {sheet?.type === "event" && <EventSheet key={key} slug={sheet.slug} taste={!!sheet.taste} />}
         {sheet?.type === "talent" && <TalentSheet key={key} slug={sheet.slug} />}
       </div>
     </div>

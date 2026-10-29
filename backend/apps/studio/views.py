@@ -180,6 +180,8 @@ def _when(e, now):
 
 @studio_view()
 def overview(request):
+    if request.user.has_perm("crowd.view_tasteanswer") and not request.user.has_perm("events.view_event"):
+        return redirect("studio:crowd")
     now = timezone.now()
     events = scoped(Event.objects.select_related("city", "venue"), request)
     upcoming = events.upcoming()
@@ -999,7 +1001,8 @@ def city_edit(request, pk=None):
 def search(request):
     q = request.GET.get("q", "").strip()
     results = []
-    if len(q) >= 2:
+    can = request.user.has_perm
+    if len(q) >= 2 and can("events.view_event"):
         for e in Event.objects.filter(Q(title__icontains=q) | Q(venue__name__icontains=q)).select_related("city")[:6]:
             results.append(
                 {
@@ -1009,6 +1012,7 @@ def search(request):
                     "url": reverse("studio:event_edit", args=[e.pk]),
                 }
             )
+    if len(q) >= 2 and can("talent.view_talent"):
         for t in Talent.objects.filter(Q(name__icontains=q) | Q(genre__icontains=q)).select_related("city")[:6]:
             results.append(
                 {
@@ -1018,6 +1022,7 @@ def search(request):
                     "url": reverse("studio:talent_edit", args=[t.pk]),
                 }
             )
+    if len(q) >= 2 and can("enquiries.view_bookingenquiry"):
         for r in _enquiry_rows(request, q=q)[:8]:
             results.append(
                 {
@@ -1027,6 +1032,7 @@ def search(request):
                     "url": reverse("studio:enquiries") + f"?status=all&open={r['key']}",
                 }
             )
+    if len(q) >= 2 and can("gallery.view_album"):
         for a in Album.objects.filter(title__icontains=q)[:4]:
             results.append({"type": "Album", "title": a.title, "sub": str(a.city), "url": reverse("studio:album_edit", args=[a.pk])})
     return render(request, "studio/search.html", {"nav": "", "q": q, "results": results})

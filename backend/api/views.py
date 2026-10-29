@@ -9,6 +9,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.core.models import FAQ, City, SiteSettings
+from apps.core.net import client_ip
+from apps.core.visitors import visitor_key
+from apps.crowd import taste
 from apps.enquiries.notifications import notify
 from apps.events.models import Event
 from apps.gallery.models import Album, AlbumItem, PhotoHit
@@ -225,3 +228,44 @@ class PhotoDownload(generics.GenericAPIView):
         response["Content-Disposition"] = f'attachment; filename="hoy-{item.album.slug}-{item.pk}.jpg"'
         response["Cache-Control"] = "no-store"
         return response
+
+
+class CrowdThrottle(ScopedRateThrottle):
+    def get_ident(self, request):
+        return client_ip(request)
+
+
+class EventTaste(generics.GenericAPIView):
+    """What the crowd wants to hear. GET: genre choices and shares (never free text).
+    POST {token, source: ticket|qr, genres: [slug ≤3], artist, song}: one anonymous answer per browser and source.
+    """
+
+    serializer_class = s.TasteAnswerSerializer
+    throttle_scope = "crowd"
+
+    def get_throttles(self):
+        # The room page polls GET; only answers are rate limited.
+        return [CrowdThrottle()] if self.request.method == "POST" else []
+
+    def get(self, request, slug):
+        return Response(taste.summary(get_object_or_404(Event.objects.published(), slug=slug)))
+
+    def post(self, request, slug):
+        event = get_object_or_404(Event.objects.published(), slug=slug)
+        if event.status == Event.Status.CANCELLED:
+            return Response({"detail": "This event was cancelled."}, status=400)
+        if not taste.is_open(event):
+            return Response({"detail": "Answers for this night are closed."}, status=400)
+        options = {style for style, _ in taste.genre_options(event)}
+        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "options": options})
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        _, created = taste.save_answer(
+            event,
+            visitor_key("taste", str(event.pk), data["token"]),
+            data["source"],
+            genres=data.get("genres", []),
+            artist=data.get("artist", ""),
+            song=data.get("song", ""),
+        )
+        return Response({"status": "saved", **taste.summary(event)}, status=201 if created else 200)

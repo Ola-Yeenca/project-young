@@ -8,6 +8,7 @@ class CoreConfig(AppConfig):
     verbose_name = "Site & cities"
 
     def ready(self):
-        from .roles import sync_team_group
+        from .roles import sync_dj_group, sync_team_group
 
         post_migrate.connect(sync_team_group, dispatch_uid="hoy_sync_team_group")
+        post_migrate.connect(sync_dj_group, dispatch_uid="hoy_sync_dj_group")

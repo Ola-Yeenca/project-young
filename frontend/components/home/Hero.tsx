@@ -9,6 +9,7 @@ import { A, beatEnv, dueBars, muffle, play, retune, scratch, stop, type Groove }
 import { mediaSrc } from "@/lib/api";
 import { loadImage, record } from "@/lib/art";
 import { AUTO, RM, money, pad, priceOf, purchaseUrl, seedOf, soldOf } from "@/lib/format";
+import { asksAfterBuying } from "@/lib/taste";
 import type { EventItem } from "@/lib/types";
 import { useSite } from "../site";
 import { Words } from "../ui";
@@ -466,7 +467,13 @@ export function Hero() {
                 </div>
               )}
               {!e.is_cancelled && purchaseUrl(e) && (
-                <a className="btn ink mag" href={purchaseUrl(e)} target={e.ticketing_mode === "simulation" ? undefined : "_blank"} rel="noopener">
+                <a
+                  className="btn ink mag"
+                  href={purchaseUrl(e)}
+                  target={e.ticketing_mode === "simulation" ? undefined : "_blank"}
+                  rel="noopener"
+                  onClick={() => asksAfterBuying(e) && setTimeout(() => openSheet("event", e.slug, { taste: true }))}
+                >
                   {e.ticketing_mode === "simulation" ? (
                     <>Get tickets · Nocheva <span className="ar">→</span></>
                   ) : sold >= 100 ? (
