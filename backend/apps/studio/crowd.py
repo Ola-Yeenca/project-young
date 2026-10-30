@@ -38,7 +38,7 @@ class DJLoginForm(forms.Form):
     username = forms.CharField(
         max_length=150,
         validators=[UnicodeUsernameValidator()],
-        help_text="What they type to log in. Letters, digits and @ . + - _ only.",
+        help_text="What they type to sign in. Letters, digits and @ . + - _ only.",
         widget=forms.TextInput(attrs={"class": "in", "autocomplete": "off", "autocapitalize": "none", "spellcheck": "false"}),
     )
 
@@ -187,5 +187,5 @@ def dj_update(request, pk):
     user.is_active = not user.is_active
     user.save(update_fields=["is_active"])
     log(request, user, CHANGED, "DJ login switched on" if user.is_active else "DJ login switched off")
-    messages.success(request, f"{name} can log in again." if user.is_active else f"{name} can no longer log in.")
+    messages.success(request, f"{name} can sign in again." if user.is_active else f"{name} can no longer sign in.")
     return redirect(reverse("studio:crowd") + "#djs")

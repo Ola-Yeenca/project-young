@@ -45,7 +45,7 @@ class MusicStyleCatalogTests(HOYTestCase):
     def test_unicode_expansion_cannot_overflow_the_stored_normalized_key(self):
         with self.assertRaises(ValidationError) as error:
             MusicStyle.objects.create(name="ﬃ" * 41)
-        self.assertIn("at most 120 characters", str(error.exception))
+        self.assertIn("120 characters or fewer", str(error.exception))
 
     def test_choice_accessors_merge_builtins_catalog_and_legacy_current_value(self):
         MusicStyle.objects.create(name="Techno")
@@ -123,7 +123,7 @@ class QuickCatalogFormTests(HOYTestCase):
             instance=City(name="New City", slug="new-city", country="Spain", currency="EUR", timezone="Europe/Madrid"),
         )
         self.assertFalse(formset.is_valid())
-        self.assertTrue(all(any("web addresses must be unique" in error for error in form.errors["name"]) for form in formset.forms))
+        self.assertTrue(all(any("needs its own web address" in error for error in form.errors["name"]) for form in formset.forms))
 
 
 class MusicStyleFormIntegrationTests(HOYTestCase):

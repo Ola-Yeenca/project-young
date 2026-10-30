@@ -12,4 +12,4 @@ Audience:   {{ e.get_expected_audience_display }}
 {{ e.message|default:"No extra details." }}
 
 Reply to this email to answer the client directly.
-Open it in the admin to change its status.
+Change its status in Studio, under Enquiries.

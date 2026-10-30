@@ -20,7 +20,7 @@
           {% include "studio/_field.html" with f=form.timezone %}
           {% include "studio/_field.html" with f=form.ticket_provider %}
         </div>
-        <p class="help muted" id="preset-note" style="margin-top:10px;font-size:.8rem" hidden>Currency and time zone filled in from the country. Change them if they're wrong.</p>
+        <p class="help muted" id="preset-note" style="margin-top:10px;font-size:.8rem" hidden>Studio filled in the currency and time zone from the country. Change them if they're wrong.</p>
       </section>
       <section class="card card-b">
         <div class="sect-h"><span class="sq soft-blue">{% include "studio/_i.html" with i="chat" %}</span>Contact and visibility</div>
@@ -54,7 +54,7 @@
       <section class="card card-b">
         <div class="sect-h" style="margin-bottom:12px">Ready to launch? <span class="muted" style="font-weight:400;font-size:.86rem;margin-left:auto">{{ ready.done }} of {{ ready.total }}</span></div>
         <div class="checklist">{% for label, ok in ready.checks %}<div class="{% if ok %}ok{% endif %}"><i></i>{{ label }}</div>{% endfor %}</div>
-        <p class="muted" style="font-size:.78rem;margin-top:12px">Talent and events are added in their own sections once the city exists.</p>
+        <p class="muted" style="font-size:.78rem;margin-top:12px">Once the city exists, add its talent and events in their own sections.</p>
       </section>
       <div class="formbar"><span class="grow"></span><a class="btn ghost" href="{% url 'studio:cities' %}">Cancel</a><button class="btn pri">{% if city %}Save city{% else %}Add city{% endif %}</button></div>
     </aside>

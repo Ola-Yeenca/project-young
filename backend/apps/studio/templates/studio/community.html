@@ -39,7 +39,7 @@
       </form></td>
     </tr>{% endfor %}</tbody>
   </table></div>
-  {% else %}<div class="empty">{% include "studio/_i.html" with i="user" %}<b>{% if q %}No matches for “{{ q }}”{% elif show == 'left' %}Nobody has unsubscribed{% else %}No members yet{% endif %}</b><span>People join from the “Join the community” form on the homepage.</span></div>{% endif %}
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="user" %}<b>{% if q %}No matches for "{{ q }}"{% elif show == 'left' %}Nobody has unsubscribed{% else %}No members yet{% endif %}</b><span>People join from the "Join the community" form on the homepage.</span></div>{% endif %}
 </section>
-<p class="muted" style="font-size:.82rem">Everyone here ticked the consent box. When someone asks to stop, press Unsubscribe; when they ask to be forgotten, delete them. The CSV leaves out unsubscribed people.</p>
+<p class="muted" style="font-size:.82rem">Everyone here ticked the consent box. When someone asks to stop hearing from us, press Unsubscribe. When they ask to be forgotten, delete them. The CSV leaves out unsubscribed people.</p>
 {% endblock %}

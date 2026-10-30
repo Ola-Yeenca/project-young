@@ -27,7 +27,7 @@ class AlbumAdminForm(forms.ModelForm):
         required=False,
         validators=[validate_managed_image],
         label="Add photos",
-        help_text="Select as many photos as you like. They are added to the end of the album.",
+        help_text="Select as many photos as you like. They go at the end of the album.",
     )
 
     class Meta:
@@ -75,4 +75,4 @@ class AlbumAdmin(admin.ModelAdmin):
         for offset, image in enumerate(files):
             AlbumItem.objects.create(album=form.instance, kind=MediaKind.PHOTO, image=image, order=start + offset)
         if files:
-            self.message_user(request, f"Added {len(files)} photo(s) to {form.instance}.")
+            self.message_user(request, f"Added {len(files)} photo{'s' if len(files) != 1 else ''} to {form.instance}.")

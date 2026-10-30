@@ -2,12 +2,12 @@
 {% block title %}HOY Radio{% endblock %}
 {% block icon %}{% include "studio/_i.html" with i="play" %}{% endblock %}
 {% block heading %}HOY Radio{% endblock %}
-{% block sub %}The music on the homepage turntable{% endblock %}
+{% block sub %}The music on the homepage record player{% endblock %}
 {% block content %}
 <section class="card card-b">
   <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="play" %}</span>On air by genre</div>
   <div class="chips">{% for g in genres %}<span class="pill {% if g.n %}good{% else %}nodot{% endif %} num">{{ g.label }} · {{ g.n }}</span>{% endfor %}</div>
-  <p class="muted" style="font-size:.84rem;margin-top:10px">Lagos plays Afrohouse, Afrobeats and Amapiano; Valencia plays Techno, House and Reggaeton. Each visitor gets a fresh shuffle. A genre with no tracks of its own plays the city’s other tracks on air, and a city with none plays HOY’s own generated beat.</p>
+  <p class="muted" style="font-size:.84rem;margin-top:10px">Lagos plays Afrohouse, Afrobeats and Amapiano. Valencia plays Techno, House and Reggaeton. Each visitor gets a new shuffle. A genre with no tracks of its own plays the city's other tracks that are on air, and a city with none plays HOY's own generated beat.</p>
 </section>
 
 <section class="card card-b">
@@ -24,7 +24,7 @@
     </div>
     <div class="toolbar" style="margin-top:12px"><span class="grow"></span><button class="btn pri" type="submit">{% include "studio/_i.html" with i="upload" %}Upload</button></div>
   </form>
-  <p class="muted" style="font-size:.82rem;margin-top:8px">Only upload music HOY has permission to stream: the artist’s own tracks, or tracks they’ve cleared in writing. Commercial releases and DJ mixes of other people’s songs need a music licence.</p>
+  <p class="muted" style="font-size:.82rem;margin-top:8px">Only upload music HOY has permission to stream, such as the artist's own tracks or tracks they've cleared in writing. Commercial releases and DJ mixes of other people's songs need a music licence.</p>
 </section>
 
 <section class="card">
@@ -44,6 +44,6 @@
       </form></td>
     </tr>{% endfor %}</tbody>
   </table></div>
-  {% else %}<div class="empty">{% include "studio/_i.html" with i="play" %}<b>No tracks yet</b><span>The radio plays HOY’s generated beats until you upload some.</span></div>{% endif %}
+  {% else %}<div class="empty">{% include "studio/_i.html" with i="play" %}<b>No tracks yet</b><span>The radio plays HOY's generated beats until you upload some.</span></div>{% endif %}
 </section>
 {% endblock %}

@@ -55,9 +55,12 @@ def publish(modeladmin, request, queryset):
         event.save(update_fields=["status", "updated_at"])
         published += 1
     if published:
-        messages.success(request, f"Published {published} event(s).")
+        messages.success(request, f"Published {published} event{'s' if published != 1 else ''}.")
     if skipped:
-        messages.warning(request, "Not published, missing a ticket link or price: " + ", ".join(skipped))
+        messages.warning(
+            request,
+            f"{', '.join(skipped)} stayed in draft. Each needs a usable ticket link, a price of 0 or Sold out before it can be published.",
+        )
 
 
 @admin.action(description="Move selected events back to draft")

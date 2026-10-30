@@ -36,7 +36,7 @@
         </span>
       </a>
       {% empty %}
-      <div class="empty">{% include "studio/_i.html" with i="inbox" %}<b>{% if q %}No matches for “{{ q }}”{% else %}Nothing here{% endif %}</b><span>{% if status == 'open' %}Every enquiry has been handled.{% else %}Try another status.{% endif %}</span></div>
+      <div class="empty">{% include "studio/_i.html" with i="inbox" %}<b>{% if q %}No matches for "{{ q }}"{% else %}Nothing here{% endif %}</b><span>{% if status == 'open' %}No open enquiries left.{% else %}Try another status.{% endif %}</span></div>
       {% endfor %}
     </div>
   </section>
@@ -49,7 +49,7 @@
       <div style="min-width:0">
         <span class="ref">{{ e.reference }} · received {{ e.created_at|date:"D j M, H:i" }}</span>
         <h2>{{ detail.name }}{% if detail.kind == 'bk' and e.company %} <span class="muted" style="font-size:1rem">· {{ e.company }}</span>{% endif %}</h2>
-        <span class="muted" style="font-size:.9rem">{% if detail.kind == 'bk' %}Booking {% if e.talent %}for <b style="color:var(--ink);font-weight:500">{{ e.talent.name }}</b>{% else %}(any act){% endif %}{% else %}{{ e.get_category_display }}{% if e.subject %} · {{ e.subject }}{% endif %}{% endif %}</span>
+        <span class="muted" style="font-size:.9rem">{% if detail.kind == 'bk' %}Booking {% if e.talent %}for <b style="color:var(--ink);font-weight:500">{{ e.talent.name }}</b>{% else %}for any act{% endif %}{% else %}{{ e.get_category_display }}{% if e.subject %} · {{ e.subject }}{% endif %}{% endif %}</span>
       </div>
       <div class="acts">
         {% if e.email %}<a class="btn pri sm" href="mailto:{{ e.email }}?subject=Re: {{ e.reference|urlencode }} House of Young">{% include "studio/_i.html" with i="mail" %}Reply</a>{% endif %}
@@ -68,7 +68,7 @@
       <div><span>Email</span><b style="word-break:break-all">{{ e.email|default:"—" }}</b></div>
       <div><span>Phone</span><b>{{ e.phone|default:"—" }}</b></div>
     </div>
-    <div class="quote {% if not e.message %}none{% endif %}">{{ e.message|default:"No extra details were given." }}</div>
+    <div class="quote {% if not e.message %}none{% endif %}">{{ e.message|default:"They didn't add any details." }}</div>
     <form class="work" method="post" action="{% url 'studio:enquiry_update' detail.key %}">{% csrf_token %}
       <input type="hidden" name="back" value="{{ request.get_full_path }}">
       <div class="f">
@@ -76,7 +76,7 @@
         <textarea class="in" id="notes" name="internal_notes" rows="6" placeholder="Quote sent, rider, follow-up date. Only the team sees this.">{{ e.internal_notes }}</textarea>
         <div class="toolbar" style="margin-top:6px">
           <select class="in" name="assign" style="max-width:220px" aria-label="Owner">
-            <option value="">{% if e.assigned_to %}Owner: {{ e.assigned_to.get_short_name|default:e.assigned_to.get_username }}{% else %}No owner{% endif %}</option>
+            <option value="">{% if e.assigned_to %}Owned by {{ e.assigned_to.get_short_name|default:e.assigned_to.get_username }}{% else %}No owner{% endif %}</option>
             <option value="me">Assign to me</option>
             {% for u in team %}{% if u != request.user %}<option value="{{ u.pk }}">Assign to {{ u.get_short_name|default:u.get_username }}</option>{% endif %}{% endfor %}
             {% if e.assigned_to %}<option value="none">Remove owner</option>{% endif %}

@@ -87,7 +87,7 @@ class MusicStyle(TimeStampedModel):
             raise ValidationError({"name": "Enter a music style."})
         normalized_name = normalize_catalog_name(display_name)
         if len(display_name) > 120 or len(normalized_name) > 120:
-            raise ValidationError({"name": "Ensure the normalized music style has at most 120 characters."})
+            raise ValidationError({"name": "Keep the music style to 120 characters or fewer."})
         self.name = display_name
         self.normalized_name = normalized_name
         duplicate = type(self).objects.exclude(pk=self.pk).filter(normalized_name=self.normalized_name)
@@ -97,7 +97,7 @@ class MusicStyle(TimeStampedModel):
 
 def validate_timezone(value):
     if value not in available_timezones():
-        raise ValidationError(f"“{value}” is not a known time zone. Use a name like Europe/Madrid or Africa/Lagos.")
+        raise ValidationError(f'"{value}" is not a known time zone. Use a name like Europe/Madrid or Africa/Lagos.')
 
 
 DECK_VIDEO_MAX_MB = 25
@@ -120,7 +120,8 @@ def validate_deck_video(value):
         return  # already stored and checked; reading it back would download the whole video
     if value.size > DECK_VIDEO_MAX_MB * 1024 * 1024:
         raise ValidationError(
-            f"Keep the video under {DECK_VIDEO_MAX_MB} MB. Aim for about 8 MB: 10–20 seconds at 720p, no sound.", code="video_too_large"
+            f"Keep the video under {DECK_VIDEO_MAX_MB} MB. Aim for about 8 MB, with 10 to 20 seconds at 720p and no sound.",
+            code="video_too_large",
         )
     check = VIDEO_SIGNATURES.get(value.name.rsplit(".", 1)[-1].lower())
     value.seek(0)
