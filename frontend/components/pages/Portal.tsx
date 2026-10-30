@@ -3,12 +3,14 @@
 // Each page's opening: a full-bleed dark stage that irises open on arrival, with its own
 // moving art, so leaving Home feels like stepping into another room.
 
+import Image from "next/image";
 import { useSyncExternalStore } from "react";
 import { useSite } from "../site";
 import { FieldCanvas, Words } from "../ui";
 import { interleave } from "../home/sections/shared";
 import { isHttp, seedOf } from "@/lib/format";
 import { MOTTO } from "../shell";
+import logo from "@/public/hoy-logo.jpg";
 
 type CSS = React.CSSProperties;
 type Part = { t: string; it?: boolean };
@@ -181,11 +183,15 @@ export function GalleryPortal() {
 
 /* ---------------- shop ---------------- */
 
+// The ring's path is a circle of r=170; the motto is spaced to fill it exactly once.
+const RING = 2 * Math.PI * 170;
+
 export function ShopPortal() {
   const { bundle, city } = useSite();
   const products = bundle?.products ?? [];
   const p = products[0];
-  const ring = `House of Young · ${MOTTO.replace(/\.$/, "")} · `.repeat(2);
+  const src = p?.images[0]?.url || p?.image;
+  const ring = `House of Young · ${MOTTO.replace(/\.$/, "")} · `;
   return (
     <Portal
       id="shop"
@@ -200,10 +206,18 @@ export function ShopPortal() {
               <path id="ring" d="M200,200 m-170,0 a170,170 0 1,1 340,0 a170,170 0 1,1 -340,0" />
             </defs>
             <text>
-              <textPath href="#ring">{ring}</textPath>
+              <textPath href="#ring" textLength={RING} lengthAdjust="spacing">
+                {ring}
+              </textPath>
             </text>
           </svg>
-          <Picture src={p?.images[0]?.url || p?.image} seed={seedOf(p?.slug ?? "hoy")} className="p-piece" />
+          {isHttp(src) ? (
+            <div className="p-piece" style={bg(src)} />
+          ) : (
+            <div className="p-piece p-logo">
+              <Image src={logo} alt="" fill sizes="(min-width: 900px) 300px, 50vw" />
+            </div>
+          )}
         </div>
       }
     />
@@ -212,20 +226,34 @@ export function ShopPortal() {
 
 /* ---------------- about ---------------- */
 
-const SPOTS: [number, number][] = [
-  [330, 190],
-  [700, 420],
-  [540, 120],
-  [860, 240],
-];
+// A landscape map, and a portrait one for phones, where slicing the wide one pushes cities off-screen.
+const MAPS = [
+  {
+    id: "wide",
+    box: "0 0 1000 600",
+    lift: [60, 160],
+    spots: [
+      [330, 190],
+      [700, 420],
+      [540, 120],
+      [860, 240],
+    ],
+  },
+  {
+    id: "tall",
+    box: "0 0 400 720",
+    lift: [30, 110],
+    spots: [
+      [70, 170],
+      [270, 240],
+      [170, 70],
+      [230, 140],
+    ],
+  },
+] as const;
 
 export function StoryPortal() {
   const { cities, city, bundle, global } = useSite();
-  const spots = cities.slice(0, SPOTS.length).map((c, i) => ({ c, at: SPOTS[i] }));
-  const arcs = spots.slice(1).map(({ at: [x, y] }, i) => {
-    const [x0, y0] = spots[i].at;
-    return `M${x0},${y0} Q${(x0 + x) / 2 + 60},${Math.min(y0, y) - 160} ${x},${y}`;
-  });
   const nights = bundle ? bundle.events.length + bundle.past.length : 0;
   return (
     <Portal
@@ -241,27 +269,35 @@ export function StoryPortal() {
       art={
         <>
           <div className="p-year">2022</div>
-          <svg className="p-map" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
-            {arcs.map((d, i) => (
-              <g key={i}>
-                <path id={`arc-${i}`} className="p-arc" d={d} />
-                <circle className="p-dot" r="4">
-                  <animateMotion dur="5s" repeatCount="indefinite" rotate="auto">
-                    <mpath href={`#arc-${i}`} />
-                  </animateMotion>
-                </circle>
-              </g>
-            ))}
-            {spots.map(({ c, at: [x, y] }, i) => (
-              <g key={c.slug} className={c.slug === city?.slug ? "p-city on" : "p-city"} style={{ "--i": i } as CSS}>
-                <circle className="ring" cx={x} cy={y} r="10" />
-                <circle className="core" cx={x} cy={y} r="5" />
-                <text x={x + 18} y={y + 5}>
-                  {c.name}
-                </text>
-              </g>
-            ))}
-          </svg>
+          {MAPS.map((m) => {
+            const spots = cities.slice(0, m.spots.length).map((c, i) => ({ c, at: m.spots[i] }));
+            return (
+              <svg key={m.id} className={`p-map ${m.id}`} viewBox={m.box} preserveAspectRatio="xMidYMid slice">
+                {spots.slice(1).map(({ at: [x, y] }, i) => {
+                  const [x0, y0] = spots[i].at;
+                  return (
+                    <g key={i}>
+                      <path id={`arc-${m.id}-${i}`} className="p-arc" d={`M${x0},${y0} Q${(x0 + x) / 2 + m.lift[0]},${Math.min(y0, y) - m.lift[1]} ${x},${y}`} />
+                      <circle className="p-dot" r="4">
+                        <animateMotion dur="5s" repeatCount="indefinite" rotate="auto">
+                          <mpath href={`#arc-${m.id}-${i}`} />
+                        </animateMotion>
+                      </circle>
+                    </g>
+                  );
+                })}
+                {spots.map(({ c, at: [x, y] }, i) => (
+                  <g key={c.slug} className={c.slug === city?.slug ? "p-city on" : "p-city"} style={{ "--i": i } as CSS}>
+                    <circle className="ring" cx={x} cy={y} r="10" />
+                    <circle className="core" cx={x} cy={y} r="5" />
+                    <text x={x + 18} y={y + 5}>
+                      {c.name}
+                    </text>
+                  </g>
+                ))}
+              </svg>
+            );
+          })}
         </>
       }
     />
