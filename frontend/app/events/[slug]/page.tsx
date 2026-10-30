@@ -7,7 +7,8 @@ import { AdoptSheet } from "@/components/sheets/Adopt";
 export async function generateMetadata({ params }: PageProps<"/events/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const e = await getEvent(slug);
-  if (!e) return { title: "Event" };
+  // The page still answers 200 (the list streams first), so keep a missing event out of search.
+  if (!e) return { title: "Event", robots: { index: false } };
   const description = `${e.local.date} · ${e.local.time} · ${e.venue.name}, ${e.city.name}. ${e.caption}`.trim();
   return {
     title: e.title,

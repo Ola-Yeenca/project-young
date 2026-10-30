@@ -7,7 +7,8 @@ import { AdoptSheet } from "@/components/sheets/Adopt";
 export async function generateMetadata({ params }: PageProps<"/talent/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const t = await getTalent(slug);
-  if (!t) return { title: "Talent" };
+  // The page still answers 200 (the list streams first), so keep a missing profile out of search.
+  if (!t) return { title: "Talent", robots: { index: false } };
   const description = [t.genre, t.city.name].filter(Boolean).join(" · ");
   return { title: t.name, description, openGraph: { title: t.name, description, images: t.photo ? [{ url: t.photo, alt: t.name }] : [] } };
 }
