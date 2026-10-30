@@ -45,7 +45,13 @@ function paint(cv: HTMLCanvasElement, seed: number) {
     if (!cv.isConnected) return;
     if (img) {
       cv.width = cv.height = 900;
-      cv.getContext("2d")!.drawImage(img, 0, 0, 900, 900);
+      const g = cv.getContext("2d")!;
+      // The photo's corners are opaque black, and WebKit doesn't clip this rotating layer to the
+      // disc's rounded corners over the hero video, so keep everything outside the record clear.
+      g.beginPath();
+      g.arc(450, 450, 450, 0, 7);
+      g.clip();
+      g.drawImage(img, 0, 0, 900, 900);
     } else if (!drawn) record(cv, seed);
   });
 }
