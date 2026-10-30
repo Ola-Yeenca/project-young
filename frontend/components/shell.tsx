@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSite } from "./site";
 import { beatEnv, stop } from "@/lib/audio";
-import { fmtT } from "@/lib/format";
+import { fmtT, isHttp } from "@/lib/format";
 import mark from "@/public/hoy-mark.jpg";
 
 const NAV = [
@@ -114,18 +114,54 @@ export function Header() {
   );
 }
 
+const SOCIAL = [
+  ["instagram_url", "Instagram", <><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r=".6" /></>],
+  ["tiktok_url", "TikTok", <><path d="M14 3.5v11a3.5 3.5 0 1 1-3.5-3.5M14 3.5c.4 2.6 2.1 4.3 5 4.6" /></>],
+  ["youtube_url", "YouTube", <><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="M10 9.2v5.6l4.8-2.8z" /></>],
+] as const;
+
 export function Footer() {
   const { global } = useSite();
+  const site = global.site;
+  const business = !!site?.business_enabled;
+  const social = SOCIAL.filter(([k]) => isHttp(site?.[k]));
   return (
     <footer>
-      <div className="wrap">
-        <span>
-          © {new Date().getFullYear()} House of Young · {global.site?.tagline || MOTTO}
-        </span>
-        <span>
-          <Link href="/about">About</Link> · <Link href="/privacy">Privacy</Link> · <Link href="/legal">Legal notice</Link> · <Link href="/terms">Terms</Link>
-        </span>
-        {global.site?.show_powered_by && <span>Powered by SME Analytica</span>}
+      <div className="wrap ft">
+        <Link className="ft-brand" href="/" aria-label="House of Young, home">
+          <Image src={mark} alt="" width={44} height={44} />
+          <span>
+            <b>House of Young</b>
+            <em className="it">{site?.tagline || MOTTO}</em>
+          </span>
+        </Link>
+        {social.length > 0 && (
+          <div className="ft-social">
+            {social.map(([k, label, icon]) => (
+              <a key={k} href={site?.[k]} target="_blank" rel="noopener noreferrer" aria-label={`House of Young on ${label}`}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  {icon}
+                </svg>
+              </a>
+            ))}
+          </div>
+        )}
+        <nav className="ft-nav" aria-label="Footer">
+          {[...NAV.filter(([href]) => business || href !== "/business"), ["/about", "About"] as const].map(([href, label]) => (
+            <Link key={href} href={href}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="ft-base">
+          <span>© {new Date().getFullYear()} House of Young</span>
+          <span className="ft-legal">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/legal">Legal notice</Link>
+            <Link href="/terms">Terms</Link>
+          </span>
+          {site?.show_powered_by && <span className="ft-by">Powered by SME Analytica</span>}
+        </div>
       </div>
     </footer>
   );
@@ -140,16 +176,56 @@ const TABS = [
   ["/contact", "Contact", <><path d="M4 6h16v10H8l-4 4z" /></>],
 ] as const;
 
+const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 /**
- * Mobile dock. The now-playing pill is positioned from the dock (bottom: 100% + 12px), so it
- * always sits above the tab bar, never behind it. Keep .np inside .dock.
+ * Mobile dock: a floating tab bar. The dock itself has no height; the bar and the now-playing pill
+ * hang from its bottom edge (--dock-h clears the bar), and the footer pads by the same amount.
+ * Keep .np inside .dock.
  */
 export function Dock() {
   const { view, playing, records, grooves, cur, global, onAir } = useSite();
   const business = !!global.site?.business_enabled;
   const on = section(view);
+  const tabs = TABS.filter(([href]) => business || href !== "/business");
+  const at = tabs.findIndex(([href]) => href === on);
+  // Off the tabbed sections the knob fades out where it was rather than sliding home.
+  const [last, setLast] = useState(at);
+  if (at >= 0 && at !== last) setLast(at);
+  const bar = useRef<HTMLElement>(null);
+  const knob = useRef<HTMLSpanElement>(null);
+  const was = useRef(at);
   const e = records[cur];
   const eq = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const from = was.current;
+    was.current = at;
+    if (from < 0 || at < 0 || from === at || still()) return;
+    knob.current?.animate([{ scale: "1 1" }, { scale: "1.2 .86", offset: 0.4 }, { scale: "1 1" }], { duration: 560, easing: "cubic-bezier(.3,.7,.3,1)" });
+  }, [at]);
+  // Shrinks while you scroll down and comes back on the way up; every page starts with it full.
+  useEffect(() => {
+    const el = bar.current;
+    if (!el || still()) return;
+    let y0 = scrollY,
+      raf = 0;
+    const tick = () => {
+      raf = 0;
+      const y = scrollY;
+      if (Math.abs(y - y0) < 10) return;
+      el.toggleAttribute("data-min", y > y0 && y > 120);
+      y0 = y;
+    };
+    const onScroll = () => {
+      raf ||= requestAnimationFrame(tick);
+    };
+    addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+      el.removeAttribute("data-min");
+    };
+  }, [on]);
   // The pill's eq bars follow the beat on every page (the hero's loop only runs on Home).
   useEffect(() => {
     if (!playing) return;
@@ -179,13 +255,14 @@ export function Dock() {
           ■
         </button>
       </div>
-      <nav className="tabs">
-        {TABS.filter(([href]) => business || href !== "/business").map(([href, label, icon]) => (
-          <Link key={href} href={href} className={on === href ? "on" : ""}>
+      <nav className="tabs" ref={bar} aria-label="Sections" style={{ "--n": tabs.length, "--i": Math.max(0, at >= 0 ? at : last) } as React.CSSProperties}>
+        <span className={at < 0 ? "knob off" : "knob"} ref={knob}></span>
+        {tabs.map(([href, label, icon]) => (
+          <Link key={href} href={href} className={on === href ? "on" : ""} aria-current={on === href ? "page" : undefined}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               {icon}
             </svg>
-            {label}
+            <span>{label}</span>
           </Link>
         ))}
       </nav>
