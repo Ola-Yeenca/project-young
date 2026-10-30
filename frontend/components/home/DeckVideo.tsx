@@ -32,12 +32,16 @@ export function DeckVideo({ video, poster }: { video?: string | null; poster?: s
   const ref = useRef<HTMLDivElement>(null);
   const playing = useRef<HTMLVideoElement | null>(null);
   const seen = useRef(true);
+  const refused = useRef(false);
 
   const sync = useEffectEvent(() => {
     const v = playing.current;
     if (!v) return;
-    if (seen.current && !document.hidden) v.play().catch(() => {});
-    else v.pause();
+    if (!seen.current || document.hidden) return v.pause();
+    v.play().then(
+      () => (refused.current = false),
+      (e: DOMException) => (refused.current = e.name === "NotAllowedError"),
+    );
   });
 
   useEffect(() => {
@@ -50,9 +54,15 @@ export function DeckVideo({ video, poster }: { video?: string | null; poster?: s
     io.observe(box);
     const vis = () => sync();
     document.addEventListener("visibilitychange", vis);
+    // Low Power Mode and some data savers refuse autoplay until the visitor touches the page: the
+    // still stays up until then, and the first tap, click or key press starts the video.
+    const unlock = () => refused.current && sync();
+    const gestures = ["touchend", "click", "keydown"] as const;
+    gestures.forEach((t) => document.addEventListener(t, unlock, { capture: true, passive: true }));
     return () => {
       io.disconnect();
       document.removeEventListener("visibilitychange", vis);
+      gestures.forEach((t) => document.removeEventListener(t, unlock, { capture: true }));
       [...box.children].forEach(stop);
     };
   }, []);
@@ -97,7 +107,9 @@ export function DeckVideo({ video, poster }: { video?: string | null; poster?: s
       v.playsInline = true;
       v.disablePictureInPicture = true;
       v.preload = calm ? "metadata" : "auto";
+      v.autoplay = !calm;
       v.addEventListener("loadeddata", () => show(v), { once: true });
+      if (!calm) v.addEventListener("canplay", () => sync());
       v.addEventListener("error", () => !shown && (poster ? still(poster) : show(null)), { once: true });
       if (poster) {
         v.poster = poster;

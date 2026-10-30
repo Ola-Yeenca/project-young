@@ -141,7 +141,8 @@ nav.top a:hover::after,nav.top a.on::after{transform:scaleX(1);transform-origin:
 .pulse{position:absolute;inset:-7%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--gold) 55%,transparent) 62%,transparent 100%);opacity:0;pointer-events:none}
 .ripple{position:absolute;inset:0;border-radius:50%;border:1px solid var(--gold);pointer-events:none;animation:ripple 1.6s var(--ease) forwards}
 @keyframes ripple{from{transform:scale(1)}to{opacity:0;transform:scale(1.38)}}
-.disc{position:absolute;inset:0;border-radius:50%;overflow:hidden;box-shadow:0 34px 80px -24px rgba(30,20,5,.5),0 0 0 1px rgba(0,0,0,.06);cursor:grab;touch-action:none}
+/* isolation: over the hero video, Safari only clips the spinning record (and blends the sheen) inside an isolated disc */
+.disc{position:absolute;inset:0;border-radius:50%;overflow:hidden;isolation:isolate;box-shadow:0 34px 80px -24px rgba(30,20,5,.5),0 0 0 1px rgba(0,0,0,.06);cursor:grab;touch-action:none}
 .disc.grab{cursor:grabbing}
 .rot{position:absolute;inset:0;will-change:transform}
 .rot canvas{position:absolute;inset:0;width:100%;height:100%}
