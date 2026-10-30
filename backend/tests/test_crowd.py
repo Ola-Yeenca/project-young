@@ -185,6 +185,21 @@ class CrowdStudioTests(HOYTestCase):
         self.assertEqual(self.client.get(reverse("admin:crowd_tasteanswer_changelist")).status_code, 403)
         self.assertNotContains(self.client.get(reverse("admin:index")), "Booking enquir")
 
+    def test_admin_top_menu_shows_only_sections_the_user_can_open(self):
+        links = [
+            reverse("admin:app_list", args=["enquiries"]),
+            reverse("admin:events_event_changelist"),
+            reverse("admin:talent_talent_changelist"),
+        ]
+        self.client.force_login(self.dj)
+        dj_index = self.client.get(reverse("admin:index"))
+        for href in links:
+            self.assertNotContains(dj_index, f'href="{href}"')
+        self.client.force_login(self.team)
+        team_index = self.client.get(reverse("admin:index"))
+        for href in links:
+            self.assertContains(team_index, f'href="{href}"')
+
     def test_dj_search_finds_nothing_private(self):
         enquiry = BookingEnquiry.objects.create(
             client_name="Adaeze",

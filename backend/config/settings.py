@@ -283,9 +283,10 @@ JAZZMIN_SETTINGS = {
     "copyright": "House of Young · powered by SME Analytica",
     "search_model": ["events.Event", "talent.Talent", "enquiries.BookingEnquiry"],
     "topmenu_links": [
-        {"name": "Enquiries", "url": "admin:app_list", "args": ["enquiries"]},
-        {"name": "Events", "url": "admin:events_event_changelist"},
-        {"name": "Talent", "url": "admin:talent_talent_changelist"},
+        # Jazzmin reverses names without args, so an app list needs its path ("admin:app_list" gave "#").
+        {"name": "Enquiries", "url": "/admin/enquiries/", "permissions": ["enquiries.view_bookingenquiry"]},
+        {"name": "Events", "url": "admin:events_event_changelist", "permissions": ["events.view_event"]},
+        {"name": "Talent", "url": "admin:talent_talent_changelist", "permissions": ["talent.view_talent"]},
     ],
     "order_with_respect_to": ["enquiries", "events", "talent", "gallery", "shop", "core", "auth"],
     "icons": {
