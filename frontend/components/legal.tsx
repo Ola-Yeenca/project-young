@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { City, Site } from "@/lib/types";
 
-export const UPDATED = "29 October 2026";
+export const UPDATED = "30 October 2026";
 
 /** The company details filled in so far; nothing at all while they're blank. */
 export function Company({ site, register = false }: { site: Site | null; register?: boolean }) {

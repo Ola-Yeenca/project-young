@@ -165,7 +165,7 @@ export function Closing() {
         Be part of the <span className="it">vision</span>
       </h2>
       <div className="about lead" data-rv="">
-        <p>Whether you’re looking for your next experience, exploring creative opportunities or interested in collaborating, there’s a place for you at House of Young.</p>
+        <p>Whether you&apos;re looking for your next experience, exploring creative opportunities or interested in collaborating, there&apos;s a place for you at House of Young.</p>
       </div>
       <div className="ctas" data-rv="">
         <Link className="btn ink mag" href="/events">

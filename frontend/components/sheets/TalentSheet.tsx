@@ -85,7 +85,7 @@ export function TalentSheet({ slug }: { slug: string }) {
               <BookingForm talent={d.slug} name={d.name} style={i(3)} />
             ) : (
               <p className="note" style={i(3)}>
-                Not taking bookings right now.
+                {d.name} isn&apos;t taking bookings right now.
               </p>
             )}
           </>

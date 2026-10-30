@@ -87,7 +87,7 @@ export function TasteForm({
       </label>
       <label>
         One song you want to hear
-        <input name="song" maxLength={120} defaultValue={initial?.song} autoComplete="off" placeholder="Artist – title" enterKeyHint="send" {...errProps(errors, id, "song")} />
+        <input name="song" maxLength={120} defaultValue={initial?.song} autoComplete="off" placeholder="Song and artist" enterKeyHint="send" {...errProps(errors, id, "song")} />
         <Err errors={errors} id={id} name="song" />
       </label>
       <Honeypot />
@@ -107,7 +107,8 @@ export function TasteForm({
         </button>
       </div>
       <span className="note">
-        Anonymous: no name, no email. The DJs see the genres, artists and songs; the room sees genre shares only. <Link href="/privacy#music">Privacy</Link>
+        We don&apos;t ask for your name or email. The DJs see your whole answer, and everyone else sees only the share of each genre.{" "}
+        <Link href="/privacy#music">Privacy</Link>
       </span>
     </form>
   );

@@ -101,11 +101,13 @@ function EventCard({ e, past, taste, openTalent }: { e: EventItem; past: boolean
               </a>
             )}
             <p className="m" style={i(1)}>
-              {simulation ? "Local ticket simulation. No money is collected; test tickets are not valid for entry." : !checkout && !e.is_cancelled ? "Registration is not open for this event yet." : ""}
+              {simulation ? "Local ticket simulation. We take no money, and test tickets won't get you in." : !checkout && !e.is_cancelled ? "Registration for this event isn't open yet." : ""}
             </p>
           </>
         )}
-        <p style={{ ...i(2), fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "1.3rem", lineHeight: 1.3 }}>{e.caption || "Recap, photos and film from the night."}</p>
+        {(e.caption || past) && (
+          <p style={{ ...i(2), fontFamily: "var(--serif)", fontStyle: "italic", fontSize: "1.3rem", lineHeight: 1.3 }}>{e.caption || "Photos and film from the night."}</p>
+        )}
         <div className="kv" style={i(3)}>
           {e.lineup.length > 0 && (
             <div>
@@ -134,7 +136,7 @@ function EventCard({ e, past, taste, openTalent }: { e: EventItem; past: boolean
           </div>
           <div>
             <span>Doors</span>
-            <span>{e.local.time || "—"}</span>
+            <span>{e.local.time || "TBA"}</span>
           </div>
           {e.bpm ? (
             <div>

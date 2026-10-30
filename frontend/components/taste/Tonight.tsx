@@ -62,7 +62,7 @@ export function Tonight({ e }: { e: EventItem }) {
         {!summary ? (
           failed ? (
             <div className="tn-card" role="alert">
-              <p>We couldn’t reach the room. Check your connection.</p>
+              <p>We couldn&apos;t reach the room. Check your connection.</p>
               <div>
                 <button className="btn" type="button" onClick={() => location.reload()}>
                   Try again
@@ -80,7 +80,7 @@ export function Tonight({ e }: { e: EventItem }) {
             <h2>
               Help the DJs <span className="it">set the night</span>
             </h2>
-            <p className="tn-why">Pick up to three genres, name an artist you love and ask for one song. No name needed.</p>
+            <p className="tn-why">Pick up to three genres, name an artist you love and ask for one song. We don&apos;t need your name.</p>
             <TasteForm
               id="tn"
               slug={e.slug}
@@ -116,7 +116,7 @@ export function Tonight({ e }: { e: EventItem }) {
                 ))}
               </ol>
             ) : (
-              <p>No genre picks yet. Be the first to set the tone.</p>
+              <p>Nobody has picked a genre yet. Be the first.</p>
             )}
             <p className="note">Each bar is the share of answers that picked the genre. It updates every 20 seconds.</p>
             {summary.open ? (
@@ -126,7 +126,7 @@ export function Tonight({ e }: { e: EventItem }) {
                 </button>
               </div>
             ) : (
-              <p className="note">Answers for this night are closed.</p>
+              <p className="note">Answers for this night have closed.</p>
             )}
           </div>
         )}

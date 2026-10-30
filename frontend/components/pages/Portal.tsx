@@ -70,10 +70,10 @@ function Countdown({ at }: { at: string }) {
   const parts: [string, string][] =
     left === null
       ? [
-          ["––", "days"],
-          ["––", "hrs"],
-          ["––", "min"],
-          ["––", "sec"],
+          ["--", "days"],
+          ["--", "hrs"],
+          ["--", "min"],
+          ["--", "sec"],
         ]
       : [
           [pad2(Math.floor(left / 864e5)), "days"],
@@ -101,8 +101,8 @@ export function EventsPortal() {
     <Portal
       id="events"
       kicker={`Events · ${city?.name ?? ""}`}
-      title={[{ t: "What’s" }, { t: "next.", it: true }]}
-      sub={next ? `Up next: ${next.title}, ${next.venue.name}.` : "New dates are on the way."}
+      title={[{ t: "What's" }, { t: "next.", it: true }]}
+      sub={next ? `Next up is ${next.title} at ${next.venue.name}.` : "New dates are on the way."}
       stats={city ? [[String(events.length), events.length === 1 ? "night coming up" : "nights coming up"], [city.ticket_provider, "tickets"]] : []}
       art={
         <>
@@ -166,7 +166,7 @@ export function GalleryPortal() {
       id="gallery"
       kicker={`Gallery · ${city?.name ?? ""}`}
       title={[{ t: "The rooms" }, { t: "we filled.", it: true }]}
-      sub="Every night, in pictures."
+      sub="See every night in pictures."
       stats={albums.length ? [[String(photos), "photos"], [String(albums.length), albums.length === 1 ? "night" : "nights"]] : []}
       art={
         <div className="p-wall">
@@ -197,7 +197,7 @@ export function ShopPortal() {
       id="shop"
       kicker={`Shop · ${city?.name ?? ""}`}
       title={[{ t: "Wear the" }, { t: "vision.", it: true }]}
-      sub="HOY pieces, made for the community that fills the room."
+      sub="We make HOY pieces for the people who fill the room."
       stats={city && products.length ? [[String(products.length), products.length === 1 ? "piece" : "pieces"], [city.currency, `ships from ${city.name}`]] : []}
       art={
         <div className="p-obj">
@@ -307,11 +307,11 @@ export function StoryPortal() {
 /* ---------------- contact ---------------- */
 
 function Clock({ tz, name, now, slot }: { tz: string; name: string; now: number; slot: number }) {
-  const t = now ? new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(now) : "––:––";
+  const t = now ? new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(now) : "--:--";
   return (
     <div className={slot === 0 ? "p-clock on" : "p-clock"} style={{ "--slot": slot } as CSS}>
       <b>{t}</b>
-      <span>{slot === 0 ? `${name} · you’re here` : name}</span>
+      <span>{slot === 0 ? `${name} · you're here` : name}</span>
     </div>
   );
 }
@@ -325,8 +325,8 @@ export function ContactPortal() {
     <Portal
       id="contact"
       kicker={`Contact · ${city?.name ?? ""}`}
-      title={[{ t: "Let’s" }, { t: "talk.", it: true }]}
-      sub="Book an act, plan a night, or just say hi."
+      title={[{ t: "Let's" }, { t: "talk.", it: true }]}
+      sub="Book an act or plan a night with us. Or just say hi."
       art={
         <div className="p-clocks" style={{ "--n": cities.length } as CSS}>
           {cities.map((c) => (

@@ -223,7 +223,7 @@ function ProductFocus({ p, i, n, city, step, go }: { p: Product; i: number; n: n
       <div className="hero-foot" style={{ padding: "34px 0 0" }}>
         <p className="cap">{p.description}</p>
         <div className="pager">
-          <button className="arrow mag" aria-label="Previous" onClick={() => step(-1)}>
+          <button className="arrow mag" aria-label="Previous product" onClick={() => step(-1)}>
             ←
           </button>
           <div className="dots hold">
@@ -231,7 +231,7 @@ function ProductFocus({ p, i, n, city, step, go }: { p: Product; i: number; n: n
               <button key={j} className={j === i ? "on" : ""} aria-label={`Product ${j + 1}`} onClick={() => go(j)}></button>
             ))}
           </div>
-          <button className="arrow mag" aria-label="Next" onClick={() => step(1)}>
+          <button className="arrow mag" aria-label="Next product" onClick={() => step(1)}>
             →
           </button>
         </div>

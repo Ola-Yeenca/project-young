@@ -88,7 +88,7 @@ export async function post(path: string, body: Record<string, unknown>): Promise
     if (res.status === 400 && data && typeof data === "object") {
       for (const [k, v] of Object.entries(data)) errors[k === "non_field_errors" || k === "detail" ? "__all__" : k] = Array.isArray(v) ? String(v[0]) : String(v);
     } else if (res.status === 429) {
-      errors.__all__ = "Too many messages, try again later";
+      errors.__all__ = "Too many messages. Please try again later.";
     } else {
       errors.__all__ = "Something went wrong. Please try again.";
     }
