@@ -15,13 +15,20 @@ async function page(w, h) {
   const p = await b.newPage({ viewport: { width: w, height: h } });
   p.on("console", (m) => m.type() === "error" && errors.push(m.text().slice(0, 160)));
   p.on("pageerror", (e) => errors.push(e.message));
-  // Record low-pass filter targets so "hold to muffle" can be checked.
+  // Record what the page tells the deck about the hand, so "hold to stop" can be checked.
   await p.addInitScript(() => {
-    window.__lp = [];
-    const o = AudioParam.prototype.setTargetAtTime;
-    AudioParam.prototype.setTargetAtTime = function (v, t, c) {
-      if (v === 420 || v === 18000) window.__lp.push(v);
-      return o.call(this, v, t, c);
+    window.__hand = [];
+    const W = window.AudioWorkletNode;
+    if (!W) return;
+    window.AudioWorkletNode = class extends W {
+      constructor(...a) {
+        super(...a);
+        const post = this.port.postMessage.bind(this.port);
+        this.port.postMessage = (m, t) => {
+          if (m.k === "hand") window.__hand.push(m.on);
+          return post(m, t);
+        };
+      }
     };
   });
   return p;
@@ -37,7 +44,7 @@ async function page(w, h) {
   await wait(600);
   const playing = await p.locator(".platter.playing").count();
   const kick = await p.locator(".kick .mono").textContent();
-  note(playing === 1 && /Now playing/.test(kick), "Play", `platter.playing=${playing}, kicker "${kick}"`);
+  note(playing === 1 && /HOY Radio/.test(kick), "Play", `platter.playing=${playing}, kicker "${kick}"`);
   const d = await p.locator(".disc").boundingBox();
   const cx = d.x + d.width / 2, cy = d.y + d.height / 2;
   await p.mouse.move(cx + d.width * 0.35, cy);
@@ -51,9 +58,9 @@ async function page(w, h) {
   await wait(300);
   await p.mouse.up();
   await wait(200);
-  const lp = await p.evaluate(() => window.__lp);
+  const hand = await p.evaluate(() => window.__hand);
   note(grab === 1, "Scratch", `.disc.grab while held=${grab}; dragged a half turn`);
-  note(lp.includes(420) && lp.at(-1) === 18000, "Hold to muffle", `low-pass targets ${JSON.stringify(lp)}`);
+  note(hand[0] === true && hand.at(-1) === false, "Hold to stop", `hand on the record ${JSON.stringify(hand)}`);
   await p.click(".label");
   await wait(400);
   note((await p.locator(".platter.playing").count()) === 0, "Stop", "platter.playing cleared");

@@ -184,6 +184,10 @@ if AWS_STORAGE_BUCKET_NAME:
 else:
     _default_storage = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
 
+# django-jazzmin's admin/base.html asks {% static %} for a folder (vendor/bootswatch), which the
+# manifest can't list; a strict lookup made every admin page a 500. Missing files still raise.
+WHITENOISE_MANIFEST_STRICT = False
+
 STORAGES = {
     "default": _default_storage,
     "staticfiles": {

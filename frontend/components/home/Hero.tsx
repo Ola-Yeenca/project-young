@@ -5,7 +5,7 @@
 // interval and the Home keyboard. Per-frame work writes styles directly, never React state.
 
 import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
-import { A, beatEnv, dueBars, muffle, play, retune, scratch, stop, type Groove } from "@/lib/audio";
+import { A, beatEnv, dueBars, hold, play, retune, scratch, stop, type Groove } from "@/lib/audio";
 import { mediaSrc } from "@/lib/api";
 import { loadImage, record } from "@/lib/art";
 import { AUTO, RM, money, pad, priceOf, purchaseUrl, seedOf, soldOf } from "@/lib/format";
@@ -321,7 +321,7 @@ export function Hero() {
     return () => window.removeEventListener("keydown", k);
   }, []);
 
-  /* ---- drag to scratch, hold to muffle ---- */
+  /* ---- drag to scratch; a hand held still stops the record ---- */
   const angleAt = (ev: React.PointerEvent) => {
     const r = discRef.current!.getBoundingClientRect();
     return (Math.atan2(ev.clientY - (r.top + r.height / 2), ev.clientX - (r.left + r.width / 2)) * 180) / Math.PI;
@@ -332,7 +332,7 @@ export function Hero() {
     T.lastT = performance.now();
     ev.currentTarget.classList.add("grab");
     ev.currentTarget.setPointerCapture(ev.pointerId);
-    muffle(true); // idle is reset by the site-wide pointerdown listener
+    hold(true); // idle is reset by the site-wide pointerdown listener
   };
   const onMove = (ev: React.PointerEvent<HTMLDivElement>) => {
     if (!T.drag) return;
@@ -352,7 +352,7 @@ export function Hero() {
     if (!T.drag) return;
     T.drag = false;
     ev.currentTarget.classList.remove("grab");
-    muffle(false);
+    hold(false);
   };
 
   const pv = n ? records[(cur - 1 + n) % n] : undefined,

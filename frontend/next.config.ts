@@ -8,7 +8,19 @@ const PROXY = (process.env.API_PROXY_URL || API).replace(/\/$/, "");
 
 const PROXY_ORIGIN = new URL(PROXY).origin;
 
+// The API and Studio already send these from Django; the site's own pages need them too.
+const SECURITY_HEADERS = [
+  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+  },
   // A second build (e.g. for Lighthouse) can go to its own folder without disturbing a running one.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   cacheComponents: true,

@@ -7,7 +7,7 @@
 <section class="card card-b">
   <div class="sect-h"><span class="sq soft-gold">{% include "studio/_i.html" with i="play" %}</span>On air by genre</div>
   <div class="chips">{% for g in genres %}<span class="pill {% if g.n %}good{% else %}nodot{% endif %} num">{{ g.label }} · {{ g.n }}</span>{% endfor %}</div>
-  <p class="muted" style="font-size:.84rem;margin-top:10px">Lagos plays Afrohouse, Afrobeats and Amapiano; Valencia plays Techno, House and Reggaeton. Each visitor gets a fresh shuffle. A genre with no tracks on air plays HOY’s own generated beat instead.</p>
+  <p class="muted" style="font-size:.84rem;margin-top:10px">Lagos plays Afrohouse, Afrobeats and Amapiano; Valencia plays Techno, House and Reggaeton. Each visitor gets a fresh shuffle. A genre with no tracks of its own plays the city’s other tracks on air, and a city with none plays HOY’s own generated beat.</p>
 </section>
 
 <section class="card card-b">
