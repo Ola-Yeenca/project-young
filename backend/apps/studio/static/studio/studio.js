@@ -225,7 +225,7 @@
       try {
         const response = await fetch(form.action, {method:"POST",body:new FormData(form),credentials:"same-origin",redirect:"error",headers:{Accept:"application/json"}});
         if (response.status === 400) { const data = await response.json();mount(data.html);content.querySelector(".has-err input,.has-err select")?.focus();return; }
-        if (!response.ok) throw new Error(response.status === 403 ? "You no longer have permission to add this choice." : "The choice could not be saved. Your draft is unchanged.");
+        if (!response.ok) throw new Error(response.status === 403 ? "You no longer have permission to add this." : "Couldn't save this. Nothing else on the page has changed.");
         const data = await response.json(), target = document.getElementById(trigger.dataset.choiceTarget);
         document.dispatchEvent(new CustomEvent("studio-choice-created", {detail:data}));
         if (data.kind === "venue") {
@@ -238,9 +238,9 @@
           if (list && ![...list.options].some(option => option.value === data.name)) list.append(new Option(data.name,data.name));
         }
         target.value = value;target.dispatchEvent(new Event("change",{bubbles:true}));target.dispatchEvent(new Event("input",{bubbles:true}));
-        document.getElementById("choice-notice").textContent = data.name+" created and selected. Save the draft to keep this selection.";
+        document.getElementById("choice-notice").textContent = data.name+" added and selected. Save the form to keep it.";
         dialog.close();target.focus();
-      } catch (exception) { fail(exception.message === "Failed to fetch" ? "The save could not be confirmed. Keep this dialog open and retry. Your draft is unchanged." : exception.message); }
+      } catch (exception) { fail(exception.message === "Failed to fetch" ? "Couldn't confirm the save. Keep this window open and try again. Nothing else on the page has changed." : exception.message); }
       finally {saving = false;buttons.forEach(button => button.disabled = false);}
     });
     form.querySelector("input:not([type=hidden]),select")?.focus();
@@ -256,7 +256,7 @@
     if (button.dataset.choiceKind === "venue") url.searchParams.set("city",document.getElementById("id_city").value);
     try {
       const response = await fetch(url,{credentials:"same-origin",redirect:"error",cache:"no-store"});
-      if (!response.ok) throw new Error("Could not load this form. Check your access and try again.");
+      if (!response.ok) throw new Error("Couldn't load this form. Check your access and try again.");
       const html = await response.text();if (current === generation && dialog.open) mount(html);
     } catch (exception) {if (current === generation && dialog.open) fail(exception.message);}
   }));

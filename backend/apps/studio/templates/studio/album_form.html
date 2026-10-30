@@ -13,7 +13,7 @@
         <label class="file-drop" for="id_m-photos" style="padding:40px">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the night's photos here">Drop the night's photos here</b><span>JPEG, PNG or WebP · maximum 10 MiB and 40 MP each</span><input id="id_m-photos" type="file" name="m-photos" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple><div class="file-preview"></div></label>
         {% for e in upload.photos.errors %}<span class="err">{{ e }}</span>{% endfor %}{% for e in upload.non_field_errors %}<span class="err">{{ e }}</span>{% endfor %}
         <div class="fgrid">{{ upload.video_url }}{{ upload.caption }}</div>
-        <div><button class="btn pri">{% include "studio/_i.html" with i="upload" %}Add as unpublished</button></div>
+        <div><button class="btn pri">{% include "studio/_i.html" with i="upload" %}Add as hidden</button></div>
       </form>
     </section>
     <section class="masonry">

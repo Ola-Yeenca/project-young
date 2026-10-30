@@ -74,10 +74,10 @@
 
     <div class="split" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
       <section class="card">
-        <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="mic" %}</span><h2>Most requested</h2><span class="grow"></span><span class="muted" style="font-size:.84rem">90 days</span></div>
+        <div class="card-h"><span class="badge-ico">{% include "studio/_i.html" with i="mic" %}</span><h2>Most requested</h2><span class="grow"></span><span class="muted" style="font-size:.84rem">Last 90 days</span></div>
         <div class="card-b">
           {% if demand %}<div class="hbars">{% for d in demand %}<a class="hbar" href="{% url 'studio:talent_edit' d.talent__pk %}"><span>{{ d.talent__name }}</span><span class="t"><i style="width:{{ d.pct }}%"></i></span><b>{{ d.value }}</b></a>{% endfor %}</div>
-          {% else %}<p class="muted">No booking enquiries yet. They'll rank your most wanted acts here.</p>{% endif %}
+          {% else %}<p class="muted">No booking enquiries yet. The acts people ask for most will show up here.</p>{% endif %}
         </div>
       </section>
       <section class="card">
@@ -85,7 +85,7 @@
         <div class="acts-list">
           {% for a in activity %}
           <div class="act"><span class="av">{{ a.user|initials }}</span><span><b style="font-weight:500">{{ a.user.get_short_name|default:a.user.get_username }}</b> {% if a.is_addition %}added{% elif a.is_deletion %}deleted{% else %}updated{% endif %} {{ a.object_repr|truncatechars:38 }}<small>{{ a.content_type.name|capfirst }} · {{ a.action_time|ago }}</small></span></div>
-          {% empty %}<div class="card-b muted">Changes made by the team will show up here.</div>{% endfor %}
+          {% empty %}<div class="card-b muted">Changes the team makes will show up here.</div>{% endfor %}
         </div>
       </section>
     </div>

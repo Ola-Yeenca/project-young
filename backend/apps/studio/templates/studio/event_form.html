@@ -32,7 +32,7 @@
             <label class="file-drop" for="id_poster">{% include "studio/_i.html" with i="upload" %}<b data-default="Drop the poster here or click to choose">{% if event.poster %}Replace the poster{% else %}Drop the poster here or click to choose{% endif %}</b><span style="font-size:.8rem">JPEG, PNG or WebP · maximum 10 MiB and 40 MP</span>
               <input id="id_poster" type="file" name="poster" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-preview="#pv-img"></label>
             {% for e in form.poster.errors %}<span class="err">{{ e }}</span>{% endfor %}
-            {% if event.poster %}<label class="switch" for="poster-clear" style="margin-top:10px"><span><b>Clear current poster</b><small>The stored original remains intact.</small></span><input id="poster-clear" type="checkbox" name="poster-clear"></label>{% endif %}
+            {% if event.poster %}<label class="switch" for="poster-clear" style="margin-top:10px"><span><b>Remove the poster</b><small>The event shows no poster. The original file stays in storage.</small></span><input id="poster-clear" type="checkbox" name="poster-clear"></label>{% endif %}
           </div>
           {% include "studio/_field.html" with f=form.poster_alt wide=1 %}
           {% include "studio/_field.html" with f=form.poster_fit wide=1 %}

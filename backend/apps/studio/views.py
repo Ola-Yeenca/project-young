@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.text import capfirst, get_text_list
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.community.models import INTERESTS, Member
@@ -53,6 +54,7 @@ from .forms import (
 
 OVERDUE_AFTER = timedelta(hours=24)
 OPEN_STATUSES = [EnquiryBase.Status.NEW, EnquiryBase.Status.IN_PROGRESS, EnquiryBase.Status.WAITING]
+FORM_ERRORS = "Some fields need fixing. They're marked on the form."
 
 
 # ---------------------------------------------------------------- auth + scope
@@ -217,7 +219,7 @@ def overview(request):
             "note": f"{this_week} this week vs {last_week} last week",
         },
         {
-            "label": "Events next 30 days",
+            "label": "Next 30 days",
             "icon": "calendar",
             "sq": "ink",
             "value": next30.count() + drafts_soon.count(),
@@ -243,7 +245,7 @@ def overview(request):
             "value": won_now,
             "url": reverse("studio:enquiries") + "?status=won",
             "delta": _delta(won_now, won_before),
-            "note": "last 90 days",
+            "note": "last 90 days vs the 90 before",
         },
     ]
 
@@ -255,7 +257,7 @@ def overview(request):
                 "tone": "critical",
                 "icon": "clock",
                 "title": f"{len(overdue)} enquir{'ies' if len(overdue) != 1 else 'y'} waiting over 24 hours",
-                "body": f"{names}{' and others' if len(overdue) > 3 else ''}. Clients expect a reply within one working day.",
+                "body": f"{names}{' and others' if len(overdue) > 3 else ''}. The confirmation email promises a reply within one working day.",
                 "cta": "Reply now",
                 "url": reverse("studio:enquiries") + f"?status=new&open={overdue[0]['key']}",
             }
@@ -268,8 +270,8 @@ def overview(request):
                 "tone": "warning",
                 "icon": "image",
                 "title": f"{len(missing_poster)} upcoming event{'s' if len(missing_poster) != 1 else ''} without a poster",
-                "body": f"{e.title} is {_when(e, now)['rel']}. Events with artwork get far more ticket clicks.",
-                "cta": "Add artwork",
+                "body": f"{e.title} is {_when(e, now)['rel'].lower()}. Until it has one, the site shows placeholder art.",
+                "cta": "Add a poster",
                 "url": reverse("studio:event_edit", args=[e.pk]),
             }
         )
@@ -285,7 +287,7 @@ def overview(request):
                 "tone": "warning",
                 "icon": "ticket",
                 "title": f"{e.title} has no usable ticket link",
-                "body": f"{_when(e, now)['date']} in {e.city}. Buyers can't purchase until it has one.",
+                "body": f"{_when(e, now)['date']} in {e.city}. Nobody can buy tickets until it has one.",
                 "cta": "Add ticket link",
                 "url": reverse("studio:event_edit", args=[e.pk]),
             }
@@ -297,7 +299,7 @@ def overview(request):
                 "tone": "info",
                 "icon": "draft",
                 "title": f"{drafts_soon.count()} event{'s' if drafts_soon.count() != 1 else ''} still in draft",
-                "body": f"{e.title} starts {_when(e, now)['rel']} and isn't on the site yet.",
+                "body": f"{e.title} starts {_when(e, now)['rel'].lower()} and isn't on the site yet.",
                 "cta": "Review and publish",
                 "url": reverse("studio:event_edit", args=[e.pk]),
             }
@@ -435,24 +437,24 @@ def enquiry_update(request, key):
         data = form.cleaned_data
         if data["status"] and data["status"] != e.status:
             e.status = data["status"]
-            changes.append(f"status → {e.get_status_display()}")
+            changes.append(f"status set to {e.get_status_display()}")
         if "internal_notes" in request.POST and data["internal_notes"] != e.internal_notes:
             e.internal_notes = data["internal_notes"]
-            changes.append("notes")
+            changes.append("notes updated")
         assign = data["assign"]
         if assign == "me":
             e.assigned_to = request.user
             changes.append("assigned to me")
         elif assign == "none":
             e.assigned_to = None
-            changes.append("unassigned")
+            changes.append("owner removed")
         elif assign.isdigit():
             e.assigned_to = get_user_model().objects.filter(pk=assign, is_staff=True).first()
-            changes.append("reassigned")
+            changes.append("owner changed")
         if changes:
             e.save()
             log(request, e, CHANGED, ", ".join(changes))
-            messages.success(request, f"{e.reference} updated: {', '.join(changes)}.")
+            messages.success(request, f"Saved {e.reference}. {capfirst(get_text_list(changes, 'and'))}.")
     back = request.POST.get("back") or reverse("studio:enquiries")
     if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}):
         back = reverse("studio:enquiries")
@@ -501,7 +503,7 @@ def event_edit(request, pk=None):
             if request.POST.get("action") == "save_continue":
                 return redirect("studio:event_edit", pk=obj.pk)
             return redirect(reverse("studio:events") + ("?tab=drafts" if obj.status == "draft" else ""))
-        messages.error(request, "Some fields need attention.")
+        messages.error(request, FORM_ERRORS)
     venues = [{"id": v.pk, "city": v.city_id, "name": v.name} for v in form.fields["venue"].queryset]
     talent_by_city = {}
     for t in form.fields["lineup"].queryset:
@@ -539,7 +541,7 @@ def event_toggle(request, pk, field):
         try:
             event.full_clean()
         except ValidationError as exc:
-            messages.error(request, f"Can't publish {event.title}: " + " ".join(m for msgs in exc.message_dict.values() for m in msgs))
+            messages.error(request, f"Can't publish {event.title}. " + " ".join(m for msgs in exc.message_dict.values() for m in msgs))
             return redirect(request.POST.get("back") or "studio:events")
         event.save(update_fields=["status", "updated_at"])
         msg = f"{event.title} {'published' if event.status == 'published' else 'moved to drafts'}."
@@ -583,13 +585,15 @@ def talent_edit(request, pk=None):
             if upload.is_valid():
                 n = _add_media(TalentMedia, {"talent": person}, upload.cleaned_data, person.media.count())
                 log(request, person, CHANGED, f"added {n} media")
-                messages.success(request, f"Added {n} item(s) to {person.name}.")
+                messages.success(request, f"Added {n} {'item' if n == 1 else 'items'} to {person.name}.")
             else:
-                messages.error(request, " ".join(upload.non_field_errors()) or "Couldn't add that.")
+                messages.error(
+                    request, " ".join(upload.non_field_errors()) or "Couldn't add that. Check the files or the link and try again."
+                )
             return redirect("studio:talent_edit", pk=person.pk)
         if action == "delete_media" and person:
             person.media.filter(pk=request.POST.get("media")).delete()
-            messages.success(request, "Removed.")
+            messages.success(request, "Removed from the profile.")
             return redirect("studio:talent_edit", pk=person.pk)
         if form.is_valid():
             created = person is None
@@ -597,7 +601,7 @@ def talent_edit(request, pk=None):
             log(request, obj, ADDED if created else CHANGED, "saved in Studio")
             messages.success(request, f"{'Added' if created else 'Saved'} {obj.name}.")
             return redirect("studio:talent_edit", pk=obj.pk)
-        messages.error(request, "Some fields need attention.")
+        messages.error(request, FORM_ERRORS)
     recent = BookingEnquiry.objects.filter(talent=person).order_by("-created_at")[:5] if person else []
     return render(
         request,
@@ -615,7 +619,7 @@ def talent_toggle(request, pk, field):
         raise Http404
     setattr(person, attr, not getattr(person, attr))
     person.save(update_fields=[attr, "updated_at"])
-    log(request, person, CHANGED, f"{attr} → {getattr(person, attr)}")
+    log(request, person, CHANGED, f"{attr} set to {getattr(person, attr)}")
     return redirect(request.POST.get("back") or "studio:talent")
 
 
@@ -701,9 +705,9 @@ def album_edit(request, pk=None):
                     is_published=False,
                 )
                 log(request, album, CHANGED, f"added {n} items")
-                messages.success(request, f"Added {n} item(s) to {album.title}.")
+                messages.success(request, f"Added {n} {'item' if n == 1 else 'items'} to {album.title}.")
                 return redirect("studio:album_edit", pk=album.pk)
-            messages.error(request, "Some uploads need attention.")
+            messages.error(request, "Some files couldn't be added. See the notes under the upload box.")
         elif action == "delete_item" and album:
             album.items.filter(pk=request.POST.get("item")).delete()
             messages.success(request, "Removed from the album.")
@@ -717,7 +721,7 @@ def album_edit(request, pk=None):
                 log(request, item, CHANGED, "Studio item: " + ", ".join(changed))
                 messages.success(request, "Album item saved.")
                 return redirect("studio:album_edit", pk=album.pk)
-            messages.error(request, "That album item needs attention.")
+            messages.error(request, "Couldn't save that item. See the notes on it.")
         elif form.is_valid():
             created = album is None
             obj = form.save()
@@ -725,7 +729,7 @@ def album_edit(request, pk=None):
             messages.success(request, f"{'Created' if created else 'Saved'} {obj.title}." + (" Now add some photos." if created else ""))
             return redirect("studio:album_edit", pk=obj.pk)
         elif action not in {"upload", "edit_item"}:
-            messages.error(request, "Some fields need attention.")
+            messages.error(request, FORM_ERRORS)
     items = list(album.items.all()) if album else []
     for item in items:
         if request.method == "POST" and request.POST.get("action") == "edit_item" and request.POST.get("item") == str(item.pk):
@@ -767,7 +771,7 @@ def product_edit(request, pk=None):
             log(request, obj, ADDED if created else CHANGED, "saved in Studio")
             messages.success(request, f"{'Added' if created else 'Saved'} {obj.name}.")
             return redirect("studio:product_edit", pk=obj.pk)
-        messages.error(request, "Some fields need attention.")
+        messages.error(request, FORM_ERRORS)
     return render(
         request, "studio/product_form.html", {"nav": "shop", "form": form, "prices": prices, "variants": variants, "product": product}
     )
@@ -866,9 +870,10 @@ def radio(request):
         if form.is_valid():
             track = form.save()
             log(request, track, ADDED, "uploaded in Studio")
-            messages.success(request, f"Added {track}. {'It’s on air.' if track.is_published else 'It’s off air until you switch it on.'}")
+            on_air = "It's on air." if track.is_published else "It stays off air until you put it on air."
+            messages.success(request, f"Added {track}. {on_air}")
             return redirect("studio:radio")
-        messages.error(request, "Some fields need attention.")
+        messages.error(request, FORM_ERRORS)
     tracks = Track.objects.select_related("city")
     city = current_city(request)
     if city:
@@ -918,7 +923,7 @@ def content(request):
             faqs.save()
             messages.success(request, "FAQs saved.")
             return redirect(reverse("studio:content") + "#faqs")
-        messages.error(request, "Some fields need attention.")
+        messages.error(request, FORM_ERRORS)
     cities = City.objects.annotate(
         n_events=Count("events", filter=Q(events__starts_at__gte=timezone.now()), distinct=True),
         n_talent=Count("talent", distinct=True),
@@ -979,7 +984,7 @@ def city_edit(request, pk=None):
             try:
                 venues.save()
             except ProtectedError:
-                messages.error(request, "A venue that has events can't be removed. Move or delete those events first.")
+                messages.error(request, "You can't remove a venue that has events. Move or delete those events first.")
                 return redirect("studio:city_edit", pk=obj.pk)
             log(request, obj, ADDED if created else CHANGED, "saved in Studio")
             if created:
@@ -987,7 +992,7 @@ def city_edit(request, pk=None):
             else:
                 messages.success(request, f"Saved {obj.name}.")
             return redirect("studio:city_edit", pk=obj.pk)
-        messages.error(request, "Some fields need attention.")
+        messages.error(request, FORM_ERRORS)
     zones = sorted(z for z in available_timezones() if "/" in z and not z.startswith(("Etc/", "SystemV/", "posix/", "right/")))
     return render(
         request,

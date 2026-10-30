@@ -11,14 +11,14 @@
     <span class="mono" style="color:var(--side-mute)">House of Young · Studio</span>
     <div class="disc" aria-hidden="true"></div>
     <div style="position:relative;display:grid;gap:14px">
-      <h1>Run the nights, the roster and the <span class="it">room.</span></h1>
-      <p>Events, talent, bookings and the gallery for Valencia and Lagos, in one place.</p>
+      <h1>Where the HOY team runs each <span class="it">night</span></h1>
+      <p>Events, talent, bookings and the gallery for Valencia and Lagos.</p>
     </div>
   </section>
   <section class="formside">
     <form method="post">{% csrf_token %}
-      <div><span class="mono">Team sign in</span><h2 style="margin-top:6px">Welcome back</h2></div>
-      {% if locked_out %}<div class="pill crit" role="alert" style="height:auto;padding:8px 12px;white-space:normal">Too many wrong passwords, so sign-in for this username is paused for {{ cooloff_minutes }} minutes on this connection. Wait, then try again. Forgotten it? Ask an admin to reset your password.</div>
+      <div><span class="mono">For the HOY team</span><h2 style="margin-top:6px">Sign in to Studio</h2></div>
+      {% if locked_out %}<div class="pill crit" role="alert" style="height:auto;padding:8px 12px;white-space:normal">Too many wrong passwords. Sign-in for this username is paused for {{ cooloff_minutes }} minutes on this connection. Try again after that, or ask an admin to reset your password.</div>
       {% elif form.non_field_errors %}<div class="pill crit" style="height:auto;padding:8px 12px;white-space:normal">Wrong username or password. Check both and try again.</div>{% endif %}
       <div class="f"><label for="id_username">Username</label><input class="in" id="id_username" name="username" autocomplete="username" autofocus required></div>
       <div class="f"><label for="id_password">Password</label><input class="in" id="id_password" name="password" type="password" autocomplete="current-password" required></div>

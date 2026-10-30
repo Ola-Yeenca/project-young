@@ -2,7 +2,7 @@
 {% block title %}Gallery{% endblock %}
 {% block icon %}{% include "studio/_i.html" with i="image" %}{% endblock %}
 {% block heading %}Gallery{% endblock %}
-{% block sub %}Albums from the nights · last 30 days: {{ stats.views }} view{{ stats.views|pluralize }}, {{ stats.downloads }} download{{ stats.downloads|pluralize }}, {{ stats.visitors }} visitor-day{{ stats.visitors|pluralize }}, {{ stats.devices }} recognised device{{ stats.devices|pluralize }}{% endblock %}
+{% block sub %}Albums from the nights · last 30 days · {{ stats.views }} view{{ stats.views|pluralize }}, {{ stats.downloads }} download{{ stats.downloads|pluralize }}, {{ stats.visitors }} visitor-day{{ stats.visitors|pluralize }} and {{ stats.devices }} recognised device{{ stats.devices|pluralize }}{% endblock %}
 {% block action %}<a class="btn pri" href="{% url 'studio:album_new' %}">{% include "studio/_i.html" with i="plus" %}<span>New album</span></a>{% endblock %}
 {% block content %}
 <section class="card">

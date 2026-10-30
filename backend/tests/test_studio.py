@@ -5,6 +5,7 @@ from axes.models import AccessAttempt
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.contrib.messages import get_messages
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
@@ -145,6 +146,8 @@ class StudioActionTests(HOYTestCase):
         e.refresh_from_db()
         self.assertEqual((e.status, e.internal_notes, e.assigned_to), ("won", "Quote sent", self.boss))
         self.assertTrue(LogEntry.objects.filter(object_id=str(e.pk), change_message__contains="Confirmed").exists())
+        toast = [str(m) for m in get_messages(r.wsgi_request)]
+        self.assertEqual(toast, [f"Saved {e.reference}. Status set to Confirmed / won, notes updated and assigned to me."])
 
     def test_unknown_enquiry_key_is_404(self):
         self.assertEqual(self.client.post(reverse("studio:enquiry_update", args=["xx-1"])).status_code, 404)

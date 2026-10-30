@@ -9,7 +9,7 @@ MAX_MB = 30
 
 def audio_size(f):
     if f.size > MAX_MB * 1024 * 1024:
-        raise ValidationError(f"Keep tracks under {MAX_MB} MB. Export as MP3 at 192–320 kbps.")
+        raise ValidationError(f"Keep tracks under {MAX_MB} MB. Export as MP3 at 192 to 320 kbps.")
 
 
 class TrackQuerySet(models.QuerySet):
@@ -48,4 +48,4 @@ class Track(TimeStampedModel):
         ordering = ("genre", "artist", "title")
 
     def __str__(self):
-        return f"{self.artist} – {self.title}"
+        return f"{self.title} by {self.artist}"

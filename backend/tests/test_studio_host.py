@@ -29,7 +29,7 @@ class StudioHostTests(HOYTestCase):
     def test_studio_and_admin_answer_at_the_root(self):
         r = self.studio.get("/")
         self.assertEqual((r.status_code, r["Location"]), (302, "/login/?next=/"))
-        self.assertContains(self.studio.get("/login/"), "Team sign in")
+        self.assertContains(self.studio.get("/login/"), "Sign in to Studio")
         self.assertEqual(self.studio.get("/admin/login/").status_code, 200)
         self.studio.force_login(self.boss)
         for path in ("/", "/events/", "/enquiries/", "/crowd/", "/content/", "/cities/", "/admin/", "/admin/auth/user/"):
@@ -110,7 +110,7 @@ class StudioWithoutItsOwnHostTests(HOYTestCase):
     def test_studio_and_admin_stay_on_the_main_host(self):
         self.assertEqual(reverse("studio:events"), "/studio/events/")
         login = self.client.get("/studio/login/")
-        self.assertContains(login, "Team sign in")
+        self.assertContains(login, "Sign in to Studio")
         self.assertNotIn("X-Robots-Tag", login)
         r = self.client.get("/admin/")
         self.assertEqual((r.status_code, r["Location"]), (302, "/admin/login/?next=/admin/"))

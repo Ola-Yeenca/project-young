@@ -11,11 +11,11 @@
     <div style="display:flex;align-items:center;gap:8px"><span class="mono">{{ c.country }} · {{ c.currency }}</span><span class="grow" style="flex:1"></span>{% if c.is_active %}<span class="pill good">Live</span>{% else %}<span class="pill gold">Hidden</span>{% endif %}</div>
     <h3>{{ c.name }}</h3>
     <span class="muted" style="font-size:.86rem">{{ c.n_events }} upcoming event{{ c.n_events|pluralize }} · {{ c.n_talent }} on the roster</span>
-    <span class="muted" style="font-size:.86rem">Tickets via {{ c.ticket_provider|default:"—" }} · WhatsApp {{ c.whatsapp_number|default:"—" }}</span>
+    <span class="muted" style="font-size:.86rem">Tickets via {{ c.ticket_provider|default:"no partner yet" }} · WhatsApp {{ c.whatsapp_number|default:"not set" }}</span>
     <a class="btn sm" style="justify-self:start;margin-top:4px" href="{% url 'studio:city_edit' c.pk %}">Edit city</a>
   </section>
   {% endfor %}
-  {% if perms.core.add_city %}<a class="new-card" style="min-height:150px" href="{% url 'studio:city_new' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.8rem">Accra, London… one form</span></a>{% endif %}
+  {% if perms.core.add_city %}<a class="new-card" style="min-height:150px" href="{% url 'studio:city_new' %}">{% include "studio/_i.html" with i="plus" %}<b style="font-weight:500">Add a city</b><span style="font-size:.8rem">Set up the next city here</span></a>{% endif %}
 </div>
 
 <form class="card" method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden" name="action" value="site">
@@ -37,7 +37,7 @@
       <div class="city-hero{% if video or still %} filmed{% endif %}" id="pv-deck">{% include "studio/_deck_media.html" %}<span class="mono">Every city</span><b>House of Young</b><span class="muted" style="font-size:.8rem">The default homepage video</span></div>
     </div>
     {% endwith %}
-    <div class="sect-h full" id="company" style="margin:10px 0 0"><span class="sq soft-gold">{% include "studio/_i.html" with i="draft" %}</span>Company details<span class="muted" style="font-weight:400;font-size:.86rem">For the Legal notice and Privacy pages. Anything left blank shows as “details to follow”.</span></div>
+    <div class="sect-h full" id="company" style="margin:10px 0 0"><span class="sq soft-gold">{% include "studio/_i.html" with i="draft" %}</span>Company details<span class="muted" style="font-weight:400;font-size:.86rem">For the Legal notice and Privacy pages. Anything left blank shows as "details to follow".</span></div>
     {% include "studio/_field.html" with f=site_form.legal_name %}{% include "studio/_field.html" with f=site_form.tax_id %}
     {% include "studio/_field.html" with f=site_form.legal_address %}{% include "studio/_field.html" with f=site_form.registry_details %}
     {% include "studio/_field.html" with f=site_form.privacy_email %}

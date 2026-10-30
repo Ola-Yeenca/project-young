@@ -19,7 +19,7 @@
     </div>
     <div class="stats">
       {% if not p.is_published %}<span class="pill gold">Hidden</span>{% elif not p.booking_available %}<span class="pill">Not taking bookings</span>{% else %}<span class="pill good">Bookable</span>{% endif %}
-      {% if p.open_count %}<a class="pill info" href="{% url 'studio:enquiries' %}?q={{ p.name|urlencode }}">{{ p.open_count }} open</a>{% endif %}
+      {% if p.open_count %}<a class="pill info" href="{% url 'studio:enquiries' %}?q={{ p.name|urlencode }}">{{ p.open_count }} open enquir{{ p.open_count|pluralize:"y,ies" }}</a>{% endif %}
       {% if p.event_count %}<span class="pill nodot">{{ p.event_count }} upcoming</span>{% endif %}
       <span class="grow"></span>
       <form method="post" action="{% url 'studio:talent_toggle' p.pk 'featured' %}">{% csrf_token %}<input type="hidden" name="back" value="{{ request.get_full_path }}"><button class="star {% if p.is_featured %}on{% endif %}" title="{% if p.is_featured %}On the homepage line-up{% else %}Feature on the homepage{% endif %}" aria-pressed="{{ p.is_featured|yesno:'true,false' }}">{% include "studio/_i.html" with i="star" %}</button></form>

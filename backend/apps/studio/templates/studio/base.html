@@ -41,8 +41,8 @@
       <div class="sky"><span class="disc"></span></div>
       <div class="b">
         <b>Finish setup</b>
-        <p>Next: {{ setup.next.label|lower }}.</p>
-        <div class="row"><span class="ring" style="--p:{{ setup.pct }}"></span><span>{{ setup.done }} of {{ setup.total }}</span><span class="grow"></span><a class="btn sm" href="{{ setup.next.url }}">Do it</a></div>
+        <p>Next, {{ setup.next.label|lower }}.</p>
+        <div class="row"><span class="ring" style="--p:{{ setup.pct }}"></span><span>{{ setup.done }} of {{ setup.total }} done</span><span class="grow"></span><a class="btn sm" href="{{ setup.next.url }}">Start</a></div>
       </div>
     </div>
     {% endif %}

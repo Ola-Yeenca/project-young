@@ -8,11 +8,12 @@ from apps.enquiries.models import EnquiryBase
 from apps.events.models import Event
 from apps.events.timezones import from_city_wall_time, to_city_wall_time
 from apps.gallery.models import Album, AlbumItem
-from apps.radio.models import Track
+from apps.radio.models import MAX_MB, Track
 from apps.shop.models import Product, ProductPrice, ProductVariant
 from apps.talent.models import Talent
 
 DT_FORMAT = "%Y-%m-%dT%H:%M"
+DJANGO_BLANK = "---------"
 
 
 def music_style_choices(current=None):
@@ -53,6 +54,10 @@ class StyledMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
+            if getattr(field, "empty_label", None) == DJANGO_BLANK:
+                field.empty_label = "Choose one"
+            elif isinstance(field, forms.TypedChoiceField) and field.choices and field.choices[0] == ("", DJANGO_BLANK):
+                field.choices = [("", "Choose one"), *field.choices[1:]]
             widget = field.widget
             if isinstance(widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple)):
                 continue
@@ -103,7 +108,28 @@ class EventForm(StyledMixin, forms.ModelForm):
             "ends_at": LocalDateTimeInput(),
             "lineup": forms.CheckboxSelectMultiple,
             "description": forms.Textarea(attrs={"rows": 5}),
-            "poster_alt": forms.TextInput(attrs={"placeholder": "Example: Gold event poster with the date and venue"}),
+            "poster_alt": forms.TextInput(attrs={"placeholder": "e.g. Gold event poster with the date and venue"}),
+        }
+        labels = {
+            "kind": "Event type",
+            "poster_alt": "Poster description",
+            "lineup_extra": "Other acts",
+            "bpm": "BPM",
+            "ticket_url": "Ticket link",
+            "ticket_provider": "Ticket partner",
+            "sold_percent": "Percent sold",
+            "is_featured": "Feature on the homepage",
+            "featured_order": "Homepage order",
+        }
+        help_texts = {
+            "starts_at": "When doors open, in the event city's local time.",
+            "poster_fit": "Show the whole poster so no text is cut off, or fill the frame and crop the edges.",
+            "caption": 'One line for the homepage, for example "Log drums, salt air, an early finish."',
+            "lineup_extra": 'Acts who aren\'t on the HOY roster, separated by commas, for example "Special guest".',
+            "ticket_url": "The Fourvenues, Tix.africa or other page where people buy tickets.",
+            "price_from": "Enter 0 for free entry. Leave blank if the price isn't announced.",
+            "sold_percent": 'Optional. Shows a "% sold" bar.',
+            "is_featured": "Puts it on the homepage record player.",
         }
 
     def __init__(self, *args, **kwargs):
@@ -157,6 +183,25 @@ class TalentForm(StyledMixin, forms.ModelForm):
             "featured_order",
         )
         widgets = {"bio": forms.Textarea(attrs={"rows": 4}), "previous_work": forms.Textarea(attrs={"rows": 4})}
+        labels = {
+            "booking_available": "Taking bookings",
+            "spotify_url": "Spotify",
+            "apple_music_url": "Apple Music",
+            "soundcloud_url": "SoundCloud",
+            "youtube_url": "YouTube",
+            "instagram_url": "Instagram",
+            "tiktok_url": "TikTok",
+            "website_url": "Website",
+            "is_published": "Show on the site",
+            "is_featured": "Feature on the homepage",
+            "featured_order": "Homepage order",
+        }
+        help_texts = {
+            "genre": "Genre or speciality, for example Afrobeats or Amapiano.",
+            "previous_work": "One per line, such as residencies, headline shows and brands.",
+            "travels": "Takes bookings outside their home city.",
+            "is_featured": "Shows them in the homepage line-up.",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -204,6 +249,12 @@ class AlbumForm(StyledMixin, forms.ModelForm):
         model = Album
         fields = ("title", "slug", "city", "event", "date", "cover", "is_published", "order")
         widgets = {"date": forms.DateInput(attrs={"type": "date"})}
+        labels = {"is_published": "Show on the site", "order": "Position in the gallery"}
+        help_texts = {"event": "Pick an event to show this album on its page too.", "order": "Lower numbers show first."}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["event"].empty_label = "No event"
 
 
 class AlbumItemForm(StyledMixin, forms.ModelForm):
@@ -211,6 +262,7 @@ class AlbumItemForm(StyledMixin, forms.ModelForm):
         model = AlbumItem
         fields = ("image", "alt", "caption", "order", "is_published")
         widgets = {"alt": forms.TextInput(attrs={"placeholder": "Describe this image"})}
+        labels = {"alt": "Image description", "order": "Position in the album", "is_published": "Show on the site"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -223,18 +275,25 @@ class ProductForm(StyledMixin, forms.ModelForm):
         model = Product
         fields = ("name", "slug", "image", "description", "material", "fit", "is_published", "order")
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
+        labels = {"is_published": "Show in the shop", "order": "Position in the shop"}
 
 
 class PriceForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = ProductPrice
         fields = ("city", "amount", "checkout_url", "is_available")
+        labels = {"checkout_url": "Checkout link", "is_available": "Available"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["city"].empty_label = "City"
 
 
 class VariantForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = ProductVariant
         fields = ("label", "sku", "stock", "order")
+        labels = {"label": "Size", "sku": "SKU", "order": "Position"}
 
 
 PriceFormSet = inlineformset_factory(Product, ProductPrice, form=PriceForm, extra=1, can_delete=True)
@@ -281,6 +340,8 @@ class SiteSettingsForm(StyledMixin, forms.ModelForm):
             "vision": forms.Textarea(attrs={"rows": 5}),
             "community": forms.Textarea(attrs={"rows": 5}),
         }
+        labels = {"instagram_url": "Instagram", "tiktok_url": "TikTok", "youtube_url": "YouTube", "show_powered_by": "Footer credit"}
+        help_texts = {"show_powered_by": 'Shows "Powered by SME Analytica" in the footer.'}
 
 
 class EnquiryUpdateForm(forms.Form):
@@ -414,6 +475,7 @@ class VenueForm(StyledMixin, forms.ModelForm):
         model = Venue
         fields = ("name", "address", "map_url", "capacity")
         widgets = {"address": forms.TextInput()}
+        labels = {"map_url": "Map link"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -477,7 +539,7 @@ class BaseVenueFormSet(BaseInlineFormSet):
             name_key = normalize_catalog_name(name)
             slug_key = form.instance.slug or slugify(name)[:120]
             if name_key in seen_names:
-                message = "Venue names must be unique within a city."
+                message = "Each venue in a city needs its own name."
                 form.add_error("name", message)
                 seen_names[name_key].add_error("name", message)
             else:
@@ -485,7 +547,7 @@ class BaseVenueFormSet(BaseInlineFormSet):
             if not slug_key:
                 form.add_error("name", "Enter a venue name that can form a web address.")
             elif slug_key in seen_slugs:
-                message = "Venue web addresses must be unique within a city."
+                message = "Each venue in a city needs its own web address."
                 form.add_error("name", message)
                 seen_slugs[slug_key].add_error("name", message)
             else:
@@ -499,6 +561,11 @@ class TrackForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Track
         fields = ("title", "artist", "genre", "city", "file", "rights", "is_published")
+        help_texts = {
+            "city": "Pick a city to play it only there.",
+            "file": f"MP3, M4A, AAC, OGG or WAV, under {MAX_MB} MB.",
+            "rights": "Who allowed HOY to stream this, and when. For example, \"Artist's own track, OK'd by email on 12 Oct.\"",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
