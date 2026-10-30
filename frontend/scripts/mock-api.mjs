@@ -125,7 +125,7 @@ function validate(kind, body) {
   const errors = Object.fromEntries(Object.entries(checks).filter(([, v]) => v));
   if (Object.keys(errors).length) return errors;
   // Object-level validation only runs once every field is valid, as in DRF.
-  if (String(body.website ?? "")) return { non_field_errors: ["Submission rejected."] };
+  if (String(body.website ?? "")) return { non_field_errors: ["We couldn't send this form."] };
   if (!String(body.email ?? "").trim() && !String(body.phone ?? "").trim()) return { email: ["Give an email address or a phone number so we can reply."] };
   return null;
 }

@@ -253,9 +253,9 @@ class EventTaste(generics.GenericAPIView):
     def post(self, request, slug):
         event = get_object_or_404(Event.objects.published(), slug=slug)
         if event.status == Event.Status.CANCELLED:
-            return Response({"detail": "This event was cancelled."}, status=400)
+            return Response({"detail": "This event is cancelled."}, status=400)
         if not taste.is_open(event):
-            return Response({"detail": "Answers for this night are closed."}, status=400)
+            return Response({"detail": "Answers for this night have closed."}, status=400)
         options = {style for style, _ in taste.genre_options(event)}
         serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "options": options})
         serializer.is_valid(raise_exception=True)

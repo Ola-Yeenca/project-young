@@ -250,7 +250,7 @@ export function Dock() {
           <i></i>
           <i></i>
         </span>
-        <span>{onAir ? `HOY Radio · ${onAir.artist} – ${onAir.title}` : e ? `HOY Radio · ${grooves[cur]?.label} · ${grooves[cur]?.bpm} BPM` : ""}</span>
+        <span>{onAir ? `HOY Radio · ${onAir.title} by ${onAir.artist}` : e ? `HOY Radio · ${grooves[cur]?.label} · ${grooves[cur]?.bpm} BPM` : ""}</span>
         <button aria-label="Stop" onClick={() => stop()}>
           ■
         </button>

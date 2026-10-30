@@ -22,7 +22,7 @@ const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: [
 export const metadata: Metadata = {
   title: { default: "House of Young", template: "%s · House of Young" },
   description:
-    "House of Young (HOY) is a creative and entertainment-driven platform: events, talent, merchandise and collaborations, in Valencia and Lagos. The Vision Is Ours.",
+    "House of Young (HOY) runs events and represents artists in Valencia and Lagos, and makes its own merch. The Vision Is Ours.",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };

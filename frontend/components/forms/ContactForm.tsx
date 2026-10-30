@@ -104,7 +104,7 @@ export function ContactForm() {
               )}
             </button>
           </div>
-          <span className="note">Goes to the HOY inbox. You get a confirmation email.</span>
+          <span className="note">Your message goes to the HOY team, and we email you a confirmation.</span>
         </form>
       )}
     </div>

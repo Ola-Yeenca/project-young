@@ -58,7 +58,7 @@ export function TasteStep({ e, done }: { e: EventItem; done: () => void }) {
           <p className="taste-ev">
             {e.title} · {e.local.date} · {e.venue.name}
           </p>
-          <p className="taste-why">Twenty seconds, no name needed. The DJs read the answers before doors.</p>
+          <p className="taste-why">It takes twenty seconds, and we don&apos;t ask for your name. The DJs read every answer before doors open.</p>
           <TasteForm id="ts" slug={e.slug} source="ticket" options={options} initial={initial} onSent={() => setSent(true)} onSkip={done} />
         </>
       )}

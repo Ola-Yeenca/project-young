@@ -14,13 +14,13 @@ export default async function Page() {
         <p className="mono">Last updated {UPDATED}</p>
         <p>
           By using this website you agree to these terms. See also our <Link href="/privacy">privacy policy</Link> and <Link href="/legal">legal notice</Link>. If we
-          change these terms we&rsquo;ll update the date above.
+          change these terms we&apos;ll update the date above.
         </p>
 
         <h3>Using the site</h3>
         <p>
-          It&rsquo;s for your own personal, non-commercial use. No scraping, abuse, fake submissions or attempts to break into or overload it. Line-ups, times and
-          prices can change; the ticket seller&rsquo;s page has the final word.
+          It&apos;s for your own personal, non-commercial use. Don&apos;t scrape or abuse it, send fake submissions or try to break into or overload it. Line-ups,
+          times and prices can change, and the ticket seller&apos;s page has the final word.
         </p>
 
         <h3 id="tickets">Tickets</h3>
@@ -32,14 +32,14 @@ export default async function Page() {
         <h3 id="photos">Photos and filming at events</h3>
         <p>
           By attending you accept that you may appear in our photos and videos, on this site, on social media and in our promotion. To have a photo of you removed
-          from the gallery, use the <Link href="/contact">contact form</Link>. Gallery downloads are for personal use with credit; nothing commercial without our
-          written permission.
+          from the gallery, use the <Link href="/contact">contact form</Link>. Gallery downloads are for personal use with credit. Commercial use needs our written
+          permission.
         </p>
 
         <h3>Rights, liability and law</h3>
         <p>
-          All rights reserved; see the <Link href="/legal">legal notice</Link>. To the extent the law allows, we aren&rsquo;t liable for any loss from using the site,
-          and nothing here limits your rights as a consumer. These terms are governed by Spanish law.
+          All rights reserved, as set out in the <Link href="/legal">legal notice</Link>. To the extent the law allows, we aren&apos;t liable for any loss from using
+          the site, and nothing here limits your rights as a consumer. Spanish law governs these terms.
         </p>
       </div>
     </section>

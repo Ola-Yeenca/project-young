@@ -60,8 +60,8 @@ export function JoinForm() {
     return (
       <div className="sent" ref={sent} tabIndex={-1} role="status">
         <span className="mono">Welcome to the family</span>
-        <b>You’re in.</b>
-        <p>You’ll hear about new events, ticket drops and opportunities first.</p>
+        <b>You&apos;re in.</b>
+        <p>You&apos;ll hear about new events, ticket drops and opportunities first.</p>
         {ig && (
           <div>
             <a className="btn ink mag" href={ig} target="_blank" rel="noopener">
@@ -150,11 +150,11 @@ export function JoinForm() {
       </div>
       {ig && (
         <span className="note">
-          And follow us on Instagram,{" "}
+          Follow us on Instagram at{" "}
           <a href={ig} target="_blank" rel="noopener">
             @{handleOf(ig)}
-          </a>
-          , for the latest drops and behind the scenes.
+          </a>{" "}
+          for new drops and behind-the-scenes posts.
         </span>
       )}
     </form>

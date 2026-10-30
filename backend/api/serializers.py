@@ -316,7 +316,7 @@ class EnquiryCreateMixin(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get("website"):
-            raise serializers.ValidationError("Submission rejected.")
+            raise serializers.ValidationError("We couldn't send this form.")
         if not attrs.get("email") and not attrs.get("phone"):
             raise serializers.ValidationError({"email": "Give an email address or a phone number so we can reply."})
         attrs.pop("website", None)
@@ -412,7 +412,7 @@ class CommunityJoinSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get("website"):
-            raise serializers.ValidationError("Submission rejected.")
+            raise serializers.ValidationError("We couldn't send this form.")
         if attrs["channel"] != Member.Channel.EMAIL and not attrs.get("phone"):
             raise serializers.ValidationError({"phone": "Add a WhatsApp number, or choose email only."})
         return attrs
@@ -442,7 +442,9 @@ class TasteAnswerSerializer(serializers.Serializer):
     """One guest's answer. Needs `options` (allowed genre slugs) in the context."""
 
     token = serializers.RegexField(
-        r"^[A-Za-z0-9_-]{16,64}$", help_text="Random id the browser keeps for its answers.", error_messages={"invalid": "Invalid token."}
+        r"^[A-Za-z0-9_-]{16,64}$",
+        help_text="Random id the browser keeps for its answers.",
+        error_messages={"invalid": "We couldn't save your answer. Reload the page and try again."},
     )
     source = serializers.ChoiceField(choices=TasteAnswer.Source.choices)
     genres = serializers.ListField(
@@ -470,7 +472,7 @@ class TasteAnswerSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get("website"):
-            raise serializers.ValidationError("Submission rejected.")
+            raise serializers.ValidationError("We couldn't save your answer.")
         if not (attrs.get("genres") or attrs.get("artist") or attrs.get("song")):
             raise serializers.ValidationError("Pick a genre, or tell us an artist or a song.")
         return attrs

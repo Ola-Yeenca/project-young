@@ -109,7 +109,7 @@ export async function sendTaste(slug: string, source: TasteSource, answer: Taste
     const errors: Record<string, string> = {};
     if (res.status === 400 && data && typeof data === "object") {
       for (const [k, v] of Object.entries(data)) errors[k === "non_field_errors" || k === "detail" ? "__all__" : k] = first(v);
-    } else errors.__all__ = res.status === 429 ? "Lots of answers right now. Try again in a minute." : "Something went wrong. Please try again.";
+    } else errors.__all__ = res.status === 429 ? "We're getting a lot of answers right now. Try again in a minute." : "Something went wrong. Please try again.";
     return { ok: false, errors };
   } catch {
     return { ok: false, errors: { __all__: "Something went wrong. Please try again." } };

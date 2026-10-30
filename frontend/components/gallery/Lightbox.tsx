@@ -23,7 +23,7 @@ function DeviceAsk() {
   return (
     <div className="lb-ask" role="region" aria-label="Device recognition">
       <p>
-        Remember this device for gallery stats? No name, no cookies. <Link href="/privacy#gallery">Learn more</Link>
+        Remember this device for gallery stats? It never uses your name or a cookie. <Link href="/privacy#gallery">Learn more</Link>
       </p>
       <button className="on" onClick={() => choose("yes")}>
         Allow

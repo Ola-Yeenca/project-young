@@ -127,7 +127,7 @@ export function Marquee() {
               }}
             >
               <span className="o">{e.local.date}</span>
-              <span className="o">—</span>
+              <span className="o">·</span>
               <span className="f">{e.lineup[0]?.name || e.title}</span>
               <span className="o">· {e.venue.name}</span>
               {e.sold_out && <small>Sold out</small>}
@@ -317,7 +317,7 @@ export function Lineup({ home }: { home: boolean }) {
             who make the night.
           </h2>
         )}
-        <p>Artists, DJs, hosts and crews represented by House of Young. Pick a name to see the profile and send a booking enquiry.</p>
+        <p>House of Young represents these artists, DJs, hosts and crews. Pick a name to see their profile and send a booking enquiry.</p>
         <div className="chips">
           {CATS.map((k) => (
             <button key={k} className={k === cat ? "on" : ""} onClick={() => setCat(k)}>

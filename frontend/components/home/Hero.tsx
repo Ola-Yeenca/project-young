@@ -369,10 +369,10 @@ export function Hero() {
       {pv && nx && (
         <>
           <button className="side-disc l" aria-label="Previous event" onClick={() => step(-1)}>
-            <span>{`${pad(((cur - 1 + n) % n) + 1)} — ${pv.title}`}</span>
+            <span>{`${pad(((cur - 1 + n) % n) + 1)} · ${pv.title}`}</span>
           </button>
           <button className="side-disc r" aria-label="Next event" onClick={() => step(1)}>
-            <span>{`${pad(((cur + 1) % n) + 1)} — ${nx.title}`}</span>
+            <span>{`${pad(((cur + 1) % n) + 1)} · ${nx.title}`}</span>
           </button>
         </>
       )}
@@ -385,7 +385,7 @@ export function Hero() {
               <i></i>
               <i></i>
             </span>
-            <span className="mono">{`${playing ? "HOY Radio" : "Now spinning"} · ${city?.name ?? ""}${onAir ? ` · ${onAir.artist} – ${onAir.title}` : groove ? ` · ${groove.label}` : ""}`}</span>
+            <span className="mono">{`${playing ? "HOY Radio" : "Now spinning"} · ${city?.name ?? ""}${onAir ? ` · ${onAir.title} by ${onAir.artist}` : groove ? ` · ${groove.label}` : ""}`}</span>
           </div>
           <h1 key={tok}>{e ? <Words parts={titleParts(e.title)} /> : ready && <Words parts={titleParts("New dates soon")} />}</h1>
           <div className="kv swap" key={`kv:${tok}`}>
@@ -513,7 +513,7 @@ export function Hero() {
         </p>
         {e && (
           <div className="pager">
-            <button className="arrow mag" aria-label="Previous" onClick={() => step(-1)}>
+            <button className="arrow mag" aria-label="Previous event" onClick={() => step(-1)}>
               ←
             </button>
             <div className={`dots${playing ? " hold" : ""}`}>
@@ -530,7 +530,7 @@ export function Hero() {
                 ></button>
               ))}
             </div>
-            <button className="arrow mag" aria-label="Next" onClick={() => step(1)}>
+            <button className="arrow mag" aria-label="Next event" onClick={() => step(1)}>
               →
             </button>
             <span className="n">{`${pad(cur + 1)} / ${pad(n)}`}</span>
