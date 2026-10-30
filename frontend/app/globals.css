@@ -422,8 +422,10 @@ footer a:hover{color:var(--ink)}
 .wipe.on{display:grid}
 .wipe .stage{position:absolute;inset:0;background:#0b0b0a;opacity:0}
 .wipe .pile{position:absolute;inset:0}
-.wipe .pile img{position:absolute;left:50%;top:50%;width:clamp(120px,19vw,220px);aspect-ratio:4/5;translate:-50% -50%;object-fit:cover;padding:6px 6px 22px;background:#f2f0ea;border-radius:2px;box-shadow:0 22px 44px -16px rgba(0,0,0,.8)}
+.wipe .pile img{position:absolute;left:50%;top:44%;width:clamp(140px,22vw,260px);aspect-ratio:4/5;translate:-50% -50%;object-fit:cover;padding:6px 6px 22px;background:#f2f0ea;border-radius:2px;box-shadow:0 22px 44px -16px rgba(0,0,0,.8)}
 .wipe .name{position:relative;opacity:0;text-shadow:0 2px 28px rgba(0,0,0,.55)}
+.wipe:has(.pile img) .name{align-self:end;margin-bottom:max(36px,8vh)}
+.wipe:has(.pile img) b{font-size:clamp(2.6rem,9cqw,7rem)}
 .wipe b{display:block;font-size:clamp(3.4rem,15cqw,12rem);font-weight:900;letter-spacing:-.06em;text-transform:uppercase;line-height:.9;text-align:center}
 .wipe span{font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;display:block;text-align:center;margin-top:12px}
 
