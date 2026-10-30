@@ -1,7 +1,9 @@
-// HOY Radio. Plays the tracks uploaded in Studio for the record's genre, shuffled per visit,
-// and falls back to a groove synthesised live with WebAudio (ported from the prototype's A,
-// PAT, schedule()) that varies per visit and evolves every 8 bars. A module singleton so the
-// hero and the now-playing pill share one engine across routes.
+// HOY Radio. Plays the tracks uploaded in Studio for the record's genre (any track on air in the
+// city when its genre has none), shuffled per visit, and falls back to a groove synthesised with
+// WebAudio (ported from the prototype's A, PAT, schedule()) that varies per visit and evolves
+// every 8 bars. Both play through the deck (public/deck-worklet.js), which reads the music at
+// the platter's speed, so a hand on the record scratches it. A module singleton so the hero and
+// the now-playing pill share one engine across routes.
 
 import { mediaSrc } from "./api";
 import type { EventItem, Track } from "./types";
@@ -26,7 +28,6 @@ function shuffle<T>(xs: T[], r: () => number) {
   return out;
 }
 
-type Beat = { t: number; k: 0 | 1; bar: boolean; r?: 1 };
 export type Style = "afrobeats" | "amapiano" | "afrohouse" | "techno" | "house" | "reggaeton";
 
 export const GENRE: Record<Style, { label: string; bpm: number }> = {
@@ -92,35 +93,38 @@ export function grooves(events: Pick<EventItem, "music_style" | "bpm" | "city">[
   });
 }
 
+/** What a record plays: a rotation of tracks (`key` names it), or none for its synth groove. */
+type Pool = { key: string; list: Track[] };
+
 export const A = {
   ctx: null as AudioContext | null,
   on: false,
-  next: 0,
-  step: 0,
   bpm: 104,
   style: "afrobeats" as Style,
   /** Frequency ratio for the groove's key. */
   kf: 1,
   seed: 1,
-  /** This section's added hits: [step, voice]. Re-rolled every 8 bars. */
-  extra: [] as [number, (t: number) => void][],
-  timer: 0 as ReturnType<typeof setInterval> | 0,
-  master: null as GainNode | null,
-  lp: null as BiquadFilterNode | null,
-  noise: null as AudioBuffer | null,
-  curve: null as Float32Array<ArrayBuffer> | null,
-  beats: [] as Beat[],
   /** The uploaded track on air, or null while the synth plays. */
   track: null as Track | null,
   tracks: [] as Track[],
+  /** Files that failed to load this visit. */
+  bad: new Set<string>(),
   city: "",
   visit: 0,
   order: {} as Record<string, { list: Track[]; at: number; round: number }>,
-  el: null as HTMLAudioElement | null,
+  /** The rotation on air, and the music under the needle (a track's URL or the pool key). */
+  pool: "",
+  src: "",
+  /** Bumped by every tune(), so a load that finishes late knows it was overtaken. */
+  load: 0,
+  deck: null as AudioWorkletNode | null,
+  held: false,
+  /** The deck's last report: seconds into the music, speed, context time, length in seconds. */
+  at: { p: 0, v: 0, t: 0, len: 0 },
+  bar: -1,
   an: null as AnalyserNode | null,
   bins: null as Uint8Array<ArrayBuffer> | null,
   lvl: 0,
-  bars: 0,
 };
 
 const listeners = new Set<(on: boolean) => void>();
@@ -131,30 +135,12 @@ export const subscribe = (fn: (on: boolean) => void) => {
 /** Called with A.on whenever playback starts, stops or the track on air changes. */
 const emit = () => listeners.forEach((fn) => fn(A.on));
 
-function audioInit() {
-  if (A.ctx) return;
-  const C = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!C) return;
-  const ctx = (A.ctx = new C());
-  A.master = ctx.createGain();
-  A.master.gain.value = 0.55;
-  A.lp = ctx.createBiquadFilter();
-  A.lp.type = "lowpass";
-  A.lp.frequency.value = 18000;
-  A.lp.Q.value = 0.7;
-  const comp = ctx.createDynamicsCompressor();
-  A.lp.connect(A.master);
-  A.master.connect(comp);
-  comp.connect(ctx.destination);
-  const len = ctx.sampleRate * 0.5,
-    b = ctx.createBuffer(1, len, ctx.sampleRate),
-    d = b.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  A.noise = b;
-  const k = new Float32Array(256);
-  for (let i = 0; i < 256; i++) k[i] = Math.tanh((i / 128 - 1) * 3);
-  A.curve = k;
-}
+/* ---- the synth's voices. They play into `rc`, the OfflineAudioContext rendering a loop. ---- */
+
+let rc!: BaseAudioContext;
+let noise!: AudioBuffer;
+let curve!: Float32Array<ArrayBuffer>;
+const out = () => rc.destination;
 
 export function env(t: number, g: GainNode, a: number, dcy: number, peak: number) {
   g.gain.setValueAtTime(0.0001, t);
@@ -162,37 +148,34 @@ export function env(t: number, g: GainNode, a: number, dcy: number, peak: number
   g.gain.exponentialRampToValueAtTime(0.0001, t + a + dcy);
 }
 function kick(t: number) {
-  const c = A.ctx!,
-    o = c.createOscillator(),
-    g = c.createGain();
+  const o = rc.createOscillator(),
+    g = rc.createGain();
   o.frequency.setValueAtTime(150, t);
   o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
   env(t, g, 0.003, 0.32, 1);
   o.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   o.start(t);
   o.stop(t + 0.4);
 }
 function hat(t: number, v: number, dcy = 0.045) {
-  const c = A.ctx!,
-    s = c.createBufferSource(),
-    f = c.createBiquadFilter(),
-    g = c.createGain();
-  s.buffer = A.noise;
+  const s = rc.createBufferSource(),
+    f = rc.createBiquadFilter(),
+    g = rc.createGain();
+  s.buffer = noise;
   f.type = "highpass";
   f.frequency.value = 7500;
   env(t, g, 0.002, dcy, v);
   s.connect(f);
   f.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   s.start(t);
   s.stop(t + dcy + 0.04);
 }
 function bass(t: number, f0: number, dcy: number) {
-  const c = A.ctx!,
-    o = c.createOscillator(),
-    f = c.createBiquadFilter(),
-    g = c.createGain();
+  const o = rc.createOscillator(),
+    f = rc.createBiquadFilter(),
+    g = rc.createGain();
   o.type = "sawtooth";
   o.frequency.value = f0;
   f.type = "lowpass";
@@ -202,22 +185,21 @@ function bass(t: number, f0: number, dcy: number) {
   env(t, g, 0.004, dcy, 0.3);
   o.connect(f);
   f.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   o.start(t);
   o.stop(t + dcy + 0.05);
 }
 /** A minor-chord organ stab, the house signature. */
 function stab(t: number) {
-  const c = A.ctx!,
-    f = c.createBiquadFilter(),
-    g = c.createGain();
+  const f = rc.createBiquadFilter(),
+    g = rc.createGain();
   f.type = "lowpass";
   f.frequency.value = 1800;
   env(t, g, 0.003, 0.2, 0.07);
   f.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   [220, 261.63, 329.63].forEach((hz) => {
-    const o = c.createOscillator();
+    const o = rc.createOscillator();
     o.type = "square";
     o.frequency.value = hz * A.kf;
     o.connect(f);
@@ -227,28 +209,26 @@ function stab(t: number) {
 }
 function clap(t: number) {
   [0, 0.011, 0.022].forEach((o, i) => {
-    const c = A.ctx!,
-      s = c.createBufferSource(),
-      f = c.createBiquadFilter(),
-      g = c.createGain();
-    s.buffer = A.noise;
+    const s = rc.createBufferSource(),
+      f = rc.createBiquadFilter(),
+      g = rc.createGain();
+    s.buffer = noise;
     f.type = "bandpass";
     f.frequency.value = 1500;
     f.Q.value = 0.9;
     env(t + o, g, 0.002, i === 2 ? 0.16 : 0.02, 0.55);
     s.connect(f);
     f.connect(g);
-    g.connect(A.lp!);
+    g.connect(out());
     s.start(t + o);
     s.stop(t + o + 0.2);
   });
 }
 function logdrum(t: number, f0: number) {
-  const c = A.ctx!,
-    o = c.createOscillator(),
-    ws = c.createWaveShaper(),
-    g = c.createGain();
-  ws.curve = A.curve;
+  const o = rc.createOscillator(),
+    ws = rc.createWaveShaper(),
+    g = rc.createGain();
+  ws.curve = curve;
   o.type = "sine";
   o.frequency.setValueAtTime(f0 * 1.6, t);
   o.frequency.exponentialRampToValueAtTime(f0, t + 0.06);
@@ -256,28 +236,26 @@ function logdrum(t: number, f0: number) {
   env(t, g, 0.004, 0.42, 0.5);
   o.connect(ws);
   ws.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   o.start(t);
   o.stop(t + 0.5);
 }
 function conga(t: number, f: number) {
-  const c = A.ctx!,
-    o = c.createOscillator(),
-    g = c.createGain();
+  const o = rc.createOscillator(),
+    g = rc.createGain();
   o.type = "sine";
   o.frequency.setValueAtTime(f * 1.5, t);
   o.frequency.exponentialRampToValueAtTime(f, t + 0.03);
   env(t, g, 0.002, 0.16, 0.38);
   o.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   o.start(t);
   o.stop(t + 0.22);
 }
 function bell(t: number) {
-  const c = A.ctx!,
-    o = c.createOscillator(),
-    o2 = c.createOscillator(),
-    g = c.createGain();
+  const o = rc.createOscillator(),
+    o2 = rc.createOscillator(),
+    g = rc.createGain();
   o.type = "square";
   o2.type = "square";
   o.frequency.value = 840 * A.kf;
@@ -285,7 +263,7 @@ function bell(t: number) {
   env(t, g, 0.002, 0.09, 0.05);
   o.connect(g);
   o2.connect(g);
-  g.connect(A.lp!);
+  g.connect(out());
   o.start(t);
   o2.start(t);
   o.stop(t + 0.12);
@@ -347,53 +325,141 @@ function section(n: number) {
     .map((s) => [s, VOICE[A.style](r)] as [number, (t: number) => void]);
 }
 
-function schedule() {
-  const ctx = A.ctx!,
-    spb = 60 / A.bpm / 4;
-  while (A.next < ctx.currentTime + 0.12) {
-    const s = A.step % 16,
-      bar = Math.floor(A.step / 16),
-      sec = Math.floor(bar / 8),
-      t = A.next,
-      P = PAT[A.style];
-    if (s === 0 && bar % 8 === 0) A.extra = section(sec);
-    // Every fourth section opens on two bars without kick and bass; every section's last bar fills.
-    const drop = sec % 4 === 3 && bar % 8 < 2,
-      fill = bar % 8 === 7 && s >= 12;
-    if (P.k.includes(s) && !drop) {
-      kick(t);
-      A.beats.push({ t, k: 1, bar: s === 0 });
-    } else if (s % 4 === 0) A.beats.push({ t, k: 0, bar: s === 0 });
+/** Seconds of ring-out rendered past a bar's end. */
+const TAIL = 0.6;
+
+/**
+ * Every fourth section opens on two bars without kick and bass; every section's last bar fills.
+ * The rest of a section's bars are the same bar.
+ */
+const kindOf = (bar: number) => (Math.floor(bar / 8) % 4 === 3 && bar % 8 < 2 ? "drop" : bar % 8 === 7 ? "fill" : "bar");
+
+/** One bar of the groove on air (A.style, bpm, key, seed) and its ring-out, mono. */
+function renderBar(sec: number, kind: string) {
+  const sr = A.ctx!.sampleRate,
+    P = PAT[A.style],
+    spb = 60 / A.bpm / 4,
+    oc = new OfflineAudioContext(1, Math.ceil((16 * spb + TAIL) * sr), sr),
+    extra = section(sec),
+    drop = kind === "drop";
+  rc = oc;
+  let t = 0;
+  for (let s = 0; s < 16; s++) {
+    const fill = kind === "fill" && s >= 12;
+    if (P.k.includes(s) && !drop) kick(t);
     if (P.c.includes(s) || (fill && s % 2)) clap(t);
     if (P.h.includes(s)) hat(t, 0.22);
     if (P.hs.includes(s) || fill) hat(t, 0.07);
     if (P.oh?.includes(s)) hat(t, 0.15, 0.2);
-    P.cg?.forEach(([st, f]) => {
-      if (st === s) conga(t, f * A.kf);
-    });
-    P.ld?.forEach(([st, f]) => {
-      if (st === s) logdrum(t, f * A.kf);
-    });
-    if (!drop)
-      P.bs?.forEach(([st, f]) => {
-        if (st === s) bass(t, f * A.kf, P.bd ?? 0.15);
-      });
+    P.cg?.forEach(([st, f]) => st === s && conga(t, f * A.kf));
+    P.ld?.forEach(([st, f]) => st === s && logdrum(t, f * A.kf));
+    if (!drop) P.bs?.forEach(([st, f]) => st === s && bass(t, f * A.kf, P.bd ?? 0.15));
     if (P.bl?.includes(s)) bell(t);
     if (P.st?.includes(s)) stab(t);
-    if (!fill) A.extra.forEach(([st, v]) => st === s && v(t));
-    A.next += spb * (s % 2 ? 1 - P.sw : 1 + P.sw);
-    A.step++;
+    if (!fill) extra.forEach(([st, v]) => st === s && v(t));
+    t += spb * (s % 2 ? 1 - P.sw : 1 + P.sw);
   }
+  return oc.startRendering().then((b) => b.getChannelData(0));
 }
 
-/** The next uploaded track for a genre in this city, in this visit's shuffled order. */
-function nextTrack(style: Style) {
-  const key = `${A.city}:${style}`;
+/**
+ * The groove on air as a seamless loop of `bars` bars, mono. Each distinct bar is rendered once
+ * (an offline render costs every node for its whole length) and laid in place, ring-outs
+ * overlapping the next bar and the last one's wrapping onto the start. `made` keeps rendered bars.
+ */
+async function render(bars: number, made: Map<string, Promise<Float32Array>>) {
+  const barLen = (240 / A.bpm) * A.ctx!.sampleRate,
+    n = Math.round(bars * barLen),
+    loop = new Float32Array(n);
+  const parts = [...Array(bars).keys()].map((b) => {
+    const sec = Math.floor(b / 8),
+      kind = kindOf(b),
+      key = `${sec}:${kind}`;
+    let p = made.get(key);
+    if (!p) made.set(key, (p = renderBar(sec, kind)));
+    return p;
+  });
+  (await Promise.all(parts)).forEach((d, b) => {
+    const at = Math.round(b * barLen);
+    for (let i = 0; i < d.length; i++) loop[(at + i) % n] += d[i];
+  });
+  return loop;
+}
+
+/* ---- the deck ---- */
+
+/** Messages for the deck while its worklet loads; null once it can't (no AudioWorklet here). */
+let queued: [object, Transferable[]][] | null = [];
+function post(m: object, transfer: Transferable[] = []) {
+  if (A.deck) A.deck.port.postMessage(m, transfer);
+  else queued?.push([m, transfer]);
+}
+
+function heard(m: { k: "at"; p: number; v: number; t: number; len: number } | { k: "end" | "idle" }) {
+  if (m.k === "at") A.at = m;
+  else if (m.k === "end") {
+    if (A.track) tune(A.style, true);
+  } else if (!A.on) A.ctx?.suspend();
+}
+
+function audioInit() {
+  if (A.ctx) return;
+  const C = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!C) return;
+  // iOS: this is music, so it plays with the silent switch on.
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session) session.type = "playback";
+  const ctx = (A.ctx = new C());
+  const master = ctx.createGain(),
+    comp = ctx.createDynamicsCompressor();
+  master.gain.value = 0.55;
+  master.connect(comp);
+  comp.connect(ctx.destination);
+  A.an = ctx.createAnalyser();
+  A.an.fftSize = 512;
+  A.bins = new Uint8Array(A.an.frequencyBinCount);
+  const len = ctx.sampleRate * 0.5;
+  noise = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = noise.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) curve[i] = Math.tanh((i / 128 - 1) * 3);
+  const failed = () => void (queued = null);
+  if (!ctx.audioWorklet) failed();
+  else
+    ctx.audioWorklet.addModule("/deck-worklet.js").then(() => {
+      const deck = (A.deck = new AudioWorkletNode(ctx, "deck", { numberOfInputs: 0, outputChannelCount: [2] }));
+      deck.connect(master);
+      deck.connect(A.an!);
+      deck.port.onmessage = (e) => heard(e.data);
+      queued?.forEach(([m, transfer]) => deck.port.postMessage(m, transfer));
+      queued = null;
+    }, failed);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) ctx.suspend();
+    else if (A.on) ctx.resume();
+  });
+}
+
+/** Puts music under the needle. `keep` is the same music, longer: it keeps its place. */
+function send(ch: Float32Array<ArrayBuffer>[], loop: boolean, keep = false) {
+  if (!keep) A.bar = -1;
+  post({ k: "buf", ch, loop, keep }, ch.map((c) => c.buffer));
+}
+
+/** What a record plays here: its genre's tracks, else any track on air in the city, else its synth groove. */
+function poolOf(style: Style): Pool {
+  const here = A.tracks.filter((t) => (!t.city || t.city === A.city) && !A.bad.has(t.url)),
+    own = here.filter((t) => t.genre === style);
+  if (own.length) return { key: `${A.city}:${style}`, list: own };
+  if (here.length) return { key: `${A.city}:*`, list: here };
+  return { key: `synth:${style}:${A.bpm}:${A.kf}:${A.seed}`, list: [] };
+}
+
+/** The pool's next track, in this visit's shuffled order. */
+function nextTrack({ key, list }: Pool) {
   let o = A.order[key];
-  if (!o) {
-    const list = A.tracks.filter((t) => t.genre === style && (!t.city || t.city === A.city));
-    o = A.order[key] = { list: shuffle(list, rng(A.visit + list.length)), at: 0, round: 0 };
-  }
+  if (!o) o = A.order[key] = { list: shuffle(list, rng(A.visit + list.length)), at: 0, round: 0 };
   if (!o.list.length) return null;
   if (o.at >= o.list.length) {
     o.round++;
@@ -403,55 +469,52 @@ function nextTrack(style: Style) {
   return o.list[o.at++];
 }
 
-function startSynth() {
-  const ctx = A.ctx!;
-  A.next = ctx.currentTime + 0.08;
-  A.step = 0;
-  A.beats = [];
-  clearInterval(A.timer);
-  A.timer = setInterval(schedule, 25);
-  schedule();
+/** `again`: the track on air has ended, so the same file starts over rather than carrying on. */
+async function loadTrack(t: Track, id: number, again: boolean) {
+  if (t.url === A.src) {
+    if (again) post({ k: "seek", p: 0 });
+    return;
+  }
+  try {
+    const res = await fetch(mediaSrc(t.url) ?? t.url, { mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const buf = await A.ctx!.decodeAudioData(await res.arrayBuffer());
+    if (id !== A.load) return;
+    A.src = t.url;
+    A.track = t;
+    send([...Array(Math.min(2, buf.numberOfChannels)).keys()].map((i) => buf.getChannelData(i).slice()), false);
+    emit();
+  } catch {
+    if (id !== A.load) return;
+    // An unplayable file drops out of this visit's rotation.
+    A.bad.add(t.url);
+    Object.values(A.order).forEach((o) => (o.list = o.list.filter((x) => x !== t)));
+    tune(A.style);
+  }
 }
 
-function startTrack(t: Track) {
-  const ctx = A.ctx!;
-  if (!A.el) {
-    const el = (A.el = new Audio());
-    el.crossOrigin = "anonymous";
-    el.preload = "auto";
-    const src = ctx.createMediaElementSource(el);
-    A.an = ctx.createAnalyser();
-    A.an.fftSize = 512;
-    A.bins = new Uint8Array(A.an.frequencyBinCount);
-    src.connect(A.lp!);
-    src.connect(A.an);
-    el.addEventListener("ended", () => A.on && A.track && tune(A.style));
-    el.addEventListener("error", () => {
-      if (!A.on || !A.track) return;
-      // An unplayable file drops out of this visit's rotation.
-      const bad = A.track;
-      Object.values(A.order).forEach((o) => (o.list = o.list.filter((x) => x !== bad)));
-      tune(A.style);
-    });
-  }
-  clearInterval(A.timer);
-  A.track = t;
-  A.bars = 0;
-  A.el.src = mediaSrc(t.url) ?? t.url;
-  A.el.play().catch(() => {});
-}
-
-/** Puts a genre on air: its next uploaded track if it has one, otherwise the synth. */
-function tune(style: Style) {
-  A.style = style;
-  const t = nextTrack(style);
-  if (t) startTrack(t);
-  else {
-    A.el?.pause();
-    A.track = null;
-    startSynth();
-  }
+async function loadSynth(id: number) {
+  // Four bars first, so it starts at once; then the full 32-bar cycle, which opens on the same bars.
+  const made = new Map<string, Promise<Float32Array>>(),
+    intro = await render(4, made);
+  if (id !== A.load) return;
+  A.src = A.pool;
+  A.track = null;
+  send([intro], true);
   emit();
+  const full = await render(32, made);
+  if (id === A.load) send([full], true, true);
+}
+
+/** Puts a genre on air: its rotation's next track if it has one, otherwise the synth. */
+function tune(style: Style, again = false) {
+  A.style = style;
+  const p = poolOf(style),
+    t = p.list.length ? nextTrack(p) : null,
+    id = ++A.load;
+  A.pool = p.key;
+  if (t) loadTrack(t, id, again);
+  else loadSynth(id).catch(() => {});
 }
 
 function set(g: Groove, city: string) {
@@ -465,6 +528,7 @@ function set(g: Groove, city: string) {
 /**
  * Starts HOY Radio on a record's groove. Must be called from a user gesture (browsers block
  * audio otherwise). `visit` seeds the track order, so each visit hears a new running order.
+ * The motor spins the platter up; music still under the needle carries on where it stopped.
  */
 export function play(g: Groove, city: string, tracks: Track[], visit: number) {
   audioInit();
@@ -475,58 +539,45 @@ export function play(g: Groove, city: string, tracks: Track[], visit: number) {
   A.visit = visit;
   set(g, city);
   A.on = true;
-  A.master!.gain.cancelScheduledValues(A.ctx.currentTime);
-  A.master!.gain.setTargetAtTime(0.55, A.ctx.currentTime, 0.05);
-  tune(g.style);
-}
-
-export function stop() {
-  if (!A.ctx) return;
-  A.on = false;
-  clearInterval(A.timer);
-  A.master!.gain.setTargetAtTime(0.0001, A.ctx.currentTime, 0.08);
-  const el = A.el;
-  if (el) setTimeout(() => !A.on && el.pause(), 300);
+  post({ k: "motor", on: true });
+  if (A.src && poolOf(g.style).key === A.pool) A.style = g.style;
+  else tune(g.style);
   emit();
 }
 
-/** A record change while on air. A new genre (or city) changes the music; the same keeps the track. */
+/** The brake: the record slows to a stop, then the deck sleeps. */
+export function stop() {
+  if (!A.ctx) return;
+  A.on = false;
+  post({ k: "motor", on: false });
+  if (!A.deck) A.ctx.suspend();
+  emit();
+}
+
+/** A record change while on air. A new rotation (genre, city or groove) changes the music. */
 export function retune(g: Groove, city: string) {
   if (!A.on) return;
-  const same = g.style === A.style && city === A.city;
   set(g, city);
-  if (!(same && A.track)) tune(g.style);
+  if (poolOf(g.style).key === A.pool) A.style = g.style;
+  else tune(g.style);
 }
 
-/** Hold to muffle: low-pass down while the record is held, back up on release. */
-export function muffle(held: boolean) {
-  if (A.on && A.lp && A.ctx) A.lp.frequency.setTargetAtTime(held ? 420 : 18000, A.ctx.currentTime, held ? 0.04 : 0.12);
+/** A hand on the record: held still, it stops the music; let go and the motor spins it back up. */
+export function hold(held: boolean) {
+  if (held === A.held || !A.deck || (held && !A.on)) return;
+  A.held = held;
+  post({ k: "hand", on: held, t: performance.now() / 1000 });
 }
 
-/** Scratch noise burst while dragging, scaled by the angle moved this event. */
+/** The hand turned the record d degrees; the needle follows it (33⅓ rpm is 200° a second). */
 export function scratch(d: number) {
-  if (!(A.on && A.ctx && A.noise && A.master) || Math.abs(d) <= 1.5) return;
-  const c = A.ctx,
-    s = c.createBufferSource(),
-    f = c.createBiquadFilter(),
-    g = c.createGain();
-  s.buffer = A.noise;
-  s.playbackRate.value = Math.min(4, 0.4 + Math.abs(d) / 6);
-  f.type = "bandpass";
-  f.frequency.value = 600 + Math.min(2600, Math.abs(d) * 90);
-  f.Q.value = 4;
-  env(c.currentTime, g, 0.003, 0.06, 0.35);
-  s.connect(f);
-  f.connect(g);
-  g.connect(A.master);
-  s.start();
-  s.stop(c.currentTime + 0.09);
+  if (A.held && A.ctx) post({ k: "move", d: (d * A.ctx.sampleRate) / 200, t: performance.now() / 1000 });
 }
 
 /** Beat envelope 0..1 for the visuals. Idle: a soft pulse at the record's tempo. */
 export function beatEnv(now: number, idleBpm: number) {
-  if (A.on && A.track && A.an && A.bins) {
-    // A track: low-end energy above its running average, so kicks pulse the visuals.
+  if (A.on && A.an && A.bins) {
+    // Low-end energy above its running average, so kicks pulse the visuals (scratches too).
     A.an.getByteFrequencyData(A.bins);
     let v = 0;
     for (let i = 1; i < 7; i++) v += A.bins[i];
@@ -534,35 +585,17 @@ export function beatEnv(now: number, idleBpm: number) {
     A.lvl += (v - A.lvl) * 0.06;
     return Math.max(0, Math.min(1, (v - A.lvl) / 28));
   }
-  if (A.on && A.ctx) {
-    const at = A.ctx.currentTime;
-    while (A.beats.length && A.beats[0].t < at - 1) A.beats.shift();
-    let e = 0;
-    for (const b of A.beats) {
-      const dt = at - b.t;
-      if (dt >= 0 && dt < 0.6) e = Math.max(e, (b.k ? 1 : 0.45) * Math.exp(-dt * 7));
-    }
-    return e;
-  }
   const ph = ((now / 1000) * idleBpm) / 60 % 1;
   return 0.35 * Math.exp(-ph * 5);
 }
 
-/** Bar starts that have just sounded (each reported once), for the ripple. */
+/** 1 when the needle has crossed into another bar since the last call, for the ripple. */
 export function dueBars() {
-  if (!(A.on && A.ctx)) return 0;
-  if (A.track && A.el) {
-    const bars = Math.floor((A.el.currentTime * A.bpm) / 240),
-      n = Math.max(0, bars - A.bars);
-    A.bars = bars;
-    return Math.min(n, 1);
-  }
-  let n = 0;
-  for (const b of A.beats) {
-    if (b.bar && !b.r && b.t <= A.ctx.currentTime) {
-      b.r = 1;
-      n++;
-    }
-  }
-  return n;
+  const { ctx, at } = A;
+  if (!(A.on && ctx && at.len)) return 0;
+  const p = at.p + at.v * (ctx.currentTime - at.t),
+    bar = Math.floor(((((p % at.len) + at.len) % at.len) * A.bpm) / 240);
+  if (bar === A.bar) return 0;
+  A.bar = bar;
+  return 1;
 }
