@@ -1,6 +1,6 @@
 "use client";
 
-// The city switch: a quick deal of gallery prints across a dark stage that covers the data swap.
+// The city switch: gallery prints dealt one by one across a dark stage that covers the data swap.
 // Only prints already downloaded are dealt (warmed when idle, or when a city button is hovered or
 // focused), so the switch never waits for an image. With none, the dark stage wipes in and out on
 // its own; with reduced motion it simply fades.
@@ -9,10 +9,15 @@ import { useLayoutEffect, useEffectEvent, useRef } from "react";
 import { fmtT, isHttp, lowData, RM } from "@/lib/format";
 import type { City, CityBundle } from "@/lib/types";
 
-/** When the site swaps the city's data under the cover, in ms from the click. */
-export const COVER = 420;
-export const FADE = 160;
-const HAND = 6;
+/** The whole switch, from the click to the new city fully revealed, in ms. Tune it here. */
+export const SHUFFLE_MS = 2000;
+/** From here the city's data may swap in, unseen under the cover. */
+export const COVER = SHUFFLE_MS * 0.25;
+/** From here the new city is revealed, or once its data arrives if that's later. */
+export const REVEAL = SHUFFLE_MS * 0.7;
+/** Each half of the reduced-motion fade. */
+export const FADE = 150;
+const HAND = 4;
 
 const ready = new Map<string, HTMLImageElement>();
 const asked = new Set<string>();
@@ -46,9 +51,11 @@ function deal(to: string, bundles: Record<string, CityBundle>) {
   return [...new Set(order)].flatMap((u) => ready.get(u) ?? []).slice(0, HAND);
 }
 
-const ease = "cubic-bezier(.2,.8,.2,1)",
-  snap = "cubic-bezier(.6,.05,.2,1)",
-  swing = "cubic-bezier(.7,0,.2,1)";
+const ease = "cubic-bezier(.22,.9,.3,1)",
+  away = "cubic-bezier(.55,0,.7,.3)",
+  swing = "cubic-bezier(.65,0,.35,1)";
+const T = SHUFFLE_MS,
+  FLY = T * 0.2;
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const settled = (list: Animation[]) => Promise.all(list.map((a) => a.finished.catch(() => null)));
 
@@ -71,38 +78,42 @@ export function Shuffle({ wipe, bundles, done }: { wipe: { to: City; phase: "in"
       hand.current = calm.current ? [] : pick().map((img, i) => ({ img, side: i % 2 ? -1 : 1 }));
       pile.replaceChildren(...hand.current.map((p) => p.img));
       if (calm.current) {
-        stage.animate([{ opacity: 0 }, { opacity: 1 }], opts(FADE, "linear"));
-        name.animate([{ opacity: 0 }, { opacity: 1 }], opts(FADE, "linear"));
+        stage.animate([{ opacity: 0 }, { opacity: 1 }], opts(FADE, "ease"));
+        name.animate([{ opacity: 0 }, { opacity: 1 }], opts(FADE, "ease"));
         return;
       }
-      if (hand.current.length) stage.animate([{ opacity: 0 }, { opacity: 1 }], opts(220, ease));
-      else stage.animate([{ clipPath: "inset(0 100% 0 0)", opacity: 1 }, { clipPath: "inset(0 0 0 0)", opacity: 1 }], opts(380, swing));
+      if (hand.current.length) stage.animate([{ opacity: 0 }, { opacity: 1 }], opts(T * 0.1, ease));
+      else stage.animate([{ clipPath: "inset(0 100% 0 0)", opacity: 1 }, { clipPath: "inset(0 0 0 0)", opacity: 1 }], opts(T * 0.22, swing));
+      // Each print glides in while the one before settles, then stays on top for one step; the
+      // last one lands a step before the reveal and holds there if the city's data is late.
+      const start = T * 0.08,
+        step = (REVEAL - start - FLY * 0.6) / Math.max(1, hand.current.length);
       hand.current.forEach(({ img, side }, i) => {
         img.getAnimations().forEach((a) => a.cancel());
-        const from = `translate(${side * 70}vw, ${rand(-25, 25)}vh) rotate(${side * rand(25, 45)}deg)`;
-        const to = `translate(${rand(-9, 9)}vw, ${rand(-6, 6)}vh) rotate(${rand(-14, 14)}deg)`;
-        img.animate([{ transform: from }, { transform: to }], opts(340, ease, i * 45));
+        const from = `translate(${side * 70}vw, ${rand(-20, 20)}vh) rotate(${side * rand(25, 40)}deg)`;
+        const to = `translate(${rand(-8, 8)}vw, ${rand(-5, 3)}vh) rotate(${rand(-12, 12)}deg)`;
+        img.animate([{ transform: from }, { transform: to }], opts(FLY, ease, start + i * step));
       });
-      name.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], opts(360, ease, 110));
+      name.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], opts(T * 0.2, ease, T * 0.1));
       return;
     }
 
     const out: Animation[] = [];
     if (calm.current) {
-      out.push(stage.animate([{ opacity: 1 }, { opacity: 0 }], opts(220, "linear")));
-      out.push(name.animate([{ opacity: 1 }, { opacity: 0 }], opts(220, "linear")));
+      out.push(stage.animate([{ opacity: 1 }, { opacity: 0 }], opts(FADE, "ease")));
+      out.push(name.animate([{ opacity: 1 }, { opacity: 0 }], opts(FADE, "ease")));
     } else {
       [...hand.current].reverse().forEach(({ img, side }, k) => {
         const at = getComputedStyle(img).transform;
         img.getAnimations().forEach((a) => a.cancel());
-        const to = `translate(${-side * 80}vw, ${rand(-12, 12)}vh) rotate(${-side * rand(20, 35)}deg)`;
-        out.push(img.animate([{ transform: at }, { transform: to }], opts(300, snap, k * 35)));
+        const to = `translate(${-side * 80}vw, ${rand(-12, 12)}vh) rotate(${-side * rand(18, 30)}deg)`;
+        out.push(img.animate([{ transform: at }, { transform: to }], opts(FLY, away, k * T * 0.04)));
       });
-      out.push(name.animate([{ opacity: 1 }, { opacity: 0 }], opts(200, "linear")));
+      out.push(name.animate([{ opacity: 1 }, { opacity: 0 }], opts(T * 0.15, "ease")));
       out.push(
         hand.current.length
-          ? stage.animate([{ opacity: 1 }, { opacity: 0 }], opts(320, ease, 120))
-          : stage.animate([{ clipPath: "inset(0 0 0 0)" }, { clipPath: "inset(0 0 0 100%)" }], opts(400, swing)),
+          ? stage.animate([{ opacity: 1 }, { opacity: 0 }], opts(T * 0.25, swing, T * 0.08))
+          : stage.animate([{ clipPath: "inset(0 0 0 0)" }, { clipPath: "inset(0 0 0 100%)" }], opts(T * 0.25, swing)),
       );
     }
     settled(out).then(() => {

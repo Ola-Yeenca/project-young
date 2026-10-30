@@ -119,7 +119,7 @@ async function page(w, h) {
   await wait(450);
   const wipeOn = await p.locator(".wipe.on").count();
   const wipeText = await p.locator(".wipe b").textContent();
-  await wait(1600);
+  await wait(2400);
   const wipeGone = await p.locator(".wipe.on").count();
   const title1 = await p.locator(".notes h1").textContent();
   note(wipeOn === 1 && wipeText === "Lagos" && wipeGone === 0 && title0 !== title1, "City switch", `gallery shuffle shows "${wipeText}", exits; record "${title0}" → "${title1}"`);

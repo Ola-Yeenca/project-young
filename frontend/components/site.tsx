@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { loadCity } from "@/lib/api";
 import { grooves as groovesOf, subscribe, A, type Groove } from "@/lib/audio";
 import type { City, CityBundle, EventItem, Global, Track } from "@/lib/types";
-import { COVER, FADE, Shuffle, warmPrints, warmPrintsSoon } from "./shuffle";
+import { COVER, FADE, REVEAL, Shuffle, warmPrints, warmPrintsSoon } from "./shuffle";
 
 /** One random seed per page load: HOY Radio's running order and variations for this visit. */
 let visitSeed = 0;
@@ -152,12 +152,17 @@ export function SiteProvider({
       }
       switching.current = true;
       setWipe({ to: target, phase: "in" });
-      // Data swaps once the cover is up; if the data is late, the cover holds.
-      const at = new Promise((r) => setTimeout(r, reduced() ? FADE : COVER));
-      Promise.all([at, ready.catch(() => null)]).then(() => {
-        apply();
-        setWipe({ to: target, phase: "out" });
-      });
+      // Data swaps once the cover is up; the reveal waits for its moment and for the data, so a
+      // late city holds the cover and an early one still lets the shuffle play out.
+      const rm = reduced(),
+        t0 = performance.now(),
+        after = (ms: number) => new Promise((r) => setTimeout(r, Math.max(0, ms - (performance.now() - t0))));
+      Promise.all([after(rm ? FADE : COVER), ready.catch(() => null)])
+        .then(() => {
+          apply();
+          return after(rm ? FADE : REVEAL);
+        })
+        .then(() => setWipe({ to: target, phase: "out" }));
     },
     [slug, cities, fetchCity],
   );
